@@ -4,6 +4,9 @@
              xmlns:local="clr-namespace:GamanReader"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+
     </Application.Resources>
+    <JumpList.JumpList>
+        <JumpList ShowRecentCategory="True"/>
+    </JumpList.JumpList>
 </Application>

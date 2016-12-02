@@ -5,19 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GamanReader"
         mc:Ignorable="d"
-        Title="GamanReader" Height="591.975" Width="711.268" Background="#FF4D1D1D" MouseWheel="Window_MouseWheel">
+        Title="GamanReader" Height="630.09" Width="711.268" Background="#FF4D1D1D" MouseWheel="Window_MouseWheel">
     <Grid Margin="0,57,0,63" KeyDown="HandleKeys">
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="LoadFolderButton" Content="Load Folder" HorizontalAlignment="Left" Margin="10,0,0,-41" Width="75" Click="LoadFolder" Height="32" VerticalAlignment="Bottom"/>
+        <Button x:Name="LoadFolderButton" Content="Load Folder" HorizontalAlignment="Left" Margin="10,0,0,-41" Width="75" Click="LoadFolderByDialog" Height="32" VerticalAlignment="Bottom"/>
         <Label x:Name="ReplyLabel" Content="" HorizontalAlignment="Left" Margin="90,0,0,-41" Width="160" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom"/>
-        <Label x:Name="LeftSideLabel" Content="" HorizontalAlignment="Left" Margin="10,-27,0,0" Width="332" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Top"/>
-        <Label x:Name="RightSideLabel" Content="" Margin="0,-27,10,0" VerticalContentAlignment="Center" Grid.Column="1" HorizontalAlignment="Right" Width="331" Height="32" VerticalAlignment="Top"/>
-        <ToggleButton x:Name="DirectionButton" Content="▶ Left-to-Right ▶" Margin="235,-52,233,0" VerticalAlignment="Top" Grid.ColumnSpan="2" Unchecked="MakeLtr" Checked="MakeRtl"/>
+        <Label x:Name="LeftSideLabel" Content="" HorizontalAlignment="Left" Margin="10,-27,0,0" Width="221" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Top"/>
+        <Label x:Name="RightSideLabel" Content="" Margin="0,-27,10,0" VerticalContentAlignment="Center" Grid.Column="1" HorizontalAlignment="Right" Width="217" Height="32" VerticalAlignment="Top"/>
+        <ToggleButton x:Name="DirectionButton" Content="▶ Left-to-Right ▶" Margin="236,-27,232,0" VerticalAlignment="Top" Grid.ColumnSpan="2" Unchecked="MakeLtr" Checked="MakeRtl"/>
         <Image Grid.Column="0" x:Name="LeftImageBox" Margin="10,10,0,10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
         <Image x:Name="RightImageBox" Margin="0,10,10,10" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"/>
         <Label x:Name="IndexLabel" Content="" Margin="0,0,10,-41" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" Grid.Column="1" HorizontalAlignment="Right" Width="160"/>
+        <ComboBox x:Name="RecentCb" Margin="0,0,175,-41" Grid.ColumnSpan="2" SelectionChanged="RecentCb_SelectionChanged" Height="32" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="273"/>
+        <Button x:Name="LoadZipButton" Content="Load Zip" HorizontalAlignment="Left" Margin="10,-48,0,0" Width="75" Click="LoadArchiveByDialog" Height="32" VerticalAlignment="Top"/>
     </Grid>
 </Window>
