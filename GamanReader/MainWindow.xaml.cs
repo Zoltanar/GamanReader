@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -99,13 +100,10 @@ namespace GamanReader
             ReplyLabel.Content = _viewModel.TotalFiles + " files in folder.";
             Title = $"{Path.GetFileName(archivePath)} - {ProgramName}";
             PopulatePreviousBox(_viewModel.GetFile());
-            if (_viewModel.TotalFiles > 1) PopulateNextBox(_viewModel.GetFileForward());
+            PopulateNextBox(_viewModel.TotalFiles > 1 ? _viewModel.GetFileForward() : null);
             _recentFiles.Add(_viewModel.ContainerPath);
             IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
             SaveConfig();
-
-            //
-
         }
 
         private void LoadFolder(string folderName)
@@ -115,22 +113,33 @@ namespace GamanReader
                 ReplyLabel.Content = "Folder doesn't exist.";
                 return;
             }
-            var files = Directory.GetFiles(folderName);
+            var files = Directory.GetFiles(folderName).ToList();
+            var folders = Directory.GetDirectories(folderName);
             if (!files.Any())
             {
-                var folders = Directory.GetDirectories(folderName);
                 if (!folders.Any())
                 {
                     ReplyLabel.Content = "No files in folder.";
                     return;
                 }
-                files = folders.SelectMany(Directory.GetFiles).ToArray();
+                files = folders.SelectMany(f=>Directory.GetFiles(f,"*",SearchOption.AllDirectories)).ToList();
+            }
+            else
+            {
+                if (folders.Any())
+                {
+                    var result = MessageBox.Show("Include sub-folders?", "Include Folders", MessageBoxButton.YesNo);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        files.AddRange(Directory.GetFiles(folderName, "*", SearchOption.AllDirectories));
+                    }
+                }
             }
             _viewModel = new FolderViewModel(folderName, files);
-            ReplyLabel.Content = _viewModel.TotalFiles + " files in folder.";
+            ReplyLabel.Content = _viewModel.TotalFiles + " images.";
             Title = $"{Path.GetFileName(folderName)} - {ProgramName}";
             PopulatePreviousBox(_viewModel.GetFile());
-            if (_viewModel.TotalFiles > 1) PopulateNextBox(_viewModel.GetFileForward());
+            PopulateNextBox(_viewModel.TotalFiles > 1 ? _viewModel.GetFileForward() : null);
             _recentFiles.Add(_viewModel.ContainerPath);
             IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
             SaveConfig();
@@ -147,78 +156,57 @@ namespace GamanReader
             _recentFiles = new RecentItemList<string>(size: config.RecentListSize, items: config.RecentFolders);
         }
 
+        private void LoadContainer(string containerPath)
+        {
+            if (Directory.Exists(containerPath)) LoadFolder(containerPath);
+            else if (File.Exists(containerPath)) LoadArchive(containerPath);
+            else ReplyLabel.Content = "Container doesn't exist.";
+        }
+
         private void RecentCb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count == 0) return;
             if (e.AddedItems[0] != null && !e.AddedItems[0].ToString().Equals(""))
             {
                 var containerPath = e.AddedItems[0].ToString();
-                if(Directory.Exists(containerPath)) LoadFolder(containerPath);
-                else if (File.Exists(containerPath)) LoadArchive(containerPath);
-                else ReplyLabel.Content = "Container doesn't exist.";
+                LoadContainer(containerPath);
                 //TODO clear from list if it doesnt exist
             }
         }
-
 
         private void PopulatePreviousBox(string filename)
         {
             Image imagebox = _rtlDirection ? RightImageBox : LeftImageBox;
             Label label = _rtlDirection ? RightSideLabel : LeftSideLabel;
             imagebox.Source = new BitmapImage(new Uri(filename));
-            label.Content = $"({_viewModel.CurrentIndex}){Path.GetFileName(filename)}";
+            label.Content = $"({_viewModel.CurrentIndex+1}){Path.GetFileName(filename)}";
         }
         
         private void PopulateNextBox(string filename)
         {
             Image imagebox = _rtlDirection ? LeftImageBox : RightImageBox;
             Label label = _rtlDirection ? LeftSideLabel : RightSideLabel;
+            if (filename == null)
+            {
+                imagebox.Source = null;
+                label.Content = null;
+                return;
+            }
             imagebox.Source = new BitmapImage(new Uri(filename));
-            label.Content = $"({_viewModel.CurrentIndex + 1}){Path.GetFileName(filename)}";
+            label.Content = $"({_viewModel.CurrentIndex + 2}){Path.GetFileName(filename)}";
         }
 
-        private void HandleKeys(object sender, KeyEventArgs e)
+        private void GoToPage(int pageNumber)
         {
-            if (_viewModel == null) return;
-            switch (e.Key)
-            {
-                case Key.Left:
-                    if (_rtlDirection)
-                    {
-                        if (_viewModel.FilesAhead >= 2)
-                        {
-                            GoForward(CtrlIsDown() ? 1 : _pageSize);
-                        }
-                    }
-                    else
-                    {
-                        if (_viewModel.HasPrevious)
-                        {
-                            GoBack(CtrlIsDown() ? 1 : _pageSize);
-                        }
-                    }
-                    return;
-                case Key.Right:
-                    if (_rtlDirection)
-                    {
-                        if (_viewModel.HasPrevious)
-                        {
-                            GoBack(CtrlIsDown() ? 1 : _pageSize);
-                        }
-                    }
-                    else
-                    {
-                        if (_viewModel.FilesAhead >= 2)
-                        {
-                            GoForward(CtrlIsDown() ? 1 : _pageSize);
-                        }
-                    }
-                    return;
-            }
+            _viewModel.CurrentIndex = pageNumber - 1;
+            PopulatePreviousBox(_viewModel.GetFile());
+            PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
+            IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
         }
 
         private void GoBack(int moveNumber)
         {
+            if (_viewModel.CurrentIndex == 0) return;
             if (moveNumber == 1)
             {
                 _viewModel.CurrentIndex--;
@@ -232,17 +220,18 @@ namespace GamanReader
                 _viewModel.CurrentIndex--;
             }
             PopulatePreviousBox(_viewModel.GetFile());
-            if (_viewModel.HasNext) PopulateNextBox(_viewModel.GetFileForward());
+            PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
             IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
 
         }
 
         private void GoForward(int moveNumber)
         {
+            if (_viewModel.CurrentIndex == _viewModel.TotalFiles - 1) return;
             if (moveNumber == 0)
             {
                 PopulatePreviousBox(_viewModel.GetFile());
-                if (_viewModel.HasNext) PopulateNextBox(_viewModel.GetFileForward());
+                PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
             }
             else if (moveNumber == 1)
             {
@@ -257,7 +246,7 @@ namespace GamanReader
                 _viewModel.CurrentIndex++;
             }
             PopulatePreviousBox(_viewModel.GetFile());
-            if (_viewModel.HasNext) PopulateNextBox(_viewModel.GetFileForward());
+            PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
             IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
 
         }
@@ -276,24 +265,31 @@ namespace GamanReader
             GoForward(0);
         }
 
-        private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
+        private void DropFile(object sender, DragEventArgs e)
         {
-            if (_viewModel == null) return;
-            if (e.Delta < 0)
-            {
-                if (_viewModel.FilesAhead >= 2)
-                {
-                    GoForward(CtrlIsDown() ? 1 : _pageSize);
-                }
-            }
-            else if (e.Delta > 0)
-            {
-                if (_viewModel.HasPrevious)
-                {
-                    GoBack(CtrlIsDown() ? 1 : _pageSize);
-                }
-            }
+            string containerPath = ((DataObject)e.Data).GetFileDropList()[0];
+            if (containerPath == null) return;
+            LoadContainer(containerPath);
+
         }
 
+        private void GoToTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        private void GoToTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter) return;
+            int pageNumber;
+            if (!int.TryParse(GoToTextBox.Text, out pageNumber))
+            {
+                //TODO ERROR
+                return;
+            }
+            GoToPage(pageNumber);
+        }
+        
     }
 }
