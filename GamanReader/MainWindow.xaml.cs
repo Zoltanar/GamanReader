@@ -74,21 +74,9 @@ namespace GamanReader
             LoadArchive(folderPicker.FileName);
         }
         
-        private void LoadArchive(string containerPath)
-        {
-            var extension = Path.GetExtension(containerPath);
-            if (extension != null && extension.Equals(".zip")) LoadZip(containerPath);
-            if (extension != null && extension.Equals(".rar")) LoadRar(containerPath);
-        }
 
-        // ReSharper disable once UnusedParameter.Local
-        private void LoadRar(string archivePath)
-        {
-            //TODO
-            throw new NotImplementedException();
-        }
-
-        private void LoadZip(string archivePath)
+        
+        private void LoadArchive(string archivePath)
         {
             if (!File.Exists(archivePath))
             {
@@ -96,7 +84,7 @@ namespace GamanReader
                 return;
             }
             SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
-            _viewModel = new ZipViewModel(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af=>af.FileName));
+            _viewModel = new ArchiveViewModel(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af=>af.FileName));
             ReplyLabel.Content = _viewModel.TotalFiles + " files in folder.";
             Title = $"{Path.GetFileName(archivePath)} - {ProgramName}";
             PopulatePreviousBox(_viewModel.GetFile());

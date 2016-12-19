@@ -54,11 +54,11 @@ namespace GamanReader
 
 
     /// <summary>
-    /// Model that contains details about currently opened folder/file.
+    /// Model that contains details about currently opened archive (supports zip and rar).
     /// </summary>
-    internal class ZipViewModel : ViewModel
+    internal class ArchiveViewModel : ViewModel
     {
-        public ZipViewModel(string containerPath, IEnumerable<string> fileNames)
+        public ArchiveViewModel(string containerPath, IEnumerable<string> fileNames)
         {
             ContainerPath = containerPath;
             CurrentIndex = 0;
@@ -76,8 +76,8 @@ namespace GamanReader
             var filename = FileNames[CurrentIndex];
             var tempFile = Path.Combine(TempFolder, filename);
             var fullPath = Path.GetFullPath(tempFile);
-            //TODO create folder path prior to creating file
             if (File.Exists(tempFile)) return fullPath;
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
             using (var stream = File.OpenWrite(tempFile))
             {
                 _zipExtractor.ExtractFile(filename,stream);
@@ -91,6 +91,7 @@ namespace GamanReader
             var tempFile = Path.Combine(TempFolder, filename);
             var fullPath = Path.GetFullPath(tempFile);
             if (File.Exists(tempFile)) return fullPath;
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
             using (var stream = File.OpenWrite(tempFile))
             {
                 _zipExtractor.ExtractFile(filename, stream);

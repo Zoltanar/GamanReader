@@ -9,6 +9,7 @@ namespace GamanReader
         // ReSharper disable once EmptyConstructor
         public ConfigXml()
         {
+            RecentListSize = 25;
             RecentFolders = new List<string>();
         }
         public ConfigXml(List<string> recentFolders, int recentListSize)
