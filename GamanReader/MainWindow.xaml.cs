@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SevenZip;
+using WpfAnimatedGif;
 using static GamanReader.StaticHelpers;
 
 namespace GamanReader
@@ -166,10 +167,10 @@ namespace GamanReader
         {
             Image imagebox = _rtlDirection ? RightImageBox : LeftImageBox;
             Label label = _rtlDirection ? RightSideLabel : LeftSideLabel;
-            imagebox.Source = new BitmapImage(new Uri(filename));
+            PopulateBox(imagebox, filename);
             label.Content = $"({_viewModel.CurrentIndex+1}){Path.GetFileName(filename)}";
         }
-        
+
         private void PopulateNextBox(string filename)
         {
             Image imagebox = _rtlDirection ? LeftImageBox : RightImageBox;
@@ -180,8 +181,19 @@ namespace GamanReader
                 label.Content = null;
                 return;
             }
-            imagebox.Source = new BitmapImage(new Uri(filename));
+            PopulateBox(imagebox, filename);
             label.Content = $"({_viewModel.CurrentIndex + 2}){Path.GetFileName(filename)}";
+        }
+
+        private static void PopulateBox(Image imagebox, string filename)
+        {
+            if (Path.GetExtension(filename).Equals(".gif"))
+                ImageBehavior.SetAnimatedSource(imagebox, new BitmapImage(new Uri(filename)));
+            else
+            {
+                ImageBehavior.SetAnimatedSource(imagebox,null);
+                imagebox.Source = new BitmapImage(new Uri(filename));
+            }
         }
 
         private void GoToPage(int pageNumber)

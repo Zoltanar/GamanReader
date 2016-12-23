@@ -43,6 +43,7 @@ namespace GamanReader
             CurrentIndex = 0;
             foreach (var imageCodec in ImageCodecInfo.GetImageEncoders())
                 RecognizedExtensions.AddRange(imageCodec.FilenameExtension.ToLowerInvariant().Split(';'));
+            RecognizedExtensions.Add("*.gif");
             FileNames = fileNames.Where(FileIsImage).ToArray();
             TotalFiles = FileNames.Length;
         }
