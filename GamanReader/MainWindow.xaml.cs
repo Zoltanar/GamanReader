@@ -56,7 +56,7 @@ namespace GamanReader
             //
             RecentCb.ItemsSource = _recentFiles.Items;
             var args = Environment.GetCommandLineArgs();
-            if(args.Length > 1) LoadFolder(args[1]);
+            if (args.Length > 1) LoadFolder(args[1]);
         }
 
         private void LoadFolderByDialog(object sender, RoutedEventArgs e)
@@ -66,17 +66,17 @@ namespace GamanReader
             if (result != CommonFileDialogResult.Ok) return;
             LoadFolder(folderPicker.FileName);
         }
-        
+
         private void LoadArchiveByDialog(object sender, RoutedEventArgs e)
         {
-            var folderPicker = new OpenFileDialog {Filter = "Archives|*.zip;*.rar"};
+            var folderPicker = new OpenFileDialog { Filter = "Archives|*.zip;*.rar" };
             bool? resultOk = folderPicker.ShowDialog();
             if (resultOk != true) return;
             LoadArchive(folderPicker.FileName);
         }
-        
 
-        
+
+
         private void LoadArchive(string archivePath)
         {
             if (!File.Exists(archivePath))
@@ -85,7 +85,7 @@ namespace GamanReader
                 return;
             }
             SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
-            _viewModel = new ArchiveViewModel(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af=>af.FileName));
+            _viewModel = new ArchiveViewModel(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName));
             ReplyLabel.Content = _viewModel.TotalFiles + " files in folder.";
             Title = $"{Path.GetFileName(archivePath)} - {ProgramName}";
             PopulatePreviousBox(_viewModel.GetFile());
@@ -111,7 +111,7 @@ namespace GamanReader
                     ReplyLabel.Content = "No files in folder.";
                     return;
                 }
-                files = folders.SelectMany(f=>Directory.GetFiles(f,"*",SearchOption.AllDirectories)).ToList();
+                files = folders.SelectMany(f => Directory.GetFiles(f, "*", SearchOption.AllDirectories)).ToList();
             }
             else
             {
@@ -165,14 +165,17 @@ namespace GamanReader
 
         private void PopulatePreviousBox(string filename)
         {
-            Image imagebox = _rtlDirection ? RightImageBox : LeftImageBox;
+            Image imagebox;
+            if (_pageSize == 1) imagebox = SingleImageBox;
+            else imagebox = _rtlDirection ? RightImageBox : LeftImageBox;
             Label label = _rtlDirection ? RightSideLabel : LeftSideLabel;
             PopulateBox(imagebox, filename);
-            label.Content = $"({_viewModel.CurrentIndex+1}){Path.GetFileName(filename)}";
+            label.Content = $"({_viewModel.CurrentIndex + 1}){Path.GetFileName(filename)}";
         }
 
         private void PopulateNextBox(string filename)
         {
+            if (_pageSize == 1) return;
             Image imagebox = _rtlDirection ? LeftImageBox : RightImageBox;
             Label label = _rtlDirection ? LeftSideLabel : RightSideLabel;
             if (filename == null)
@@ -187,11 +190,12 @@ namespace GamanReader
 
         private static void PopulateBox(Image imagebox, string filename)
         {
+            if (filename == null) return;
             if (Path.GetExtension(filename).Equals(".gif"))
                 ImageBehavior.SetAnimatedSource(imagebox, new BitmapImage(new Uri(filename)));
             else
             {
-                ImageBehavior.SetAnimatedSource(imagebox,null);
+                ImageBehavior.SetAnimatedSource(imagebox, null);
                 imagebox.Source = new BitmapImage(new Uri(filename));
             }
         }
@@ -200,7 +204,7 @@ namespace GamanReader
         {
             _viewModel.CurrentIndex = pageNumber - 1;
             PopulatePreviousBox(_viewModel.GetFile());
-            PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
+            if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
             IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
         }
 
@@ -220,7 +224,7 @@ namespace GamanReader
                 _viewModel.CurrentIndex--;
             }
             PopulatePreviousBox(_viewModel.GetFile());
-            PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
+            if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
             IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
 
         }
@@ -231,7 +235,7 @@ namespace GamanReader
             if (moveNumber == 0)
             {
                 PopulatePreviousBox(_viewModel.GetFile());
-                PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
+                if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
             }
             else if (moveNumber == 1)
             {
@@ -246,7 +250,7 @@ namespace GamanReader
                 _viewModel.CurrentIndex++;
             }
             PopulatePreviousBox(_viewModel.GetFile());
-            PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
+            if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
             IndexLabel.Content = $"{_viewModel.CurrentIndex + 1}/{_viewModel.TotalFiles}";
 
         }
@@ -278,9 +282,31 @@ namespace GamanReader
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
+        
 
-        private void GoToTextBox_KeyDown(object sender, KeyEventArgs e)
+        private void MakeDualPage(object sender, RoutedEventArgs e)
         {
+            DualSingleSwitcher.Content = "Dual Page View";
+            _pageSize = 2;
+            SingleImageBox.Source = null;
+            GoForward(0);
+        }
+
+        private void MakeSinglePage(object sender, RoutedEventArgs e)
+        {
+            DualSingleSwitcher.Content = "Single Page View";
+            _pageSize = 1;
+            ImageBehavior.SetAnimatedSource(LeftImageBox, null);
+            ImageBehavior.SetAnimatedSource(RightImageBox, null);
+            LeftImageBox.Source = null;
+            RightImageBox.Source = null;
+            RightSideLabel.Content = null;
+            GoForward(0);
+        }
+
+        private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (_viewModel == null) return;
             if (e.Key != Key.Enter) return;
             int pageNumber;
             if (!int.TryParse(GoToTextBox.Text, out pageNumber))
@@ -288,8 +314,9 @@ namespace GamanReader
                 //TODO ERROR
                 return;
             }
+            e.Handled = true;
             GoToPage(pageNumber);
+            GoToTextBox.Text = "";
         }
-        
     }
 }
