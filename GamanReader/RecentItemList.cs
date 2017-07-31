@@ -29,15 +29,5 @@ namespace GamanReader
             }
             Items.Insert(0, item);
         }
-
-        public void Clear()
-        {
-            Items.Clear();
-        }
-
-        public void RemoveAt(int index)
-        {
-            Items.RemoveAt(index);
-        }
     }
 }
