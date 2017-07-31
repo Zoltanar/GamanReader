@@ -6,7 +6,10 @@
         xmlns:local="clr-namespace:GamanReader"
         mc:Ignorable="d"
         Title="GamanReader" Height="740" Width="1260" Background="#FF4D1D1D" MouseWheel="Window_MouseWheel" AllowDrop="True" Drop="DropFile" MinWidth="711" MinHeight="630">
-    <Grid x:Name="PictureGrid" KeyDown="HandleKeys" MouseLeftButtonUp="Grid_MouseLeftButtonUp" MouseRightButtonUp="Grid_MouseRightButtonUp">
+    <Window.DataContext>
+        <local:MainViewModel/>
+    </Window.DataContext>
+    <Grid KeyDown="HandleKeys" MouseLeftButtonUp="Grid_MouseLeftButtonUp" MouseRightButtonUp="Grid_MouseRightButtonUp">
         <Grid.RowDefinitions>
             <RowDefinition Height="65"/>
             <RowDefinition Height="1*"/>
@@ -16,32 +19,32 @@
         <Button Content="Load Zip" Click="LoadArchiveByDialog" Margin="10,10,0,0" Grid.Row="0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left"/>
         <Button Content="Open Random" Click="OpenRandom_Click"  Height="20"  Margin="65,10,0,0" Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Left" />
         <Button Content="See Tagged Items" Margin="154,10,0,0" Click="SeeTagged_Click" HorizontalAlignment="Left" Width="96" Height="20" VerticalAlignment="Top"/>
-        <ToggleButton Content="▶ Left-to-Right ▶" Margin="491,10,491,0" VerticalAlignment="Top" Unchecked="MakeLtr" Checked="MakeRtl" Height="20"/>
+        <ToggleButton Content="{Binding RtlToggleText}" Margin="491,10,491,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked }" Height="20"/>
         <Button Content="Set Library Folder" Margin="0,10,108,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" Grid.Row="0" HorizontalAlignment="Right"/>
-        <ToggleButton Content="Single Page View" Margin="0,10,9,0" Unchecked="MakeSinglePage" Checked="MakeDualPage" Grid.Row="0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Right"/>
-        <Label x:Name="LeftSideLabel" Content="" Margin="10,35,631,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="30" VerticalAlignment="Top" Foreground="White"/>
-        <Label x:Name="RightSideLabel" Content="" Margin="631,35,10,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Height="30" VerticalAlignment="Top" Foreground="White"/>
+        <ToggleButton Content="{Binding PageSizeToggleText}" Margin="0,10,9,0" IsChecked="{Binding DualPageIsChecked }" Grid.Row="0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Right"/>
+        <Label Content="{Binding LeftLabelText}" Margin="10,35,631,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="30" VerticalAlignment="Top" Foreground="White"/>
+        <Label Content="{Binding RightLabelText}" Margin="631,35,10,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Height="30" VerticalAlignment="Top" Foreground="White"/>
         <!--Middle Row-->
         <DockPanel Grid.Row="1">
-                <local:TagTreePanel x:Name="TagPanel" Visibility="Collapsed" Width="300">                
-                </local:TagTreePanel>
+            <local:TagTreePanel x:Name="TagPanel" Visibility="Collapsed" Width="300">
+            </local:TagTreePanel>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Image x:Name="SingleImageBox" Grid.ColumnSpan="2" />
-                <Image x:Name="LeftImageBox"  Grid.Column="0" />
+                <Image x:Name="LeftImageBox" Grid.Column="0" />
                 <Image x:Name="RightImageBox" Grid.Column="1" />
             </Grid>
         </DockPanel>
         <!--Bottom Row-->
         <Button x:Name="LoadFolderButton" Content="Load Folder" HorizontalAlignment="Left" Margin="10,0,0,24" Width="75" Click="LoadFolderByDialog" Height="32" VerticalAlignment="Bottom" Grid.Row="2"/>
-        <Label x:Name="ReplyLabel" Content="" HorizontalAlignment="Left" Margin="90,0,0,24" Width="160" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" Background="#FFE66767" Grid.Row="2"/>
-        <Label x:Name="IndexLabel" Content="" Margin="0,0,9,24" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" Grid.Column="1" HorizontalAlignment="Right" Width="47" Grid.Row="2"/>
-        <ComboBox x:Name="RecentCb" Margin="278,0,276,24" Grid.ColumnSpan="2" SelectionChanged="RecentCb_SelectionChanged" Height="32" VerticalAlignment="Bottom" Grid.Row="2"/>
-        <TextBox x:Name="GoToTextBox" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,61,26" TextWrapping="Wrap" Width="40" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="30" VerticalAlignment="Bottom" KeyUp="GoToTextBox_KeyUp" Grid.Row="2"/>
-        <TextBox x:Name="TagTb" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,172,35" TextWrapping="Wrap" Width="99" Height="21" VerticalAlignment="Bottom" Grid.Row="2"/>
+        <Label Content="{Binding ReplyText}" HorizontalAlignment="Left" Margin="90,0,0,24" Width="160" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" Background="#FFE66767" Grid.Row="2"/>
+        <Label Content="{Binding IndexLabelText}" Margin="0,0,9,24" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" Grid.Column="1" HorizontalAlignment="Right" Width="47" Grid.Row="2" Foreground="White"/>
+        <ComboBox ItemsSource="{Binding RecentItems}" Margin="278,0,276,24" Grid.ColumnSpan="2" SelectionChanged="RecentCb_SelectionChanged" Height="32" VerticalAlignment="Bottom" Grid.Row="2"/>
+        <TextBox Text="{Binding GoToIndexText}" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,61,26" TextWrapping="Wrap" Width="40" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="30" VerticalAlignment="Bottom" KeyUp="GoToTextBox_KeyUp" Grid.Row="2"/>
+        <TextBox Text="{Binding TagText}" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,172,35" TextWrapping="Wrap" Width="99" Height="21" VerticalAlignment="Bottom" Grid.Row="2"/>
         <Button Content="Add Tag" Grid.Column="1" Margin="0,0,172,8" Click="AddTag" HorizontalAlignment="Right" Width="99" Height="22" VerticalAlignment="Bottom" Grid.Row="2"/>
     </Grid>
 </Window>

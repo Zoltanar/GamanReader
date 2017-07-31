@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SevenZip;
@@ -21,15 +20,12 @@ namespace GamanReader
 	/// </summary>
 	public partial class MainWindow
 	{
-		private ViewModel _viewModel;
-		private int _pageSize = 2; //make switchable to 1 (or more than 2)
-		private bool _rtlDirection; //false for left to right, true for right to left
-		private RecentItemList<string> _recentFiles = new RecentItemList<string>(Settings.RecentListSize, Settings.RecentFolders);
-		
+		private readonly MainViewModel _mainModel;	
 
 		public MainWindow()
 		{
 			InitializeComponent();
+			_mainModel = DataContext as MainViewModel;
 			Directory.CreateDirectory(StoredDataFolder);
 			Directory.CreateDirectory(TempFolder);
 			foreach (var file in Directory.GetFiles(TempFolder))
@@ -51,10 +47,8 @@ namespace GamanReader
 			}
 			//TODO try default 7zip install folder 
 			SevenZipBase.SetLibraryPath(path);
-			//
-			RecentCb.ItemsSource = _recentFiles.Items;
 			var args = Environment.GetCommandLineArgs();
-			if (args.Length > 1) LoadFolder(args[1]);
+			if (args.Length > 1) _mainModel.LoadFolder(args[1]);
 		}
 		
 
@@ -63,7 +57,7 @@ namespace GamanReader
 			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true };
 			var result = folderPicker.ShowDialog();
 			if (result != CommonFileDialogResult.Ok) return;
-			LoadFolder(folderPicker.FileName);
+			_mainModel.LoadFolder(folderPicker.FileName);
 		}
 
 		private void LoadArchiveByDialog(object sender, RoutedEventArgs e)
@@ -71,74 +65,15 @@ namespace GamanReader
 			var folderPicker = new OpenFileDialog { Filter = "Archives|*.zip;*.rar" };
 			bool? resultOk = folderPicker.ShowDialog();
 			if (resultOk != true) return;
-			LoadArchive(folderPicker.FileName);
+			_mainModel.LoadArchive(folderPicker.FileName);
 		}
 
-		internal void LoadArchive(string archivePath)
-		{
-			if (!File.Exists(archivePath))
-			{
-				ReplyLabel.Content = "Archive doesn't exist.";
-				return;
-			}
-			SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
-			_viewModel = new ArchiveViewModel(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName));
-			ReplyLabel.Content = _viewModel.TotalFiles + " files in folder.";
-			Title = $"{Path.GetFileName(archivePath)} - {ProgramName}";
-			PopulatePreviousBox(_viewModel.GetFile());
-			PopulateNextBox(_viewModel.TotalFiles > 1 ? _viewModel.GetFileForward() : null);
-			_recentFiles.Add(_viewModel.ContainerPath);
-			GoToTextBox.Text = (_viewModel.CurrentIndex + 1).ToString();
-			IndexLabel.Content = $"/{_viewModel.TotalFiles}";
-			Settings.Save(_recentFiles.Items);
-		}
-
-		internal void LoadFolder(string folderName)
-		{
-			if (!Directory.Exists(folderName))
-			{
-				ReplyLabel.Content = "Folder doesn't exist.";
-				return;
-			}
-			var files = Directory.GetFiles(folderName).ToList();
-			files.RemoveAll(i => Path.GetFileName(i) == "desktop.ini");
-			var folders = Directory.GetDirectories(folderName);
-			if (!files.Any())
-			{
-				if (!folders.Any())
-				{
-					ReplyLabel.Content = "No files in folder.";
-					return;
-				}
-				files = folders.SelectMany(f => Directory.GetFiles(f, "*", SearchOption.AllDirectories)).ToList();
-			}
-			else
-			{
-				if (folders.Any())
-				{
-					var result = MessageBox.Show("Include sub-folders?", "Include Folders", MessageBoxButton.YesNo);
-					if (result == MessageBoxResult.Yes)
-					{
-						files.AddRange(Directory.GetFiles(folderName, "*", SearchOption.AllDirectories));
-					}
-				}
-			}
-			_viewModel = new FolderViewModel(folderName, files);
-			ReplyLabel.Content = _viewModel.TotalFiles + " images.";
-			Title = $"{Path.GetFileName(folderName)} - {ProgramName}";
-			PopulatePreviousBox(_viewModel.GetFile());
-			PopulateNextBox(_viewModel.TotalFiles > 1 ? _viewModel.GetFileForward() : null);
-			_recentFiles.Add(_viewModel.ContainerPath);
-			GoToTextBox.Text = (_viewModel.CurrentIndex + 1).ToString();
-			IndexLabel.Content = $"/{_viewModel.TotalFiles}";
-			Settings.Save(_recentFiles.Items);
-		}
 
 		internal void LoadContainer(string containerPath)
 		{
-			if (Directory.Exists(containerPath)) LoadFolder(containerPath);
-			else if (File.Exists(containerPath)) LoadArchive(containerPath);
-			else ReplyLabel.Content = "Container doesn't exist.";
+			if (Directory.Exists(containerPath)) _mainModel.LoadFolder(containerPath);
+			else if (File.Exists(containerPath)) _mainModel.LoadArchive(containerPath);
+			else _mainModel.ReplyText = "Container doesn't exist.";
 		}
 
 		private void RecentCb_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -151,115 +86,24 @@ namespace GamanReader
 				//TODO clear from list if it doesnt exist
 			}
 		}
-
-		private void PopulatePreviousBox(string filename)
+		
+		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
 		{
-			Image imagebox;
-			if (_pageSize == 1) imagebox = SingleImageBox;
-			else imagebox = _rtlDirection ? RightImageBox : LeftImageBox;
-			Label label = _rtlDirection ? RightSideLabel : LeftSideLabel;
-			PopulateBox(imagebox, filename);
-			label.Content = $"({_viewModel.CurrentIndex + 1}){Path.GetFileName(filename)}";
-		}
-
-		private void PopulateNextBox(string filename)
-		{
-			if (_pageSize == 1) return;
-			Image imagebox = _rtlDirection ? LeftImageBox : RightImageBox;
-			Label label = _rtlDirection ? LeftSideLabel : RightSideLabel;
-			if (filename == null)
+			if (e.Key != Key.Enter) return;
+			var text = (sender as TextBox).Text;
+			int pageNumber;
+			if (!int.TryParse(text, out pageNumber))
 			{
-				imagebox.Source = null;
-				label.Content = null;
+				//TODO ERROR
 				return;
 			}
-			PopulateBox(imagebox, filename);
-			label.Content = $"({_viewModel.CurrentIndex + 2}){Path.GetFileName(filename)}";
+			e.Handled = true;
+			_mainModel.GoToIndex(pageNumber);
 		}
 
-		private static void PopulateBox(Image imagebox, string filename)
+		internal void ChangeTitle(string text)
 		{
-			if (filename == null) return;
-			if (Path.GetExtension(filename).Equals(".gif"))
-				ImageBehavior.SetAnimatedSource(imagebox, new BitmapImage(new Uri(filename)));
-			else
-			{
-				ImageBehavior.SetAnimatedSource(imagebox, null);
-				imagebox.Source = new BitmapImage(new Uri(filename));
-			}
-		}
-
-		private void GoToPage(int pageNumber)
-		{
-			_viewModel.CurrentIndex = pageNumber - 1;
-			PopulatePreviousBox(_viewModel.GetFile());
-			if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
-			GoToTextBox.Text = (_viewModel.CurrentIndex + 1).ToString();
-			IndexLabel.Content = $"/{_viewModel.TotalFiles}";
-		}
-
-		private void GoBack(int moveNumber)
-		{
-			if (_viewModel.CurrentIndex == 0) return;
-			if (moveNumber == 1)
-			{
-				_viewModel.CurrentIndex--;
-			}
-			else if (_viewModel.HasTwoPrevious)
-			{
-				_viewModel.CurrentIndex -= _pageSize;
-			}
-			else
-			{
-				_viewModel.CurrentIndex--;
-			}
-			PopulatePreviousBox(_viewModel.GetFile());
-			if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
-			GoToTextBox.Text = (_viewModel.CurrentIndex + 1).ToString();
-			IndexLabel.Content = $"/{_viewModel.TotalFiles}";
-
-		}
-
-		private void GoForward(int moveNumber)
-		{
-			if (_viewModel == null) return;
-			if (_viewModel.CurrentIndex == _viewModel.TotalFiles - 1) return;
-			if (moveNumber == 0)
-			{
-				PopulatePreviousBox(_viewModel.GetFile());
-				if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
-			}
-			else if (moveNumber == 1)
-			{
-				_viewModel.CurrentIndex++;
-			}
-			else if (_viewModel.FilesAhead >= 3)
-			{
-				_viewModel.CurrentIndex += _pageSize;
-			}
-			else
-			{
-				_viewModel.CurrentIndex++;
-			}
-			PopulatePreviousBox(_viewModel.GetFile());
-			if (_pageSize == 2) PopulateNextBox(_viewModel.HasNext ? _viewModel.GetFileForward() : null);
-			GoToTextBox.Text = (_viewModel.CurrentIndex + 1).ToString();
-			IndexLabel.Content = $"/{_viewModel.TotalFiles}";
-
-		}
-
-		private void MakeLtr(object sender, RoutedEventArgs e)
-		{
-			(sender as ToggleButton).Content = "▶ Left-to-Right ▶";
-			_rtlDirection = false;
-			GoForward(0);
-		}
-
-		private void MakeRtl(object sender, RoutedEventArgs e)
-		{
-			(sender as ToggleButton).Content = "◀ Right-to-Left ◀";
-			_rtlDirection = true;
-			GoForward(0);
+			Title = $"{text} - {ProgramName}";
 		}
 
 		private void DropFile(object sender, DragEventArgs e)
@@ -279,53 +123,36 @@ namespace GamanReader
 		private void MakeDualPage(object sender, RoutedEventArgs e)
 		{
 			(sender as ToggleButton).Content = "Dual Page View";
-			_pageSize = 2;
+			_mainModel.ChangePageSize(2);
 			SingleImageBox.Source = null;
-			if (_viewModel != null) GoForward(0);
 		}
 
 		private void MakeSinglePage(object sender, RoutedEventArgs e)
 		{
 			(sender as ToggleButton).Content = "Single Page View";
-			_pageSize = 1;
 			ImageBehavior.SetAnimatedSource(LeftImageBox, null);
 			ImageBehavior.SetAnimatedSource(RightImageBox, null);
 			LeftImageBox.Source = null;
 			RightImageBox.Source = null;
-			RightSideLabel.Content = null;
-			if (_viewModel != null) GoForward(0);
+			_mainModel.ChangePageSize(1);
 		}
 
-		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
-		{
-			if (_viewModel == null) return;
-			if (e.Key != Key.Enter) return;
-			int pageNumber;
-			if (!int.TryParse(GoToTextBox.Text, out pageNumber))
-			{
-				//TODO ERROR
-				return;
-			}
-			e.Handled = true;
-			GoToPage(pageNumber);
-			GoToTextBox.Text = "";
-		}
 
 		private void OpenRandom_Click(object sender, RoutedEventArgs e)
 		{
 			if (string.IsNullOrEmpty(Settings.LibraryFolder))
 			{
-				ReplyLabel.Content = "Library Folder is not set";
+				_mainModel.ReplyText = "Library Folder is not set";
 				return;
 			}
 			var fileOrFolder = RandomFile.GetRandomFileOrFolder(Settings.LibraryFolder, out bool isFolder, out string error);
 			if (fileOrFolder == null)
 			{
-				ReplyLabel.Content = error;
+				_mainModel.ReplyText = error;
 				return;
 			}
-			if (isFolder) LoadFolder(fileOrFolder);
-			else LoadArchive(fileOrFolder);
+			if (isFolder) _mainModel.LoadFolder(fileOrFolder);
+			else _mainModel.LoadArchive(fileOrFolder);
 		}
 
 		private void SetLibraryFolder_Click(object sender, RoutedEventArgs e)
@@ -338,9 +165,7 @@ namespace GamanReader
 
 		private void AddTag(object sender, RoutedEventArgs e)
 		{
-			StaticHelpers.AddTag(_viewModel.ContainerPath, _viewModel.IsFolder, TagTb.Text);
-			//todo write reply
-			TagTb.Text = "";
+			_mainModel.AddTag((sender as TextBox).Text);
 		}
 
 		private void SeeTagged_Click(object sender, RoutedEventArgs e)

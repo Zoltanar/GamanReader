@@ -105,6 +105,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="MainViewModel.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="RandomFile.cs" />
     <Compile Include="TagSystem.cs" />
@@ -112,7 +113,7 @@
       <DependentUpon>TagTreePanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="TagTreeViewModel.cs" />
-    <Compile Include="ViewModel.cs" />
+    <Compile Include="ContainerViewModel.cs" />
     <Compile Include="RecentItemList.cs" />
     <Compile Include="StaticHelpers.cs" />
     <Compile Include="WindowControls.cs" />
