@@ -13,6 +13,7 @@
         <TreeView ItemsSource="{Binding TagGroups}">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}">
+                    <Setter Property="IsExpanded" Value="True"/>
                     <EventSetter Event="MouseDoubleClick"
                 Handler="ItemDoubleClicked"/>
                 </Style>

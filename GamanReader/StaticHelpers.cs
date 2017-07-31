@@ -37,7 +37,7 @@ namespace GamanReader
 				AllowedFormats = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(AllowedFormatsJson));
 				TagDatabase = new TagDatabase();
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				//TODO log error
 			}

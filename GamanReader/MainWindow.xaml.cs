@@ -12,6 +12,7 @@ using Microsoft.WindowsAPICodePack.Dialogs;
 using SevenZip;
 using WpfAnimatedGif;
 using static GamanReader.StaticHelpers;
+using System.Windows.Controls.Primitives;
 
 namespace GamanReader
 {
@@ -25,6 +26,7 @@ namespace GamanReader
 		private bool _rtlDirection; //false for left to right, true for right to left
 		private RecentItemList<string> _recentFiles = new RecentItemList<string>(Settings.RecentListSize, Settings.RecentFolders);
 		
+
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -54,6 +56,7 @@ namespace GamanReader
 			var args = Environment.GetCommandLineArgs();
 			if (args.Length > 1) LoadFolder(args[1]);
 		}
+		
 
 		private void LoadFolderByDialog(object sender, RoutedEventArgs e)
 		{
@@ -219,6 +222,7 @@ namespace GamanReader
 
 		private void GoForward(int moveNumber)
 		{
+			if (_viewModel == null) return;
 			if (_viewModel.CurrentIndex == _viewModel.TotalFiles - 1) return;
 			if (moveNumber == 0)
 			{
@@ -246,14 +250,14 @@ namespace GamanReader
 
 		private void MakeLtr(object sender, RoutedEventArgs e)
 		{
-			DirectionButton.Content = "▶ Left-to-Right ▶";
+			(sender as ToggleButton).Content = "▶ Left-to-Right ▶";
 			_rtlDirection = false;
 			GoForward(0);
 		}
 
 		private void MakeRtl(object sender, RoutedEventArgs e)
 		{
-			DirectionButton.Content = "◀ Right-to-Left ◀";
+			(sender as ToggleButton).Content = "◀ Right-to-Left ◀";
 			_rtlDirection = true;
 			GoForward(0);
 		}
@@ -274,7 +278,7 @@ namespace GamanReader
 		
 		private void MakeDualPage(object sender, RoutedEventArgs e)
 		{
-			DualSingleSwitcher.Content = "Dual Page View";
+			(sender as ToggleButton).Content = "Dual Page View";
 			_pageSize = 2;
 			SingleImageBox.Source = null;
 			if (_viewModel != null) GoForward(0);
@@ -282,7 +286,7 @@ namespace GamanReader
 
 		private void MakeSinglePage(object sender, RoutedEventArgs e)
 		{
-			DualSingleSwitcher.Content = "Single Page View";
+			(sender as ToggleButton).Content = "Single Page View";
 			_pageSize = 1;
 			ImageBehavior.SetAnimatedSource(LeftImageBox, null);
 			ImageBehavior.SetAnimatedSource(RightImageBox, null);
@@ -341,11 +345,9 @@ namespace GamanReader
 
 		private void SeeTagged_Click(object sender, RoutedEventArgs e)
 		{
-			var tagWindow = new Window
-			{
-				Content = new TagTreePanel(this)
-			};
-			tagWindow.Show();
+			TagPanel.Visibility = TagPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+			var parentVis = (TagPanel.Parent as DockPanel).Visibility;
+			System.Diagnostics.Debug.WriteLine($"TagPanel.Visibility={TagPanel.Visibility}, Parent.Visibility={parentVis}");
 		}
 	}
 }
