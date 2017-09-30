@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -12,6 +11,7 @@ using SevenZip;
 using WpfAnimatedGif;
 using static GamanReader.StaticHelpers;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 
 namespace GamanReader
 {
@@ -47,6 +47,7 @@ namespace GamanReader
 			}
 			//TODO try default 7zip install folder 
 			SevenZipBase.SetLibraryPath(path);
+			RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.Fant);
 			var args = Environment.GetCommandLineArgs();
 			if (args.Length > 1) _mainModel.LoadFolder(args[1]);
 		}
@@ -165,7 +166,7 @@ namespace GamanReader
 
 		private void AddTag(object sender, RoutedEventArgs e)
 		{
-			_mainModel.AddTag((sender as TextBox).Text);
+			_mainModel.AddTag();
 		}
 
 		private void SeeTagged_Click(object sender, RoutedEventArgs e)

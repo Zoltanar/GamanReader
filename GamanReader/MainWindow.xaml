@@ -44,7 +44,7 @@
         <Label Content="{Binding IndexLabelText}" Margin="0,0,9,24" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" Grid.Column="1" HorizontalAlignment="Right" Width="47" Grid.Row="2" Foreground="White"/>
         <ComboBox ItemsSource="{Binding RecentItems}" Margin="278,0,276,24" Grid.ColumnSpan="2" SelectionChanged="RecentCb_SelectionChanged" Height="32" VerticalAlignment="Bottom" Grid.Row="2"/>
         <TextBox Text="{Binding GoToIndexText}" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,61,26" TextWrapping="Wrap" Width="40" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="30" VerticalAlignment="Bottom" KeyUp="GoToTextBox_KeyUp" Grid.Row="2"/>
-        <TextBox Text="{Binding TagText}" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,172,35" TextWrapping="Wrap" Width="99" Height="21" VerticalAlignment="Bottom" Grid.Row="2"/>
+        <TextBox Text="{Binding TagText, Mode=TwoWay}" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,172,35" TextWrapping="Wrap" Width="99" Height="21" VerticalAlignment="Bottom" Grid.Row="2"/>
         <Button Content="Add Tag" Grid.Column="1" Margin="0,0,172,8" Click="AddTag" HorizontalAlignment="Right" Width="99" Height="22" VerticalAlignment="Bottom" Grid.Row="2"/>
     </Grid>
 </Window>

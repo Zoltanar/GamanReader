@@ -237,10 +237,10 @@ namespace GamanReader
 			Settings.Save(_recentFiles.Items);
 		}
 
-		internal void AddTag(string text)
+		internal void AddTag()
 		{
 			if (_containerModel == null) return;
-			StaticHelpers.AddTag(_containerModel.ContainerPath, _containerModel.IsFolder, text);
+			StaticHelpers.AddTag(_containerModel.ContainerPath, _containerModel.IsFolder, TagText);
 			//todo write reply
 			TagText = "";
 		}
