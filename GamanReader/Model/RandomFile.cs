@@ -34,6 +34,7 @@ namespace GamanReader.Model
 		}
 		private static bool CompatibleOnly
 		{
+			// ReSharper disable once UnusedMember.Local
 			get => _compatibleOnly;
 			set
 			{

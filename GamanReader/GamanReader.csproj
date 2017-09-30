@@ -108,6 +108,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModel\ArchiveViewModel.cs" />
+    <Compile Include="ViewModel\FolderViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="Model\Settings.cs" />
     <Compile Include="Model\RandomFile.cs" />

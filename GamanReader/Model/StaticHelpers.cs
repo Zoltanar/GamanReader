@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -10,23 +12,23 @@ using Newtonsoft.Json;
 
 namespace GamanReader.Model
 {
-	static class StaticHelpers
+	internal static class StaticHelpers
 	{
 #if DEBUG
-		public const string TempFolder = "..\\Release\\Stored Data\\Temp";
-		public const string SettingsJson = "..\\Release\\Stored Data\\settings.json";
 		public const string StoredDataFolder = "..\\Release\\Stored Data";
 #else
-        public const string TempFolder = "Stored Data\\Temp";
-        public const string SettingsJson = "Stored Data\\settings.json";
         public const string StoredDataFolder = "Stored Data";
 #endif
+		public const string TempFolder = StoredDataFolder + "\\Temp";
+		public const string SettingsJson = StoredDataFolder + "\\settings.json";
+		public const string LogFile = StoredDataFolder + "message.log";
+
 		public const string ProgramName = "GamanReader";
 		private const string AllowedFormatsJson = "allowedformats.json";
 
-		public static TagDatabase TagDatabase { get; private set; }
+		public static TagDatabase TagDatabase { get; }
 
-		public static string[] AllowedFormats { get; private set; }
+		public static string[] AllowedFormats { get; }
 
 		static StaticHelpers()
 		{
@@ -35,23 +37,14 @@ namespace GamanReader.Model
 				AllowedFormats = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(AllowedFormatsJson));
 				TagDatabase = new TagDatabase();
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				//TODO log error
+				LogToFile($"Failed to load {AllowedFormatsJson} or TagDatabase.", ex);
 			}
 		}
 
 		public static ImageSource GetFavoritesIcon()
 		{
-			/*Image finalImage = new Image();
-BitmapImage logo = new BitmapImage();
-			logo.BeginInit();
-			logo.UriSource = new Uri("pack://application:,,,/AssemblyName;component/Resources/goldstar");
-			logo.EndInit();
-finalImage.Source = logo;*/
-			/*var assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
-			string packUri = $"pack://application:,,,/{assemblyName};component/Resources/goldstar.jpg";
-			var source = new ImageSourceConverter().ConvertFromString(packUri) as ImageSource;*/
 			var uriSource = new Uri(@"/GamanReader;component/Resources/favorites.ico", UriKind.Relative);
 			var source = new BitmapImage(uriSource);
 			return source;
@@ -91,6 +84,73 @@ finalImage.Source = logo;*/
 		{
 			return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
 		}
+		/// <summary>
+		/// Print message to Debug and write it to log file.
+		/// </summary>
+		/// <param name="message">Message to be written</param>
+		public static void LogToFile(string message)
+		{
+			Debug.Print(message);
+			int counter = 0;
+			while (IsFileLocked(new FileInfo(LogFile)))
+			{
+				counter++;
+				if (counter > 5) throw new IOException("Logfile is locked!");
+				Thread.Sleep(25);
+			}
+			using (var writer = new StreamWriter(LogFile, true))
+			{
+				writer.WriteLine(message);
+			}
+		}
 
+		/// <summary>
+		/// Print exception to Debug and write it to log file.
+		/// </summary>
+		/// <param name="header">Human-given location or reason for error</param>
+		/// <param name="exception">Exception to be written to file</param>
+		public static void LogToFile(string header, Exception exception)
+		{
+			Debug.Print(header);
+			Debug.Print(exception.Message);
+			Debug.Print(exception.StackTrace);
+			int counter = 0;
+			while (IsFileLocked(new FileInfo(LogFile)))
+			{
+				counter++;
+				if (counter > 5)throw new IOException("Logfile is locked!");
+				Thread.Sleep(25);
+			}
+			using (var writer = new StreamWriter(LogFile, true))
+			{
+				writer.WriteLine(header);
+				writer.WriteLine(exception.Message);
+				writer.WriteLine(exception.StackTrace);
+			}
+		}
+
+		/// <summary>
+		/// Check if file is locked,
+		/// </summary>
+		/// <param name="file">File to be checked</param>
+		/// <returns>Whether file is locked</returns>
+		public static bool IsFileLocked(FileInfo file)
+		{
+			FileStream stream = null;
+
+			try
+			{
+				stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			}
+			catch (IOException)
+			{
+				return true;
+			}
+			finally
+			{
+				stream?.Close();
+			}
+			return false;
+		}
 	}
 }

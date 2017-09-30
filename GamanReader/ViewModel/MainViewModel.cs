@@ -14,7 +14,6 @@ namespace GamanReader.ViewModel
 {
 	public class MainViewModel : INotifyPropertyChanged
 	{
-
 		public MainViewModel()
 		{
 			_mainWindow = Application.Current.MainWindow as View.MainWindow;
@@ -24,14 +23,10 @@ namespace GamanReader.ViewModel
 
 		internal void GoBack(bool moveOne)
 		{
-			if (_containerModel == null) return;
-			if (!_containerModel.HasPrevious) return;
 			_containerModel.GoBack(moveOne ? 1 : PageSize);
 		}
 		public void GoForward(bool moveOne)
 		{
-			if (_containerModel == null) return;
-			if (_containerModel.FilesAhead < PageSize) return;
 			_containerModel.GoForward(moveOne ? 1 : PageSize);
 		}
 
@@ -48,7 +43,7 @@ namespace GamanReader.ViewModel
 		private string _goToIndexText;
 		private bool _rtlIsChecked;
 		private bool _dualPageIsChecked;
-		private RecentItemList<string> _recentFiles = new RecentItemList<string>(Settings.RecentListSize, Settings.RecentFolders);
+		private readonly RecentItemList<string> _recentFiles = new RecentItemList<string>(Settings.RecentListSize, Settings.RecentFolders);
 
 		public string ReplyText { get => _replyText; set { _replyText = value; OnPropertyChanged("ReplyText"); } }
 		public string TagText { get => _tagText; set { _tagText = value; OnPropertyChanged("TagText"); } }
@@ -89,7 +84,7 @@ namespace GamanReader.ViewModel
 				_containerModel.GoForward(0);
 			}
 		}
-		public ObservableCollection<string> RecentItems { get => _recentFiles.Items;  }
+		public ObservableCollection<string> RecentItems => _recentFiles.Items;
 
 		// Create the OnPropertyChanged method to raise the event
 		protected void OnPropertyChanged(string name)
@@ -103,7 +98,7 @@ namespace GamanReader.ViewModel
 
 		#endregion
 
-		internal void PopulateBox(ImageBox imagebox,int index)
+		internal void PopulateBox(ImageBox imagebox, int index)
 		{
 			var image = GetImage(imagebox);
 			var filename = _containerModel.GetFile(index);
@@ -113,7 +108,7 @@ namespace GamanReader.ViewModel
 				SetLabelText(imagebox, "");
 				return;
 			}
-			SetLabelText(imagebox, $"({index + 1}){Path.GetFileName(filename)}");
+			SetLabelText(imagebox, $"({index + 1}) {Path.GetFileName(filename)}");
 			if (Path.GetExtension(filename).Equals(".gif"))
 				ImageBehavior.SetAnimatedSource(image, new BitmapImage(new Uri(filename)));
 			else
@@ -121,32 +116,34 @@ namespace GamanReader.ViewModel
 				ImageBehavior.SetAnimatedSource(image, null);
 				image.Source = new BitmapImage(new Uri(filename));
 			}
-			Image GetImage(ImageBox boxForGetImage)
+		}
+
+		private Image GetImage(ImageBox boxForGetImage)
+		{
+			switch (boxForGetImage)
 			{
-				switch (boxForGetImage)
-				{
-					case ImageBox.Single: return _mainWindow.SingleImageBox;
-					case ImageBox.Left: return _mainWindow.LeftImageBox;
-					case ImageBox.Right: return _mainWindow.RightImageBox;
-					default: throw new Exception($"Unexpected ImageBox value! ({boxForGetImage})");
-				}
+				case ImageBox.Single: return _mainWindow.SingleImageBox;
+				case ImageBox.Left: return _mainWindow.LeftImageBox;
+				case ImageBox.Right: return _mainWindow.RightImageBox;
+				default: throw new Exception($"Unexpected ImageBox value! ({boxForGetImage})");
 			}
-			void SetLabelText(ImageBox boxForLabelText, string text)
+		}
+
+		private void SetLabelText(ImageBox boxForLabelText, string text)
+		{
+			switch (boxForLabelText)
 			{
-				switch (boxForLabelText)
-				{
-					case ImageBox.Single:
-						if (RtlIsChecked) RightLabelText = text;
-						else LeftLabelText = text;
-						return;
-					case ImageBox.Left:
-						LeftLabelText = text;
-						return;
-					case ImageBox.Right:
-						RightLabelText = text;
-						return;
-					default: throw new Exception($"Unexpected ImageBox value! ({boxForLabelText})");
-				}
+				case ImageBox.Single:
+					if (RtlIsChecked) RightLabelText = text;
+					else LeftLabelText = text;
+					return;
+				case ImageBox.Left:
+					LeftLabelText = text;
+					return;
+				case ImageBox.Right:
+					RightLabelText = text;
+					return;
+				default: throw new Exception($"Unexpected ImageBox value! ({boxForLabelText})");
 			}
 		}
 
@@ -159,23 +156,11 @@ namespace GamanReader.ViewModel
 		private void GoToPage(int pageNumber)
 		{
 			_containerModel.CurrentIndex = pageNumber - 1;
-			_containerModel.PopulatePreviousBox(_containerModel.CurrentIndex);
-			if (PageSize == 2) _containerModel.PopulateNextBox(_containerModel.HasNext ? _containerModel.CurrentIndex+1 : -1);
-			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
-			IndexLabelText = $"/{_containerModel.TotalFiles}";
+			_containerModel.PopulateBoxes();
 		}
 
-		internal void ChangePageSize(int newPageSize)
-		{
-			PageSize = newPageSize;
-			if (newPageSize == 1)
-			{
-				if (RtlIsChecked) LeftLabelText = null;
-				else RightLabelText = null;
-			}
-			if (_containerModel != null) _containerModel.GoForward(0);
-		}
 		#region Load Container
+
 		internal void LoadArchive(string archivePath)
 		{
 			if (!File.Exists(archivePath))
@@ -194,7 +179,6 @@ namespace GamanReader.ViewModel
 			Settings.Save(_recentFiles.Items);
 		}
 
-
 		internal void LoadFolder(string folderName)
 		{
 			if (!Directory.Exists(folderName))
@@ -205,24 +189,17 @@ namespace GamanReader.ViewModel
 			var files = Directory.GetFiles(folderName).ToList();
 			files.RemoveAll(i => Path.GetFileName(i) == "desktop.ini");
 			var folders = Directory.GetDirectories(folderName);
-			if (!files.Any())
+			if (files.Count + folders.Length == 0)
 			{
-				if (!folders.Any())
-				{
-					ReplyText = "No files in folder.";
-					return;
-				}
-				files = folders.SelectMany(f => Directory.GetFiles(f, "*", SearchOption.AllDirectories)).ToList();
+				ReplyText = "Folder is empty.";
+				return;
 			}
-			else
+			if (folders.Any())
 			{
-				if (folders.Any())
+				var result = MessageBox.Show("Include sub-folders?", "Include Folders", MessageBoxButton.YesNo);
+				if (result == MessageBoxResult.Yes)
 				{
-					var result = MessageBox.Show("Include sub-folders?", "Include Folders", MessageBoxButton.YesNo);
-					if (result == MessageBoxResult.Yes)
-					{
-						files.AddRange(Directory.GetFiles(folderName, "*", SearchOption.AllDirectories));
-					}
+					files.AddRange(Directory.GetFiles(folderName, "*", SearchOption.AllDirectories));
 				}
 			}
 			_containerModel = new FolderViewModel(folderName, files, this);

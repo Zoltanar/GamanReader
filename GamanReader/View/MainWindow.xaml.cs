@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -11,6 +12,7 @@ using GamanReader.ViewModel;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SevenZip;
+using static GamanReader.Model.StaticHelpers;
 
 namespace GamanReader.View
 {
@@ -26,24 +28,20 @@ namespace GamanReader.View
 		{
 			InitializeComponent();
 			_mainModel = (MainViewModel)DataContext;
-			Directory.CreateDirectory(StaticHelpers.StoredDataFolder);
-			Directory.CreateDirectory(StaticHelpers.TempFolder);
-			foreach (var file in Directory.GetFiles(StaticHelpers.TempFolder))
+			Directory.CreateDirectory(StoredDataFolder);
+			Directory.CreateDirectory(TempFolder);
+			foreach (var file in Directory.GetFiles(TempFolder))
 			{
 				File.Delete(file);
 			}
 			//
 			var firstPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-			if (firstPath == null)
-			{
-				//TODO return library not found error
-				return;
-			}
+			Debug.Assert(firstPath != null, nameof(firstPath) + " != null");
 			string path = Path.Combine(firstPath, "7z.dll");
 			if (!File.Exists(path))
 			{
-				//TODO return library not found error
-				return;
+				LogToFile("Failed to find 7z.dll in same folder as executable.");
+				throw new FileNotFoundException("Failed to find 7z.dll in same folder as executable.", path);
 			}
 			//TODO try default 7zip install folder 
 			SevenZipBase.SetLibraryPath(path);
@@ -103,7 +101,7 @@ namespace GamanReader.View
 
 		internal void ChangeTitle(string text)
 		{
-			Title = $"{text} - {StaticHelpers.ProgramName}";
+			Title = $"{text} - {ProgramName}";
 		}
 
 		private void DropFile(object sender, DragEventArgs e)
@@ -154,7 +152,7 @@ namespace GamanReader.View
 		{
 			TagPanel.Visibility = TagPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
 			var parentVis = ((DockPanel) TagPanel.Parent).Visibility;
-			System.Diagnostics.Debug.WriteLine($"TagPanel.Visibility={TagPanel.Visibility}, Parent.Visibility={parentVis}");
+			Debug.WriteLine($"TagPanel.Visibility={TagPanel.Visibility}, Parent.Visibility={parentVis}");
 		}
 	}
 }

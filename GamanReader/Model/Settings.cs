@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using static GamanReader.Model.StaticHelpers;
 
 namespace GamanReader.Model
 {
@@ -43,22 +45,22 @@ namespace GamanReader.Model
 			_instance.RecentFolders = items.ToList();
 			try
 			{
-				File.WriteAllText(StaticHelpers.SettingsJson, JsonConvert.SerializeObject(_instance,Formatting.Indented));
+				File.WriteAllText(SettingsJson, JsonConvert.SerializeObject(_instance,Formatting.Indented));
 			}
-			catch
+			catch(Exception ex)
 			{
-				//TODO log error
+				LogToFile("Failed to save settings.", ex);
 			}
 		}
 		private static void Save()
 		{
 			try
 			{
-				File.WriteAllText(StaticHelpers.SettingsJson, JsonConvert.SerializeObject(_instance, Formatting.Indented));
+				File.WriteAllText(SettingsJson, JsonConvert.SerializeObject(_instance, Formatting.Indented));
 			}
-			catch
+			catch (Exception ex)
 			{
-				//TODO log error
+				LogToFile("Failed to save settings.", ex);
 			}
 		}
 
@@ -66,12 +68,12 @@ namespace GamanReader.Model
 		{
 			try
 			{
-				var settings = JsonConvert.DeserializeObject<SettingsItem>(File.ReadAllText(StaticHelpers.SettingsJson));
+				var settings = JsonConvert.DeserializeObject<SettingsItem>(File.ReadAllText(SettingsJson));
 				if (settings != null) _instance = settings;
 			}
-			catch
+			catch(Exception ex)
 			{
-				//TODO log error
+				LogToFile("Failed to save settings.", ex);
 			}
 		}
 
