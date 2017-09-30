@@ -1,15 +1,11 @@
-﻿using SQLite.CodeFirst;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
+using SQLite.CodeFirst;
 
-namespace GamanReader
+namespace GamanReader.Model
 {
 	class TagDatabase : DbContext
 	{
@@ -26,6 +22,7 @@ namespace GamanReader
 	{
 		public int Id { get; set; }
 		public string Path { get; set; }
+		// ReSharper disable once InconsistentNaming
 		public byte[] MD5Hash { get; set; }
 		public bool IsFolder { get; set; }
 		public virtual ICollection<IndividualTag> Tags { get; set; }

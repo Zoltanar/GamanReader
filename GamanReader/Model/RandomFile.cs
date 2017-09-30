@@ -2,14 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace GamanReader
+namespace GamanReader.Model
 {
 	public static class RandomFile
 	{
-		private static Random _rand = new Random();
+		private static readonly Random Rand = new Random();
 
 		#region GetRandomFile
 		private static string _folder;
@@ -74,7 +72,7 @@ namespace GamanReader
 					return null;
 				}
 			}
-			var randomFile = _files[_rand.Next(_files.Length)];
+			var randomFile = _files[Rand.Next(_files.Length)];
 			return randomFile;
 		}
 		#endregion
@@ -94,7 +92,7 @@ namespace GamanReader
 				_fileOrFolderPathChanged = true;
 			}
 		}
-		private static (string Path, bool IsFolder)[] FilesOrFolders;
+		private static (string Path, bool IsFolder)[] _filesOrFolders;
 
 		public static string GetRandomFileOrFolder(string folder, out bool isFolder, out string error)
 		{
@@ -111,14 +109,14 @@ namespace GamanReader
 					var list = new List<(string Path, bool IsFolder)>();
 					foreach (var item in files) list.Add((item, false));
 					foreach (var item in folders) list.Add((item, true));
-					FilesOrFolders = list.ToArray();
+					_filesOrFolders = list.ToArray();
 				}
-				if(FilesOrFolders.Length == 0)
+				if(_filesOrFolders.Length == 0)
 				{
 					error = "No files or folders found.";
 					return null;
 				}
-				var randomFileOrFolder = FilesOrFolders[_rand.Next(FilesOrFolders.Length)];
+				var randomFileOrFolder = _filesOrFolders[Rand.Next(_filesOrFolders.Length)];
 				isFolder = randomFileOrFolder.IsFolder;
 				return randomFileOrFolder.Path;
 			}

@@ -1,23 +1,23 @@
 ﻿using System;
-using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using Image = System.Windows.Controls.Image;
-using WpfAnimatedGif;
-using System.Windows;
-using SevenZip;
-using System.Linq;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Windows;
+using System.Windows.Media.Imaging;
+using GamanReader.Model;
+using SevenZip;
+using WpfAnimatedGif;
+using Image = System.Windows.Controls.Image;
 
-namespace GamanReader
+namespace GamanReader.ViewModel
 {
 	public class MainViewModel : INotifyPropertyChanged
 	{
 
 		public MainViewModel()
 		{
-			_mainWindow = Application.Current.MainWindow as MainWindow;
+			_mainWindow = Application.Current.MainWindow as View.MainWindow;
 			RtlIsChecked = false;
 			DualPageIsChecked = false;
 		}
@@ -36,7 +36,7 @@ namespace GamanReader
 		}
 
 		#region Properties
-		private readonly MainWindow _mainWindow;
+		private readonly View.MainWindow _mainWindow;
 		private ContainerViewModel _containerModel;
 		private string _rtlToggleText;
 		private string _pageSizeToggleText;

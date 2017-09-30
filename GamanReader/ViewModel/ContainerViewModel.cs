@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using SevenZip;
-using static GamanReader.StaticHelpers;
-using Newtonsoft.Json;
 using System.Windows.Controls;
-using WpfAnimatedGif;
 using System.Windows.Media.Imaging;
+using GamanReader.Model;
+using SevenZip;
+using WpfAnimatedGif;
 
-namespace GamanReader
+namespace GamanReader.ViewModel
 {
 	internal abstract class ContainerViewModel
 	{
@@ -186,7 +185,7 @@ namespace GamanReader
 		{
 			if (index == -1) return null;
 			var filename = FileNames[index];
-			var tempFile = Path.Combine(TempFolder, filename);
+			var tempFile = Path.Combine(StaticHelpers.TempFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
 			if (File.Exists(tempFile)) return fullPath;
 			Directory.CreateDirectory(Path.GetDirectoryName(fullPath));

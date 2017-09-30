@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace GamanReader
+namespace GamanReader.Model
 {
     public class RecentItemList<T>
     {

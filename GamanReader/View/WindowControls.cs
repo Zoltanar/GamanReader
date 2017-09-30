@@ -1,8 +1,7 @@
-﻿using System;
-using System.Windows.Input;
-using static GamanReader.StaticHelpers;
+﻿using System.Windows.Input;
+using GamanReader.Model;
 
-namespace GamanReader
+namespace GamanReader.View
 {
 	partial class MainWindow
 	{
@@ -11,7 +10,7 @@ namespace GamanReader
 		/// </summary>
 		private void Grid_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			_mainModel.GoForward(CtrlIsDown());
+			_mainModel.GoForward(StaticHelpers.CtrlIsDown());
 		}
 
 		/// <summary>
@@ -19,7 +18,7 @@ namespace GamanReader
 		/// </summary>
 		private void Grid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			_mainModel.GoBack(CtrlIsDown());
+			_mainModel.GoBack(StaticHelpers.CtrlIsDown());
 		}
 
 		/// <summary>
@@ -29,11 +28,11 @@ namespace GamanReader
 		{
 			if (e.Delta < 0)
 			{
-					_mainModel.GoForward(CtrlIsDown());
+					_mainModel.GoForward(StaticHelpers.CtrlIsDown());
 			}
 			else if (e.Delta > 0)
 			{
-					_mainModel.GoBack(CtrlIsDown());
+					_mainModel.GoBack(StaticHelpers.CtrlIsDown());
 			}
 		}
 
@@ -47,21 +46,21 @@ namespace GamanReader
 				case Key.Left:
 					if (_mainModel.RtlIsChecked.Value)
 					{
-							_mainModel.GoForward(CtrlIsDown());
+							_mainModel.GoForward(StaticHelpers.CtrlIsDown());
 					}
 					else
 					{
-							_mainModel.GoBack(CtrlIsDown());
+							_mainModel.GoBack(StaticHelpers.CtrlIsDown());
 					}
 					return;
 				case Key.Right:
 					if (_mainModel.RtlIsChecked.Value)
 					{
-							_mainModel.GoBack(CtrlIsDown());
+							_mainModel.GoBack(StaticHelpers.CtrlIsDown());
 					}
 					else
 					{
-							_mainModel.GoForward(CtrlIsDown());
+							_mainModel.GoForward(StaticHelpers.CtrlIsDown());
 					}
 					return;
 			}

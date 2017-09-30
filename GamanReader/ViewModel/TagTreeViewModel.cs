@@ -4,8 +4,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
+using GamanReader.Model;
 
-namespace GamanReader
+namespace GamanReader.ViewModel
 {
 	public class TagTreeViewModel
 	{

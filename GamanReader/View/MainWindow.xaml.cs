@@ -4,16 +4,17 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using GamanReader.Model;
+using GamanReader.ViewModel;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SevenZip;
 using WpfAnimatedGif;
-using static GamanReader.StaticHelpers;
-using System.Windows.Controls.Primitives;
-using System.Windows.Media;
 
-namespace GamanReader
+namespace GamanReader.View
 {
 	/// <summary>
 	/// WPF application for reading manga with a dual-page view.
@@ -26,9 +27,9 @@ namespace GamanReader
 		{
 			InitializeComponent();
 			_mainModel = DataContext as MainViewModel;
-			Directory.CreateDirectory(StoredDataFolder);
-			Directory.CreateDirectory(TempFolder);
-			foreach (var file in Directory.GetFiles(TempFolder))
+			Directory.CreateDirectory(StaticHelpers.StoredDataFolder);
+			Directory.CreateDirectory(StaticHelpers.TempFolder);
+			foreach (var file in Directory.GetFiles(StaticHelpers.TempFolder))
 			{
 				File.Delete(file);
 			}
@@ -104,7 +105,7 @@ namespace GamanReader
 
 		internal void ChangeTitle(string text)
 		{
-			Title = $"{text} - {ProgramName}";
+			Title = $"{text} - {StaticHelpers.ProgramName}";
 		}
 
 		private void DropFile(object sender, DragEventArgs e)
