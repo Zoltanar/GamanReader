@@ -96,7 +96,7 @@ namespace GamanReader.View
 				return;
 			}
 			e.Handled = true;
-			_mainModel.GoToIndex(pageNumber);
+			_mainModel.GoToPage(pageNumber);
 		}
 
 		internal void ChangeTitle(string text)

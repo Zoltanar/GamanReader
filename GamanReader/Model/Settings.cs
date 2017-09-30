@@ -17,7 +17,8 @@ namespace GamanReader.Model
 			Load();
 		}
 
-		public static List<string> RecentFolders { get => _instance.RecentFolders; }
+		public static List<string> RecentFolders => _instance.RecentFolders;
+
 		public static int RecentListSize
 		{
 			get => _instance.RecentListSize;

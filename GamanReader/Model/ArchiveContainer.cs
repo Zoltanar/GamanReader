@@ -1,23 +1,19 @@
 ﻿using System.Collections.Generic;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using GamanReader.Model;
 using SevenZip;
 
-namespace GamanReader.ViewModel
+namespace GamanReader.Model
 {
 	/// <summary>
 	/// Model that contains details about currently opened archive (supports zip and rar).
 	/// </summary>
-	internal class ArchiveViewModel : ContainerViewModel
+	internal class ArchiveContainer : Container
 	{
-		public ArchiveViewModel(string containerPath, IEnumerable<string> fileNames, MainViewModel mainModel) : base(mainModel)
+		public ArchiveContainer(string containerPath, IEnumerable<string> fileNames)
 		{
 			ContainerPath = containerPath;
 			CurrentIndex = 0;
-			foreach (var imageCodec in ImageCodecInfo.GetImageEncoders())
-				RecognizedExtensions.AddRange(imageCodec.FilenameExtension.ToLowerInvariant().Split(';'));
 			FileNames = fileNames.Where(FileIsImage).ToArray();
 			TotalFiles = FileNames.Length;
 			_zipExtractor = new SevenZipExtractor(containerPath);

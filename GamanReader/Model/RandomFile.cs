@@ -46,6 +46,7 @@ namespace GamanReader.Model
 		private static string[] _files;
 		private static bool _folderChanged;
 
+		// ReSharper disable once UnusedMember.Global
 		public static string GetRandomFile(string folder, bool includeSubdirectories, bool compatibleOnly, out string error)
 		{
 			error = "No Error.";
@@ -59,17 +60,12 @@ namespace GamanReader.Model
 			}
 			if (_folderChanged)
 			{
-				IEnumerable<string> exts;
-				if (compatibleOnly)
-				{
-					exts = StaticHelpers.AllowedFormats.Select(i => $"*.{i}");
-				}
-				else exts = new[] { "*.*" };
+				IEnumerable<string> exts = compatibleOnly ? StaticHelpers.AllowedFormats.Select(i => $"*.{i}") : new[] { "*.*" };
 				var option = (SearchOption)(IncludeSubdirectories ? 1 : 0);
 				_files = exts.SelectMany(x => Directory.EnumerateFiles(Folder, x, option)).ToArray();
 				if (_files.Length == 0)
 				{
-					error = $"No files found.";
+					error = "No files found.";
 					return null;
 				}
 			}

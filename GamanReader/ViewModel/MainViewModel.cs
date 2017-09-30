@@ -8,12 +8,21 @@ using System.Windows.Media.Imaging;
 using GamanReader.Model;
 using SevenZip;
 using WpfAnimatedGif;
+using Container = GamanReader.Model.Container;
 using Image = System.Windows.Controls.Image;
 
 namespace GamanReader.ViewModel
 {
 	public class MainViewModel : INotifyPropertyChanged
 	{
+		public int CurrentIndex
+		{
+			get => _containerModel.CurrentIndex;
+			set => _containerModel.CurrentIndex = value;
+		}
+
+		public int TotalFiles => _containerModel.TotalFiles;
+
 		public MainViewModel()
 		{
 			_mainWindow = Application.Current.MainWindow as View.MainWindow;
@@ -23,16 +32,34 @@ namespace GamanReader.ViewModel
 
 		internal void GoBack(bool moveOne)
 		{
-			_containerModel.GoBack(moveOne ? 1 : PageSize);
+			var moveNumber = moveOne ? 1 : PageSize;
+			CurrentIndex = Math.Max(-1, CurrentIndex - moveNumber);
+			PopulateBoxes();
 		}
+
+		public void PopulateBoxes()
+		{
+			ImageBox imagebox1;
+			if (PageSize == 1) imagebox1 = ImageBox.Single;
+			else imagebox1 = RtlIsChecked ? ImageBox.Right : ImageBox.Left;
+			PopulateBox(imagebox1, CurrentIndex);
+			if (PageSize == 1) return;
+			var imagebox2 = RtlIsChecked ? ImageBox.Left : ImageBox.Right;
+			PopulateBox(imagebox2, CurrentIndex + 1 > TotalFiles - 1 ? -1 : CurrentIndex + 1);
+			GoToIndexText = (CurrentIndex+1).ToString();
+			IndexLabelText = $"/{TotalFiles}";
+		}
+
 		public void GoForward(bool moveOne)
 		{
-			_containerModel.GoForward(moveOne ? 1 : PageSize);
+			var moveNumber = moveOne ? 1 : PageSize;
+			CurrentIndex = Math.Min(TotalFiles - 1, CurrentIndex + moveNumber);
+			PopulateBoxes();
 		}
 
 		#region Properties
 		private readonly View.MainWindow _mainWindow;
-		private ContainerViewModel _containerModel;
+		private Container _containerModel;
 		private string _rtlToggleText;
 		private string _pageSizeToggleText;
 		private string _rightLabelText;
@@ -65,7 +92,7 @@ namespace GamanReader.ViewModel
 				PopulateBox(ImageBox.Single, -1);
 				PopulateBox(ImageBox.Left, -1);
 				PopulateBox(ImageBox.Right, -1);
-				_containerModel.GoForward(0);
+				GoToIndex(CurrentIndex);
 			}
 		}
 		public bool DualPageIsChecked
@@ -81,7 +108,7 @@ namespace GamanReader.ViewModel
 				PopulateBox(ImageBox.Single, -1);
 				PopulateBox(ImageBox.Left, -1);
 				PopulateBox(ImageBox.Right, -1);
-				_containerModel.GoForward(0);
+				GoToIndex(CurrentIndex);
 			}
 		}
 		public ObservableCollection<string> RecentItems => _recentFiles.Items;
@@ -147,16 +174,21 @@ namespace GamanReader.ViewModel
 			}
 		}
 
-		internal void GoToIndex(int pageNumber)
+		internal void GoToPage(int pageNumber)
 		{
 			if (_containerModel == null) return;
-			GoToPage(pageNumber);
+			if (pageNumber < 0 || pageNumber > TotalFiles)
+			{
+				IndexLabelText = "Page out of range.";
+				return;
+			}
+			GoToIndex(pageNumber - 1);
 		}
 
-		private void GoToPage(int pageNumber)
+		private void GoToIndex(int index)
 		{
-			_containerModel.CurrentIndex = pageNumber - 1;
-			_containerModel.PopulateBoxes();
+			CurrentIndex = index;
+			PopulateBoxes();
 		}
 
 		#region Load Container
@@ -169,14 +201,8 @@ namespace GamanReader.ViewModel
 				return;
 			}
 			SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
-			_containerModel = new ArchiveViewModel(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName), this);
-			_containerModel.Initialize();
-			ReplyText = _containerModel.TotalFiles + " files in folder.";
-			_mainWindow.ChangeTitle(Path.GetFileName(archivePath));
-			_recentFiles.Add(_containerModel.ContainerPath);
-			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
-			IndexLabelText = $"/{_containerModel.TotalFiles}";
-			Settings.Save(_recentFiles.Items);
+			_containerModel = new ArchiveContainer(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName));
+			LoadContainer(archivePath);
 		}
 
 		internal void LoadFolder(string folderName)
@@ -202,10 +228,15 @@ namespace GamanReader.ViewModel
 					files.AddRange(Directory.GetFiles(folderName, "*", SearchOption.AllDirectories));
 				}
 			}
-			_containerModel = new FolderViewModel(folderName, files, this);
-			_containerModel.Initialize();
+			_containerModel = new FolderContainer(folderName, files);
+			LoadContainer(folderName);
+		}
+
+		private void LoadContainer(string containerName)
+		{
+			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
-			_mainWindow.ChangeTitle(Path.GetFileName(folderName));
+			_mainWindow.ChangeTitle(Path.GetFileName(containerName));
 			_recentFiles.Add(_containerModel.ContainerPath);
 			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
 			IndexLabelText = $"/{_containerModel.TotalFiles}";
@@ -221,5 +252,12 @@ namespace GamanReader.ViewModel
 		}
 
 		#endregion
+
+		public enum ImageBox
+		{
+			Single = 0,
+			Left = 1,
+			Right = 2
+		}
 	}
 }
