@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using GamanReader.Model;
@@ -12,7 +11,6 @@ using GamanReader.ViewModel;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SevenZip;
-using WpfAnimatedGif;
 
 namespace GamanReader.View
 {
@@ -21,12 +19,13 @@ namespace GamanReader.View
 	/// </summary>
 	public partial class MainWindow
 	{
+		[JetBrains.Annotations.NotNull]
 		private readonly MainViewModel _mainModel;	
 
 		public MainWindow()
 		{
 			InitializeComponent();
-			_mainModel = DataContext as MainViewModel;
+			_mainModel = (MainViewModel)DataContext;
 			Directory.CreateDirectory(StaticHelpers.StoredDataFolder);
 			Directory.CreateDirectory(StaticHelpers.TempFolder);
 			foreach (var file in Directory.GetFiles(StaticHelpers.TempFolder))
@@ -92,9 +91,8 @@ namespace GamanReader.View
 		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
 		{
 			if (e.Key != Key.Enter) return;
-			var text = (sender as TextBox).Text;
-			int pageNumber;
-			if (!int.TryParse(text, out pageNumber))
+			var text = ((TextBox) sender).Text;
+			if (!int.TryParse(text, out var pageNumber))
 			{
 				//TODO ERROR
 				return;
@@ -121,24 +119,6 @@ namespace GamanReader.View
 			Regex regex = new Regex("[^0-9]+");
 			e.Handled = regex.IsMatch(e.Text);
 		}
-		
-		private void MakeDualPage(object sender, RoutedEventArgs e)
-		{
-			(sender as ToggleButton).Content = "Dual Page View";
-			_mainModel.ChangePageSize(2);
-			SingleImageBox.Source = null;
-		}
-
-		private void MakeSinglePage(object sender, RoutedEventArgs e)
-		{
-			(sender as ToggleButton).Content = "Single Page View";
-			ImageBehavior.SetAnimatedSource(LeftImageBox, null);
-			ImageBehavior.SetAnimatedSource(RightImageBox, null);
-			LeftImageBox.Source = null;
-			RightImageBox.Source = null;
-			_mainModel.ChangePageSize(1);
-		}
-
 
 		private void OpenRandom_Click(object sender, RoutedEventArgs e)
 		{
@@ -173,7 +153,7 @@ namespace GamanReader.View
 		private void SeeTagged_Click(object sender, RoutedEventArgs e)
 		{
 			TagPanel.Visibility = TagPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-			var parentVis = (TagPanel.Parent as DockPanel).Visibility;
+			var parentVis = ((DockPanel) TagPanel.Parent).Visibility;
 			System.Diagnostics.Debug.WriteLine($"TagPanel.Visibility={TagPanel.Visibility}, Parent.Visibility={parentVis}");
 		}
 	}

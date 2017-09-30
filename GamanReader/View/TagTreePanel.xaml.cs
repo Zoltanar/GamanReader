@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using GamanReader.Model;
@@ -18,7 +19,9 @@ namespace GamanReader.View
 		private void ItemDoubleClicked(object sender, MouseButtonEventArgs e)
 		{
 			if (!((sender as TreeViewItem)?.DataContext is TaggedItem item)) return;
-			((MainWindow)Window.GetWindow(this)).LoadContainer(item.Path);
+			var window = (MainWindow) Window.GetWindow(this);
+			if(window == null) throw new Exception("MainWindow not found.");
+			window.LoadContainer(item.Path);
 			Visibility = Visibility.Collapsed;
 		}
 	}

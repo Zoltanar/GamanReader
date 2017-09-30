@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 using GamanReader.Model;
 using SevenZip;
-using WpfAnimatedGif;
 
 namespace GamanReader.ViewModel
 {
 	internal abstract class ContainerViewModel
 	{
-		private MainViewModel _mainModel;
-		public ContainerViewModel(MainViewModel mainModel)
+		private readonly MainViewModel _mainModel;
+
+		protected ContainerViewModel(MainViewModel mainModel)
 		{
 			_mainModel = mainModel;
 		}
@@ -95,7 +92,7 @@ namespace GamanReader.ViewModel
 		{
 			ImageBox imagebox;
 			if (_mainModel.PageSize == 1) imagebox = ImageBox.Single;
-			else imagebox = _mainModel.RtlIsChecked.Value ? ImageBox.Right : ImageBox.Left;
+			else imagebox = _mainModel.RtlIsChecked ? ImageBox.Right : ImageBox.Left;
 			_mainModel.PopulateBox(imagebox, index);
 		}
 
@@ -104,21 +101,8 @@ namespace GamanReader.ViewModel
 			if (_mainModel.PageSize == 1) return;
 			ImageBox imagebox;
 			if (_mainModel.PageSize == 1) imagebox = ImageBox.Single;
-			else imagebox = _mainModel.RtlIsChecked.Value ? ImageBox.Left : ImageBox.Right;
+			else imagebox = _mainModel.RtlIsChecked ? ImageBox.Left : ImageBox.Right;
 			_mainModel.PopulateBox(imagebox, index);
-		}
-
-
-		private static void PopulateBox(Image imagebox, string filename)
-		{
-			if (filename == null) return;
-			if (Path.GetExtension(filename).Equals(".gif"))
-				ImageBehavior.SetAnimatedSource(imagebox, new BitmapImage(new Uri(filename)));
-			else
-			{
-				ImageBehavior.SetAnimatedSource(imagebox, null);
-				imagebox.Source = new BitmapImage(new Uri(filename));
-			}
 		}
 
 		/// <summary>
@@ -188,7 +172,7 @@ namespace GamanReader.ViewModel
 			var tempFile = Path.Combine(StaticHelpers.TempFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
 			if (File.Exists(tempFile)) return fullPath;
-			Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+			Directory.CreateDirectory(Path.GetDirectoryName(fullPath) ?? throw new DirectoryNotFoundException($"Directory not found for path {fullPath}"));
 			using (var stream = File.OpenWrite(tempFile))
 			{
 				_zipExtractor.ExtractFile(filename, stream);

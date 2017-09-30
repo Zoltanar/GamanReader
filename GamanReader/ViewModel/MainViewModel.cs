@@ -46,8 +46,8 @@ namespace GamanReader.ViewModel
 		private string _replyText;
 		private string _indexLabelText;
 		private string _goToIndexText;
-		private bool? _rtlIsChecked;
-		private bool? _dualPageIsChecked;
+		private bool _rtlIsChecked;
+		private bool _dualPageIsChecked;
 		private RecentItemList<string> _recentFiles = new RecentItemList<string>(Settings.RecentListSize, Settings.RecentFolders);
 
 		public string ReplyText { get => _replyText; set { _replyText = value; OnPropertyChanged("ReplyText"); } }
@@ -58,14 +58,13 @@ namespace GamanReader.ViewModel
 		public string PageSizeToggleText { get => _pageSizeToggleText; set { _pageSizeToggleText = value; OnPropertyChanged("PageSizeToggleText"); } }
 		public string IndexLabelText { get => _indexLabelText; set { _indexLabelText = value; OnPropertyChanged("IndexLabelText"); } }
 		public string GoToIndexText { get => _goToIndexText; set { _goToIndexText = value; OnPropertyChanged("GoToIndexText"); } }
-		public bool? RtlIsChecked
+		public bool RtlIsChecked
 		{
-			get => _rtlIsChecked ?? false;
+			get => _rtlIsChecked;
 			set
 			{
-				if (!value.HasValue) value = false;
 				_rtlIsChecked = value;
-				RtlToggleText = value.Value ? "◀ Right-to-Left ◀" : "▶ Left-to-Right ▶";
+				RtlToggleText = value ? "◀ Right-to-Left ◀" : "▶ Left-to-Right ▶";
 				OnPropertyChanged("RtlIsChecked");
 				if (_containerModel == null) return;
 				PopulateBox(ImageBox.Single, -1);
@@ -74,15 +73,14 @@ namespace GamanReader.ViewModel
 				_containerModel.GoForward(0);
 			}
 		}
-		public bool? DualPageIsChecked
+		public bool DualPageIsChecked
 		{
-			get => _dualPageIsChecked ?? false;
+			get => _dualPageIsChecked;
 			set
 			{
-				if (!value.HasValue) value = false;
 				_dualPageIsChecked = value;
-				PageSize = _dualPageIsChecked.Value ? 2 : 1;
-				PageSizeToggleText = value.Value ? "Dual Page View" : "Single Page View";
+				PageSize = _dualPageIsChecked ? 2 : 1;
+				PageSizeToggleText = value ? "Dual Page View" : "Single Page View";
 				OnPropertyChanged("DualPageIsChecked");
 				if (_containerModel == null) return;
 				PopulateBox(ImageBox.Single, -1);
@@ -138,7 +136,7 @@ namespace GamanReader.ViewModel
 				switch (boxForLabelText)
 				{
 					case ImageBox.Single:
-						if (RtlIsChecked.Value) RightLabelText = text;
+						if (RtlIsChecked) RightLabelText = text;
 						else LeftLabelText = text;
 						return;
 					case ImageBox.Left:
@@ -172,7 +170,7 @@ namespace GamanReader.ViewModel
 			PageSize = newPageSize;
 			if (newPageSize == 1)
 			{
-				if (RtlIsChecked.Value) LeftLabelText = null;
+				if (RtlIsChecked) LeftLabelText = null;
 				else RightLabelText = null;
 			}
 			if (_containerModel != null) _containerModel.GoForward(0);

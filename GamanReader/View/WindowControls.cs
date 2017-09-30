@@ -44,7 +44,7 @@ namespace GamanReader.View
 			switch (e.Key)
 			{
 				case Key.Left:
-					if (_mainModel.RtlIsChecked.Value)
+					if (_mainModel.RtlIsChecked)
 					{
 							_mainModel.GoForward(StaticHelpers.CtrlIsDown());
 					}
@@ -54,7 +54,7 @@ namespace GamanReader.View
 					}
 					return;
 				case Key.Right:
-					if (_mainModel.RtlIsChecked.Value)
+					if (_mainModel.RtlIsChecked)
 					{
 							_mainModel.GoBack(StaticHelpers.CtrlIsDown());
 					}

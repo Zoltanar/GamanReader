@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:GamanReader"
         xmlns:view="clr-namespace:GamanReader.View"
         xmlns:viewModel="clr-namespace:GamanReader.ViewModel"
         mc:Ignorable="d"
@@ -21,9 +20,45 @@
         <Button Content="Load Zip" Click="LoadArchiveByDialog" Margin="10,10,0,0" Grid.Row="0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left"/>
         <Button Content="Open Random" Click="OpenRandom_Click"  Height="20"  Margin="65,10,0,0" Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Left" />
         <Button Grid.Row="0" Content="See Tagged Items" Margin="154,10,0,0" Click="SeeTagged_Click" HorizontalAlignment="Left" Width="96" Height="20" VerticalAlignment="Top"/>
-        <ToggleButton Grid.Row="0" Content="{Binding RtlToggleText}" Margin="491,10,491,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked }" Height="20"/>
+        <ToggleButton Grid.Row="0" Content="{Binding RtlToggleText}" Margin="491,10,491,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked }" Height="20">
+            <ToggleButton.Style>
+                <Style TargetType="{x:Type ToggleButton}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border Background="{TemplateBinding Background}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ToggleButton.Style>
+        </ToggleButton>
         <Button Content="Set Library Folder" Margin="0,10,108,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" Grid.Row="0" HorizontalAlignment="Right"/>
-        <ToggleButton Content="{Binding PageSizeToggleText}" Margin="0,10,9,0" IsChecked="{Binding DualPageIsChecked }" Grid.Row="0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Right"/>
+        <ToggleButton Content="{Binding PageSizeToggleText}" Margin="0,10,9,0" IsChecked="{Binding DualPageIsChecked }" Grid.Row="0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <ToggleButton.Style>
+                <Style TargetType="{x:Type ToggleButton}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border Background="{TemplateBinding Background}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ToggleButton.Style>
+        </ToggleButton>
         <Label Grid.Row="0" Content="{Binding LeftLabelText}" Margin="10,35,631,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="30" VerticalAlignment="Top" Foreground="White"/>
         <Label Grid.Row="0" Content="{Binding RightLabelText}" Margin="631,35,10,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Height="30" VerticalAlignment="Top" Foreground="White"/>
         <!--Middle Row-->
@@ -36,12 +71,12 @@
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Image x:Name="SingleImageBox" Grid.ColumnSpan="2" />
-                <Image x:Name="LeftImageBox" Grid.Column="0" />
-                <Image x:Name="RightImageBox" Grid.Column="1" />
+                <Image x:Name="LeftImageBox" Grid.Column="0" HorizontalAlignment="Right" />
+                <Image x:Name="RightImageBox" Grid.Column="1" HorizontalAlignment="Left" />
             </Grid>
         </DockPanel>
         <!--Bottom Row-->
-        <Button x:Name="LoadFolderButton" Content="Load Folder" HorizontalAlignment="Left" Margin="10,0,0,24" Width="75" Click="LoadFolderByDialog" Height="32" VerticalAlignment="Bottom" Grid.Row="2"/>
+        <Button Content="Load Folder" HorizontalAlignment="Left" Margin="10,0,0,24" Width="75" Click="LoadFolderByDialog" Height="32" VerticalAlignment="Bottom" Grid.Row="2"/>
         <Label Content="{Binding ReplyText}" HorizontalAlignment="Left" Margin="90,0,0,24" Width="160" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" Background="#FFE66767" Grid.Row="2"/>
         <Label Content="{Binding IndexLabelText}" Margin="0,0,9,24" VerticalContentAlignment="Center" Height="32" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="47" Grid.Row="2" Foreground="White"/>
         <ComboBox ItemsSource="{Binding RecentItems}" Margin="278,0,276,24" Grid.ColumnSpan="2" SelectionChanged="RecentCb_SelectionChanged" Height="32" VerticalAlignment="Bottom" Grid.Row="2"/>
