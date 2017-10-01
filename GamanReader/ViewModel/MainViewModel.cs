@@ -31,6 +31,7 @@ namespace GamanReader.ViewModel
 
 		internal void GoBack(bool moveOne)
 		{
+			if (_containerModel == null) return;
 			var moveNumber = moveOne ? 1 : PageSize;
 			CurrentIndex = Math.Max(-1, CurrentIndex - moveNumber);
 			PopulateBoxes();
@@ -51,6 +52,7 @@ namespace GamanReader.ViewModel
 
 		public void GoForward(bool moveOne)
 		{
+			if (_containerModel == null) return;
 			var moveNumber = moveOne ? 1 : PageSize;
 			CurrentIndex = Math.Min(TotalFiles - 1, CurrentIndex + moveNumber);
 			PopulateBoxes();
