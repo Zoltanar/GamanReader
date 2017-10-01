@@ -21,7 +21,7 @@ namespace GamanReader.View
 			if (!((sender as TreeViewItem)?.DataContext is TaggedItem item)) return;
 			var window = (MainWindow) Window.GetWindow(this);
 			if(window == null) throw new Exception("MainWindow not found.");
-			window.LoadContainer(item.Path);
+			window.LoadContainer(item.Path, item.IsFolder);
 			Visibility = Visibility.Collapsed;
 		}
 	}

@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:view="clr-namespace:GamanReader.View"
         xmlns:viewModel="clr-namespace:GamanReader.ViewModel"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         mc:Ignorable="d"
-        Title="GamanReader" Height="740" Width="1260" Background="#FF4D1D1D" MouseWheel="Window_MouseWheel" AllowDrop="True" Drop="DropFile" MinWidth="711" MinHeight="630">
+        Title="{Binding TitleText}" Height="740" Width="1260" Background="#FF4D1D1D" MouseWheel="Window_MouseWheel" AllowDrop="True" Drop="DropFile" MinWidth="711" MinHeight="630">
     <Window.DataContext>
         <viewModel:MainViewModel/>
     </Window.DataContext>
@@ -70,9 +71,9 @@
                     <ColumnDefinition></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Image x:Name="SingleImageBox" Grid.ColumnSpan="2" />
-                <Image x:Name="LeftImageBox" Grid.Column="0" HorizontalAlignment="Right" />
-                <Image x:Name="RightImageBox" Grid.Column="1" HorizontalAlignment="Left" />
+                <Image gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Grid.ColumnSpan="2" />
+                <Image gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Grid.Column="0" HorizontalAlignment="Right" />
+                <Image  gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Grid.Column="1" HorizontalAlignment="Left" />
             </Grid>
         </DockPanel>
         <!--Bottom Row-->

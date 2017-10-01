@@ -10,16 +10,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Project.txt = Project.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GamanReaderTests", "GamanReaderTests\GamanReaderTests.csproj", "{B4F9FC6B-FD12-4AE7-A773-D6E79DE42A8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+		Unit Tests|x64 = Unit Tests|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Debug|x64.ActiveCfg = Debug|x64
+		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Debug|x64.Build.0 = Debug|x64
+		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Release|x64.ActiveCfg = Release|x64
+		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Release|x64.Build.0 = Release|x64
+		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Unit Tests|x64.ActiveCfg = Unit Tests|x64
+		{5D7DE471-ADD3-40E7-B418-B34C49C88984}.Unit Tests|x64.Build.0 = Unit Tests|x64
+		{B4F9FC6B-FD12-4AE7-A773-D6E79DE42A8B}.Debug|x64.ActiveCfg = Debug|x64
+		{B4F9FC6B-FD12-4AE7-A773-D6E79DE42A8B}.Release|x64.ActiveCfg = Release|x64
+		{B4F9FC6B-FD12-4AE7-A773-D6E79DE42A8B}.Unit Tests|x64.ActiveCfg = Unit Tests|x64
+		{B4F9FC6B-FD12-4AE7-A773-D6E79DE42A8B}.Unit Tests|x64.Build.0 = Unit Tests|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

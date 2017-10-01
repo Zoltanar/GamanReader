@@ -4,7 +4,7 @@ using System.IO;
 
 namespace GamanReader.Model
 {
-	internal abstract class Container
+	public abstract class Container
 	{
 		public string ContainerPath { get; protected set; }
 		public int CurrentIndex { get; set; }

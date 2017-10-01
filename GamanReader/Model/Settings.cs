@@ -14,6 +14,8 @@ namespace GamanReader.Model
 
 		static Settings()
 		{
+			Directory.CreateDirectory(StoredDataFolder);
+			Directory.CreateDirectory(TempFolder);
 			Load();
 		}
 
@@ -74,7 +76,8 @@ namespace GamanReader.Model
 			}
 			catch(Exception ex)
 			{
-				LogToFile("Failed to save settings.", ex);
+				LogToFile("Failed to load settings.", ex);
+				_instance = new SettingsItem();
 			}
 		}
 

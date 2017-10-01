@@ -4,12 +4,10 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using GamanReader.Model;
 using SevenZip;
-using WpfAnimatedGif;
+using static GamanReader.Model.StaticHelpers;
 using Container = GamanReader.Model.Container;
-using Image = System.Windows.Controls.Image;
 
 namespace GamanReader.ViewModel
 {
@@ -25,9 +23,10 @@ namespace GamanReader.ViewModel
 
 		public MainViewModel()
 		{
-			_mainWindow = Application.Current.MainWindow as View.MainWindow;
-			RtlIsChecked = false;
-			DualPageIsChecked = false;
+			RtlIsChecked = true;
+			DualPageIsChecked = true;
+			Directory.CreateDirectory(StoredDataFolder);
+			Directory.CreateDirectory(TempFolder);
 		}
 
 		internal void GoBack(bool moveOne)
@@ -46,7 +45,7 @@ namespace GamanReader.ViewModel
 			if (PageSize == 1) return;
 			var imagebox2 = RtlIsChecked ? ImageBox.Left : ImageBox.Right;
 			PopulateBox(imagebox2, CurrentIndex + 1 > TotalFiles - 1 ? -1 : CurrentIndex + 1);
-			GoToIndexText = (CurrentIndex+1).ToString();
+			GoToIndexText = (CurrentIndex + 1).ToString();
 			IndexLabelText = $"/{TotalFiles}";
 		}
 
@@ -58,20 +57,24 @@ namespace GamanReader.ViewModel
 		}
 
 		#region Properties
-		private readonly View.MainWindow _mainWindow;
 		private Container _containerModel;
 		private string _rtlToggleText;
 		private string _pageSizeToggleText;
 		private string _rightLabelText;
 		private string _leftLabelText;
 		private string _tagText;
+		private string _titleText;
 		private string _replyText;
 		private string _indexLabelText;
 		private string _goToIndexText;
 		private bool _rtlIsChecked;
 		private bool _dualPageIsChecked;
 		private readonly RecentItemList<string> _recentFiles = new RecentItemList<string>(Settings.RecentListSize, Settings.RecentFolders);
+		private string _singleImageSource;
+		private string _leftImageSource;
+		private string _rightImageSource;
 
+		public string TitleText { get => _titleText; set { _titleText = value; OnPropertyChanged("TitleText"); } }
 		public string ReplyText { get => _replyText; set { _replyText = value; OnPropertyChanged("ReplyText"); } }
 		public string TagText { get => _tagText; set { _tagText = value; OnPropertyChanged("TagText"); } }
 		public string LeftLabelText { get => _leftLabelText; set { _leftLabelText = value; OnPropertyChanged("LeftLabelText"); } }
@@ -111,6 +114,34 @@ namespace GamanReader.ViewModel
 				GoToIndex(CurrentIndex);
 			}
 		}
+		public string SingleImageSource
+		{
+			get => _singleImageSource;
+			set
+			{
+				_singleImageSource = value;
+				OnPropertyChanged("SingleImageSource");
+			}
+		}
+		public string LeftImageSource
+		{
+			get => _leftImageSource;
+			set
+			{
+				_leftImageSource = value;
+				OnPropertyChanged("LeftImageSource");
+			}
+		}
+		public string RightImageSource
+		{
+			get => _rightImageSource;
+			set
+			{
+				_rightImageSource = value;
+				OnPropertyChanged("RightImageSource");
+			}
+		}
+
 		public ObservableCollection<string> RecentItems => _recentFiles.Items;
 
 		// Create the OnPropertyChanged method to raise the event
@@ -127,32 +158,24 @@ namespace GamanReader.ViewModel
 
 		internal void PopulateBox(ImageBox imagebox, int index)
 		{
-			var image = GetImage(imagebox);
 			var filename = _containerModel.GetFile(index);
-			if (filename == null)
-			{
-				image.Source = null;
-				SetLabelText(imagebox, "");
-				return;
-			}
-			SetLabelText(imagebox, $"({index + 1}) {Path.GetFileName(filename)}");
-			if (Path.GetExtension(filename).Equals(".gif"))
-				ImageBehavior.SetAnimatedSource(image, new BitmapImage(new Uri(filename)));
-			else
-			{
-				ImageBehavior.SetAnimatedSource(image, null);
-				image.Source = new BitmapImage(new Uri(filename));
-			}
+			SetImage(imagebox, filename);
+			SetLabelText(imagebox, filename == null ? "" : $"({index + 1}) {Path.GetFileName(filename)}");
 		}
 
-		private Image GetImage(ImageBox boxForGetImage)
+		private void SetImage(ImageBox boxForImage, string file)
 		{
-			switch (boxForGetImage)
+			switch (boxForImage)
 			{
-				case ImageBox.Single: return _mainWindow.SingleImageBox;
-				case ImageBox.Left: return _mainWindow.LeftImageBox;
-				case ImageBox.Right: return _mainWindow.RightImageBox;
-				default: throw new Exception($"Unexpected ImageBox value! ({boxForGetImage})");
+				case ImageBox.Single:
+					SingleImageSource = file;
+					return;
+				case ImageBox.Left:
+					LeftImageSource = file;
+					return;
+				case ImageBox.Right:
+					RightImageSource = file;
+					return;
 			}
 		}
 
@@ -193,7 +216,7 @@ namespace GamanReader.ViewModel
 
 		#region Load Container
 
-		internal void LoadArchive(string archivePath)
+		public void LoadArchive(string archivePath)
 		{
 			if (!File.Exists(archivePath))
 			{
@@ -205,7 +228,7 @@ namespace GamanReader.ViewModel
 			LoadContainer(archivePath);
 		}
 
-		internal void LoadFolder(string folderName)
+		public void LoadFolder(string folderName)
 		{
 			if (!Directory.Exists(folderName))
 			{
@@ -236,7 +259,7 @@ namespace GamanReader.ViewModel
 		{
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
-			_mainWindow.ChangeTitle(Path.GetFileName(containerName));
+			TitleText = $"{Path.GetFileName(containerName)} - {ProgramName}";
 			_recentFiles.Add(_containerModel.ContainerPath);
 			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
 			IndexLabelText = $"/{_containerModel.TotalFiles}";
@@ -259,5 +282,29 @@ namespace GamanReader.ViewModel
 			Left = 1,
 			Right = 2
 		}
+
+		public void OpenRandom()
+		{
+			if (string.IsNullOrEmpty(Settings.LibraryFolder))
+			{
+				ReplyText = "Library Folder is not set";
+				return;
+			}
+			var fileOrFolder = RandomFile.GetRandomFileOrFolder(Settings.LibraryFolder, out bool isFolder, out string error);
+			if (fileOrFolder == null)
+			{
+				ReplyText = error;
+				return;
+			}
+			if (isFolder) LoadFolder(fileOrFolder);
+			else LoadArchive(fileOrFolder);
+		}
+
+#if TEST
+		public Container GetContainer()
+		{
+		return _containerModel;
+		}
+#endif
 	}
 }

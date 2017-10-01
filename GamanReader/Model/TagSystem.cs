@@ -7,7 +7,7 @@ using SQLite.CodeFirst;
 
 namespace GamanReader.Model
 {
-	class TagDatabase : DbContext
+	public class TagDatabase : DbContext
 	{
 		public TagDatabase() : base("TagDatabase") { }
 		public DbSet<TaggedItem> TaggedItems { get; set; }

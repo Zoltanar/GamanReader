@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace GamanReader.Model
 {
-	internal static class StaticHelpers
+	public static class StaticHelpers
 	{
 #if DEBUG
 		public const string StoredDataFolder = "..\\Release\\Stored Data";
@@ -21,7 +21,7 @@ namespace GamanReader.Model
 #endif
 		public const string TempFolder = StoredDataFolder + "\\Temp";
 		public const string SettingsJson = StoredDataFolder + "\\settings.json";
-		public const string LogFile = StoredDataFolder + "message.log";
+		public const string LogFile = StoredDataFolder + "\\message.log";
 
 		public const string ProgramName = "GamanReader";
 		private const string AllowedFormatsJson = "allowedformats.json";
@@ -36,6 +36,7 @@ namespace GamanReader.Model
 			{
 				AllowedFormats = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(AllowedFormatsJson));
 				TagDatabase = new TagDatabase();
+				Directory.CreateDirectory(StoredDataFolder);
 			}
 			catch (Exception ex)
 			{
@@ -90,18 +91,7 @@ namespace GamanReader.Model
 		/// <param name="message">Message to be written</param>
 		public static void LogToFile(string message)
 		{
-			Debug.Print(message);
-			int counter = 0;
-			while (IsFileLocked(new FileInfo(LogFile)))
-			{
-				counter++;
-				if (counter > 5) throw new IOException("Logfile is locked!");
-				Thread.Sleep(25);
-			}
-			using (var writer = new StreamWriter(LogFile, true))
-			{
-				writer.WriteLine(message);
-			}
+			LogToFile(new []{message});
 		}
 
 		/// <summary>
@@ -111,21 +101,23 @@ namespace GamanReader.Model
 		/// <param name="exception">Exception to be written to file</param>
 		public static void LogToFile(string header, Exception exception)
 		{
-			Debug.Print(header);
-			Debug.Print(exception.Message);
-			Debug.Print(exception.StackTrace);
+			LogToFile(new[] {header, exception.Message, exception.StackTrace});
+		}
+
+		private static void LogToFile(ICollection<string> lines)
+		{
+			foreach (var line in lines) Debug.Print(line);
+
 			int counter = 0;
 			while (IsFileLocked(new FileInfo(LogFile)))
 			{
 				counter++;
-				if (counter > 5)throw new IOException("Logfile is locked!");
+				if (counter > 5) throw new IOException("Logfile is locked!");
 				Thread.Sleep(25);
 			}
 			using (var writer = new StreamWriter(LogFile, true))
 			{
-				writer.WriteLine(header);
-				writer.WriteLine(exception.Message);
-				writer.WriteLine(exception.StackTrace);
+				foreach (var line in lines) writer.WriteLine(line);
 			}
 		}
 
@@ -140,7 +132,7 @@ namespace GamanReader.Model
 
 			try
 			{
-				stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+				stream = file.Exists ? file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None) : file.Create();
 			}
 			catch (IOException)
 			{
