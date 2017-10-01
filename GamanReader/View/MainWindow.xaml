@@ -80,6 +80,7 @@
                 <Label Content="{Binding IndexLabelText}" Margin="10,135,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="105" Foreground="White" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" />
                 <Label Content="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,160,0,0" Width="105" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center"/>
                 <Button Grid.Column="0" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,210,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <view:MangaInfoPanel DataContext="{Binding MangaInfo}" Grid.Column="3" HorizontalAlignment="Left" Margin="0,185,0,0" VerticalAlignment="Top" Height="383"/>
             </Grid>
         </DockPanel>
     </Grid>

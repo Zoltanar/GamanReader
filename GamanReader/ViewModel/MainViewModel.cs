@@ -3,8 +3,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using GamanReader.Model;
+using JetBrains.Annotations;
 using SevenZip;
 using static GamanReader.Model.StaticHelpers;
 using Container = GamanReader.Model.Container;
@@ -75,16 +77,17 @@ namespace GamanReader.ViewModel
 		private string _singleImageSource;
 		private string _leftImageSource;
 		private string _rightImageSource;
+		private MangaInfo _mangaInfo;
 
-		public string TitleText { get => _titleText; set { _titleText = value; OnPropertyChanged("TitleText"); } }
-		public string ReplyText { get => _replyText; set { _replyText = value; OnPropertyChanged("ReplyText"); } }
-		public string TagText { get => _tagText; set { _tagText = value; OnPropertyChanged("TagText"); } }
-		public string LeftLabelText { get => _leftLabelText; set { _leftLabelText = value; OnPropertyChanged("LeftLabelText"); } }
-		public string RightLabelText { get => _rightLabelText; set { _rightLabelText = value; OnPropertyChanged("RightLabelText"); } }
-		public string RtlToggleText { get => _rtlToggleText; set { _rtlToggleText = value; OnPropertyChanged("RtlToggleText"); } }
-		public string PageSizeToggleText { get => _pageSizeToggleText; set { _pageSizeToggleText = value; OnPropertyChanged("PageSizeToggleText"); } }
-		public string IndexLabelText { get => _indexLabelText; set { _indexLabelText = value; OnPropertyChanged("IndexLabelText"); } }
-		public string GoToIndexText { get => _goToIndexText; set { _goToIndexText = value; OnPropertyChanged("GoToIndexText"); } }
+		public string TitleText { get => _titleText; set { _titleText = value; OnPropertyChanged(); } }
+		public string ReplyText { get => _replyText; set { _replyText = value; OnPropertyChanged(); } }
+		public string TagText { get => _tagText; set { _tagText = value; OnPropertyChanged(); } }
+		public string LeftLabelText { get => _leftLabelText; set { _leftLabelText = value; OnPropertyChanged(); } }
+		public string RightLabelText { get => _rightLabelText; set { _rightLabelText = value; OnPropertyChanged(); } }
+		public string RtlToggleText { get => _rtlToggleText; set { _rtlToggleText = value; OnPropertyChanged(); } }
+		public string PageSizeToggleText { get => _pageSizeToggleText; set { _pageSizeToggleText = value; OnPropertyChanged(); } }
+		public string IndexLabelText { get => _indexLabelText; set { _indexLabelText = value; OnPropertyChanged(); } }
+		public string GoToIndexText { get => _goToIndexText; set { _goToIndexText = value; OnPropertyChanged(); } }
 		public bool RtlIsChecked
 		{
 			get => _rtlIsChecked;
@@ -92,7 +95,7 @@ namespace GamanReader.ViewModel
 			{
 				_rtlIsChecked = value;
 				RtlToggleText = value ? "◀ Right-to-Left ◀" : "▶ Left-to-Right ▶";
-				OnPropertyChanged("RtlIsChecked");
+				OnPropertyChanged();
 				if (_containerModel == null) return;
 				PopulateBox(ImageBox.Single, -1);
 				PopulateBox(ImageBox.Left, -1);
@@ -108,7 +111,7 @@ namespace GamanReader.ViewModel
 				_dualPageIsChecked = value;
 				PageSize = _dualPageIsChecked ? 2 : 1;
 				PageSizeToggleText = value ? "Dual Page View" : "Single Page View";
-				OnPropertyChanged("DualPageIsChecked");
+				OnPropertyChanged();
 				if (_containerModel == null) return;
 				PopulateBox(ImageBox.Single, -1);
 				PopulateBox(ImageBox.Left, -1);
@@ -122,7 +125,7 @@ namespace GamanReader.ViewModel
 			set
 			{
 				_singleImageSource = value;
-				OnPropertyChanged("SingleImageSource");
+				OnPropertyChanged();
 			}
 		}
 		public string LeftImageSource
@@ -131,7 +134,7 @@ namespace GamanReader.ViewModel
 			set
 			{
 				_leftImageSource = value;
-				OnPropertyChanged("LeftImageSource");
+				OnPropertyChanged();
 			}
 		}
 		public string RightImageSource
@@ -140,21 +143,31 @@ namespace GamanReader.ViewModel
 			set
 			{
 				_rightImageSource = value;
-				OnPropertyChanged("RightImageSource");
+				OnPropertyChanged();
+			}
+		}
+		public MangaInfo MangaInfo
+		{
+			get => _mangaInfo;
+			set
+			{
+				_mangaInfo = value;
+				OnPropertyChanged();
 			}
 		}
 
 		public ObservableCollection<string> RecentItems => _recentFiles.Items;
 
-		// Create the OnPropertyChanged method to raise the event
-		protected void OnPropertyChanged(string name)
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		[NotifyPropertyChangedInvocator]
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		public int PageSize { get; private set; }
-
-		public event PropertyChangedEventHandler PropertyChanged;
+		
 
 		#endregion
 
@@ -259,6 +272,7 @@ namespace GamanReader.ViewModel
 
 		private void LoadContainer(string containerName)
 		{
+			MangaInfo = MangaInfo.FromFilename(Path.GetFileNameWithoutExtension(containerName));
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
 			TitleText = $"{Path.GetFileName(containerName)} - {ProgramName}";

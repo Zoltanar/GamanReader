@@ -145,10 +145,14 @@
     </ApplicationDefinition>
     <Compile Include="Model\ArchiveContainer.cs" />
     <Compile Include="Model\FolderContainer.cs" />
+    <Compile Include="Model\MangaInfo.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="Model\Settings.cs" />
     <Compile Include="Model\RandomFile.cs" />
     <Compile Include="Model\TagSystem.cs" />
+    <Compile Include="View\MangaInfoPanel.xaml.cs">
+      <DependentUpon>MangaInfoPanel.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\TagTreePanel.xaml.cs">
       <DependentUpon>TagTreePanel.xaml</DependentUpon>
     </Compile>
@@ -169,6 +173,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="View\MangaInfoPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\TagTreePanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

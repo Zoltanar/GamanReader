@@ -91,7 +91,7 @@ namespace GamanReader.Model
 		/// <param name="message">Message to be written</param>
 		public static void LogToFile(string message)
 		{
-			LogToFile(new []{message});
+			LogToFile(new[] { message });
 		}
 
 		/// <summary>
@@ -101,7 +101,7 @@ namespace GamanReader.Model
 		/// <param name="exception">Exception to be written to file</param>
 		public static void LogToFile(string header, Exception exception)
 		{
-			LogToFile(new[] {header, exception.Message, exception.StackTrace});
+			LogToFile(new[] { header, exception.Message, exception.StackTrace });
 		}
 
 		private static void LogToFile(ICollection<string> lines)
@@ -144,5 +144,14 @@ namespace GamanReader.Model
 			}
 			return false;
 		}
+
+		/// <summary>
+		/// Get substring between indexes, including the index locations.
+		/// </summary>
+		/// <param name="input"></param>
+		/// <param name="startIndex"></param>
+		/// <param name="endIndex"></param>
+		/// <returns></returns>
+		public static string BetweenIndexes(this string input, int startIndex, int endIndex) => input.Substring(startIndex, endIndex - startIndex+1);
 	}
 }
