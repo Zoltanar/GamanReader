@@ -145,6 +145,21 @@ namespace GamanReader.View
 			var parentVis = ((DockPanel)TagPanel.Parent).Visibility;
 			Debug.WriteLine($"TagPanel.Visibility={TagPanel.Visibility}, Parent.Visibility={parentVis}");
 		}
-		
+
+		private bool _fullscreenOn;
+		private void GoFullscreen(object sender, RoutedEventArgs e)
+		{
+			if (!_fullscreenOn)
+			{
+				WindowState = WindowState.Maximized;
+				WindowStyle = WindowStyle.None;
+			}
+			else
+			{
+				WindowState = WindowState.Normal;
+				WindowStyle = WindowStyle.SingleBorderWindow;
+			}
+			_fullscreenOn = !_fullscreenOn;
+		}
 	}
 }

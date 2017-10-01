@@ -31,27 +31,21 @@ namespace GamanReaderTests
 		public void OpenFolder()
 		{
 			_viewModel.LoadFolder("..\\TestContainerFolder");
-			var container = _viewModel.GetContainer();
-			Assert.AreEqual(7,container.TotalFiles);
-			Assert.IsTrue(container.IsFolder);
+			Assert.AreEqual(7, _viewModel.TotalFiles);
 		}
 
 		[TestMethod]
 		public void OpenRar()
 		{
 			_viewModel.LoadArchive("..\\TestContainerFolder.rar");
-			var container = _viewModel.GetContainer();
-			Assert.AreEqual(7, container.TotalFiles);
-			Assert.IsFalse(container.IsFolder);
+			Assert.AreEqual(7, _viewModel.TotalFiles);
 		}
 
 		[TestMethod]
 		public void OpenZip()
 		{
 			_viewModel.LoadArchive("..\\TestContainerFolder.zip");
-			var container = _viewModel.GetContainer();
-			Assert.AreEqual(7, container.TotalFiles);
-			Assert.IsFalse(container.IsFolder);
+			Assert.AreEqual(7, _viewModel.TotalFiles);
 		}
 	}
 }
