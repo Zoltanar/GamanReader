@@ -15,7 +15,6 @@ namespace GamanReader.ViewModel
 		private static IEnumerable<TagGroup> GetTagGroups()
 		{
 #if DEBUG
-			var rnd = new Random();
 			if (DesignerProperties.GetIsInDesignMode(new DependencyObject())) return GetTagGroupsMockup();
 #endif
 			var tagDatabase = new TagDatabase();
@@ -29,11 +28,13 @@ namespace GamanReader.ViewModel
 				groups.Add(tagNode);
 			}
 			return groups;
+		}
 
 #if DEBUG
-			IEnumerable<TagGroup> GetTagGroupsMockup()
-			{
-				var inGroups = new List<TagGroup>();
+		private static IEnumerable<TagGroup> GetTagGroupsMockup()
+		{
+			var rnd = new Random();
+			var inGroups = new List<TagGroup>();
 				for (int count = 0; count < rnd.Next(10); count++)
 				{
 					var tg = new TagGroup { Name = rnd.Next(7777).ToString("x") };
@@ -48,7 +49,6 @@ namespace GamanReader.ViewModel
 				return inGroups;
 			}
 #endif
-		}
 	}
 
 	public class TagGroup

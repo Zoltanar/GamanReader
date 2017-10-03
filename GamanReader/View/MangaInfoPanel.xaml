@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:model="clr-namespace:GamanReader.Model"
-             mc:Ignorable="d" Height="458.001" Width="120">
+             mc:Ignorable="d" Height="360.001" Width="120">
     <UserControl.DataContext>
         <model:MangaInfo></model:MangaInfo>
     </UserControl.DataContext>

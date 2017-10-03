@@ -15,49 +15,12 @@ namespace GamanReader.ViewModel
 {
 	public class MainViewModel : INotifyPropertyChanged
 	{
-		public int CurrentIndex
-		{
-			get => _containerModel.CurrentIndex;
-			set => _containerModel.CurrentIndex = value;
-		}
-
-		public int TotalFiles => _containerModel.TotalFiles;
-
 		public MainViewModel()
 		{
 			RtlIsChecked = true;
 			DualPageIsChecked = true;
 			Directory.CreateDirectory(StoredDataFolder);
 			Directory.CreateDirectory(TempFolder);
-		}
-
-		internal void GoBack(bool moveOne)
-		{
-			if (_containerModel == null) return;
-			var moveNumber = moveOne ? 1 : PageSize;
-			CurrentIndex = Math.Max(-1, CurrentIndex - moveNumber);
-			PopulateBoxes();
-		}
-
-		public void PopulateBoxes()
-		{
-			ImageBox imagebox1;
-			if (PageSize == 1) imagebox1 = ImageBox.Single;
-			else imagebox1 = RtlIsChecked ? ImageBox.Right : ImageBox.Left;
-			PopulateBox(imagebox1, CurrentIndex);
-			if (PageSize == 1) return;
-			var imagebox2 = RtlIsChecked ? ImageBox.Left : ImageBox.Right;
-			PopulateBox(imagebox2, CurrentIndex + 1 > TotalFiles - 1 ? -1 : CurrentIndex + 1);
-			GoToIndexText = (CurrentIndex + 1).ToString();
-			IndexLabelText = $"/{TotalFiles}";
-		}
-
-		public void GoForward(bool moveOne)
-		{
-			if (_containerModel == null) return;
-			var moveNumber = moveOne ? 1 : PageSize;
-			CurrentIndex = Math.Min(TotalFiles - 1, CurrentIndex + moveNumber);
-			PopulateBoxes();
 		}
 
 		#region Properties
@@ -155,23 +118,17 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged();
 			}
 		}
-
-		public ObservableCollection<string> RecentItems => _recentFiles.Items;
-
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		[NotifyPropertyChangedInvocator]
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		public int CurrentIndex
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			get => _containerModel.CurrentIndex;
+			set => _containerModel.CurrentIndex = value;
 		}
-
 		public int PageSize { get; private set; }
-		
-
+		public ObservableCollection<string> RecentItems => _recentFiles.Items;
+		public int TotalFiles => _containerModel.TotalFiles;
 		#endregion
 
-		internal void PopulateBox(ImageBox imagebox, int index)
+		private void PopulateBox(ImageBox imagebox, int index)
 		{
 			var filename = _containerModel.GetFile(index);
 			SetImage(imagebox, filename);
@@ -208,7 +165,6 @@ namespace GamanReader.ViewModel
 				case ImageBox.Right:
 					RightLabelText = text;
 					return;
-				default: throw new Exception($"Unexpected ImageBox value! ({boxForLabelText})");
 			}
 		}
 
@@ -227,6 +183,60 @@ namespace GamanReader.ViewModel
 		{
 			CurrentIndex = index;
 			PopulateBoxes();
+		}
+
+		internal void AddTag()
+		{
+			if (_containerModel == null) return;
+			StaticHelpers.AddTag(_containerModel.ContainerPath, _containerModel.IsFolder, TagText);
+			//todo write reply
+			TagText = "";
+		}
+
+		public void OpenRandom()
+		{
+			if (string.IsNullOrEmpty(Settings.LibraryFolder))
+			{
+				ReplyText = "Library Folder is not set";
+				return;
+			}
+			var fileOrFolder = RandomFile.GetRandomFileOrFolder(Settings.LibraryFolder, out bool isFolder, out string error);
+			if (fileOrFolder == null)
+			{
+				ReplyText = error;
+				return;
+			}
+			if (isFolder) LoadFolder(fileOrFolder);
+			else LoadArchive(fileOrFolder);
+		}
+
+		internal void GoBack(bool moveOne)
+		{
+			if (_containerModel == null) return;
+			var moveNumber = moveOne ? 1 : PageSize;
+			CurrentIndex = Math.Max(-1, CurrentIndex - moveNumber);
+			PopulateBoxes();
+		}
+
+		public void GoForward(bool moveOne)
+		{
+			if (_containerModel == null) return;
+			var moveNumber = moveOne ? 1 : PageSize;
+			CurrentIndex = Math.Min(TotalFiles - 1, CurrentIndex + moveNumber);
+			PopulateBoxes();
+		}
+
+		private void PopulateBoxes()
+		{
+			ImageBox imagebox1;
+			if (PageSize == 1) imagebox1 = ImageBox.Single;
+			else imagebox1 = RtlIsChecked ? ImageBox.Right : ImageBox.Left;
+			PopulateBox(imagebox1, CurrentIndex);
+			if (PageSize == 1) return;
+			var imagebox2 = RtlIsChecked ? ImageBox.Left : ImageBox.Right;
+			PopulateBox(imagebox2, CurrentIndex + 1 > TotalFiles - 1 ? -1 : CurrentIndex + 1);
+			GoToIndexText = (CurrentIndex + 1).ToString();
+			IndexLabelText = $"/{TotalFiles}";
 		}
 
 		#region Load Container
@@ -272,7 +282,7 @@ namespace GamanReader.ViewModel
 
 		private void LoadContainer(string containerName)
 		{
-			MangaInfo = MangaInfo.FromFilename(Path.GetFileNameWithoutExtension(containerName));
+			MangaInfo = new MangaInfo(Path.GetFileNameWithoutExtension(containerName));
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
 			TitleText = $"{Path.GetFileName(containerName)} - {ProgramName}";
@@ -281,46 +291,24 @@ namespace GamanReader.ViewModel
 			IndexLabelText = $"/{_containerModel.TotalFiles}";
 			Settings.Save(_recentFiles.Items);
 		}
-
-		internal void AddTag()
-		{
-			if (_containerModel == null) return;
-			StaticHelpers.AddTag(_containerModel.ContainerPath, _containerModel.IsFolder, TagText);
-			//todo write reply
-			TagText = "";
-		}
-
+		
 		#endregion
 
-		public enum ImageBox
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		[NotifyPropertyChangedInvocator]
+		private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		private enum ImageBox
 		{
 			Single = 0,
 			Left = 1,
 			Right = 2
 		}
 
-		public void OpenRandom()
-		{
-			if (string.IsNullOrEmpty(Settings.LibraryFolder))
-			{
-				ReplyText = "Library Folder is not set";
-				return;
-			}
-			var fileOrFolder = RandomFile.GetRandomFileOrFolder(Settings.LibraryFolder, out bool isFolder, out string error);
-			if (fileOrFolder == null)
-			{
-				ReplyText = error;
-				return;
-			}
-			if (isFolder) LoadFolder(fileOrFolder);
-			else LoadArchive(fileOrFolder);
-		}
 
-#if TEST
-		public Container GetContainer()
-		{
-		return _containerModel;
-		}
-#endif
 	}
 }

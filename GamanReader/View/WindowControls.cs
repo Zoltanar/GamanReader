@@ -26,14 +26,8 @@ namespace GamanReader.View
 		/// </summary>
 		private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
 		{
-			if (e.Delta < 0)
-			{
-					_mainModel.GoForward(StaticHelpers.CtrlIsDown());
-			}
-			else if (e.Delta > 0)
-			{
-					_mainModel.GoBack(StaticHelpers.CtrlIsDown());
-			}
+			if (e.Delta < 0) _mainModel.GoForward(StaticHelpers.CtrlIsDown());
+			else if (e.Delta > 0) _mainModel.GoBack(StaticHelpers.CtrlIsDown());
 		}
 
 		/// <summary>
@@ -44,24 +38,12 @@ namespace GamanReader.View
 			switch (e.Key)
 			{
 				case Key.Left:
-					if (_mainModel.RtlIsChecked)
-					{
-							_mainModel.GoForward(StaticHelpers.CtrlIsDown());
-					}
-					else
-					{
-							_mainModel.GoBack(StaticHelpers.CtrlIsDown());
-					}
+					if (_mainModel.RtlIsChecked) _mainModel.GoForward(StaticHelpers.CtrlIsDown());
+					else _mainModel.GoBack(StaticHelpers.CtrlIsDown());
 					return;
 				case Key.Right:
-					if (_mainModel.RtlIsChecked)
-					{
-							_mainModel.GoBack(StaticHelpers.CtrlIsDown());
-					}
-					else
-					{
-							_mainModel.GoForward(StaticHelpers.CtrlIsDown());
-					}
+					if (_mainModel.RtlIsChecked) _mainModel.GoBack(StaticHelpers.CtrlIsDown());
+					else _mainModel.GoForward(StaticHelpers.CtrlIsDown());
 					return;
 			}
 		}

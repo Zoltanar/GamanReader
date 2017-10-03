@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.IO.Packaging;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
@@ -9,6 +8,7 @@ namespace GamanReader.Model
 {
 	public class MangaInfo : INotifyPropertyChanged
 	{
+		#region Properties
 		private string _event;
 		private string _group;
 		private string _artist;
@@ -71,13 +71,21 @@ namespace GamanReader.Model
 			}
 		}
 
-		public static MangaInfo FromFilename(string filename)
+		public bool Incomplete { get; set; }
+		public bool Decensored { get; set; }
+		public bool English { get; set; }
+		public bool Digital { get; set; }
+		#endregion
+
+		/// <summary>
+		/// Guesses manga information from filename.
+		/// </summary>
+		public MangaInfo(string filename)
 		{
-			var info = new MangaInfo();
 			var firstClosingBracket = filename.IndexOf(")", StringComparison.Ordinal);
 			if (filename.StartsWith("(") && firstClosingBracket > -1)
 			{
-				info.Event = filename.BetweenIndexes(1, firstClosingBracket - 1);
+				Event = filename.BetweenIndexes(1, firstClosingBracket - 1);
 				filename = filename.Substring(firstClosingBracket + 1);
 				filename = filename.Trim();
 			}
@@ -87,14 +95,11 @@ namespace GamanReader.Model
 				var groupArtist = filename.BetweenIndexes(1, firstClosingSquareBracket - 1);
 				var rgx1 = new Regex(@"\((.*?)\)");
 				var match = rgx1.Match(groupArtist);
-				if (string.IsNullOrWhiteSpace(match.Value))
-				{
-					info.Artist = groupArtist;
-				}
+				if (string.IsNullOrWhiteSpace(match.Value)) Artist = groupArtist;
 				else
 				{
-					info.Group = groupArtist.BetweenIndexes(0, groupArtist.IndexOf("(", StringComparison.Ordinal) - 1);
-					info.Artist = match.Groups[1].Value;
+					Group = groupArtist.BetweenIndexes(0, groupArtist.IndexOf("(", StringComparison.Ordinal) - 1);
+					Artist = match.Groups[1].Value;
 				}
 				filename = filename.Substring(firstClosingSquareBracket + 1);
 				filename = filename.Trim();
@@ -102,57 +107,55 @@ namespace GamanReader.Model
 			var postTitleBracket = filename.IndexOfAny(new[] { '(', '[' });
 			if (postTitleBracket > -1)
 			{
-				info.Title = filename.BetweenIndexes(0, postTitleBracket - 1);
+				Title = filename.BetweenIndexes(0, postTitleBracket - 1);
 				if (filename[postTitleBracket] == '(')
 				{
-					info.Parody = filename.BetweenIndexes(postTitleBracket + 1, filename.IndexOf(")", StringComparison.Ordinal) - 1);
+					Parody = filename.BetweenIndexes(postTitleBracket + 1, filename.IndexOf(")", StringComparison.Ordinal) - 1);
 				}
-				var rgx2 = new Regex(@"\[(.*?)\]");
-				var matches2 = rgx2.Matches(filename);
-				var rgx3 = new Regex(@"\{(.*?)\}");
-				var matches3 = rgx3.Matches(filename);
-				foreach (Match match in matches2)
-				{
-					switch (match.Groups[1].Value)
-					{
-						case "Digital":
-							Digital = true;
-							break;
-						case "English":
-							English = true;
-							break;
-						case "Decensored":
-							Decensored = true;
-							break;
-						case "Incomplete":
-							Incomplete = true;
-							break;
-						default:
-							info.Subber = match.Groups[1].Value;
-							break;
-					}
-				}
-				if (matches3.Count > 0) info.Subber = matches3[0].Groups[1].Value;
+				GetSubberAndFlags(filename);
 			}
-			else
-			{
-				info.Title = filename;
-			}
-			return info;
+			else Title = filename;
 		}
 
-		public static bool Incomplete { get; set; }
+		public MangaInfo()
+		{
+			Title = "Unknown";
+		}
 
-		public static bool Decensored { get; set; }
-
-		public static bool English { get; set; }
-
-		public static bool Digital { get; set; }
-
+		private void GetSubberAndFlags(string filename)
+		{
+			var rgx2 = new Regex(@"\[(.*?)\]");
+			var matches2 = rgx2.Matches(filename);
+			var rgx3 = new Regex(@"\{(.*?)\}");
+			var matches3 = rgx3.Matches(filename);
+			foreach (Match match in matches2)
+			{
+				switch (match.Groups[1].Value)
+				{
+					case "Digital":
+						Digital = true;
+						break;
+					case "English":
+						English = true;
+						break;
+					case "Decensored":
+						Decensored = true;
+						break;
+					case "Incomplete":
+						Incomplete = true;
+						break;
+					default:
+						Subber = match.Groups[1].Value;
+						break;
+				}
+			}
+			if (matches3.Count > 0) Subber = matches3[0].Groups[1].Value;
+		}
+		
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		[NotifyPropertyChangedInvocator]
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		private void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
