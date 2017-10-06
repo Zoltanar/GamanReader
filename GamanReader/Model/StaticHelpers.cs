@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace GamanReader.Model
 		public const string ProgramName = "GamanReader";
 		private const string AllowedFormatsJson = "allowedformats.json";
 
-		public static TagDatabase TagDatabase { get; }
+		public static GamanDatabase LocalDatabase { get; }
 
 		public static string[] AllowedFormats { get; }
 
@@ -35,7 +36,7 @@ namespace GamanReader.Model
 			try
 			{
 				AllowedFormats = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(AllowedFormatsJson));
-				TagDatabase = new TagDatabase();
+				LocalDatabase = new GamanDatabase();
 				Directory.CreateDirectory(StoredDataFolder);
 			}
 			catch (Exception ex)
@@ -53,8 +54,8 @@ namespace GamanReader.Model
 
 		public static void AddTag(string itempath, bool isFolder, string tag)
 		{
-			var hash = isFolder ? new byte[0] : GetHash(itempath);
-			var taggedItem = TagDatabase.TaggedItems.SingleOrDefault(i => isFolder ? i.Path == itempath : i.MD5Hash == hash);
+			var hash = isFolder ? new byte[0] : new FileInfo(itempath).GetMd5Hash();
+			var taggedItem = LocalDatabase.TaggedItems.SingleOrDefault(i => isFolder ? i.Path == itempath : i.MD5Hash == hash);
 			if (taggedItem == null)
 			{
 				taggedItem = new TaggedItem
@@ -64,22 +65,12 @@ namespace GamanReader.Model
 					MD5Hash = hash,
 					Tags = new List<IndividualTag>()
 				};
-				TagDatabase.TaggedItems.Add(taggedItem);
+				LocalDatabase.TaggedItems.Add(taggedItem);
 			}
 			taggedItem.Tags.Add(new IndividualTag { Tag = tag });
-			TagDatabase.SaveChanges();
+			LocalDatabase.SaveChanges();
 		}
 
-		private static byte[] GetHash(string itempath)
-		{
-			using (var stream = File.OpenRead(itempath))
-			{
-				using (var md5 = MD5.Create())
-				{
-					return md5.ComputeHash(stream);
-				}
-			}
-		}
 
 		public static bool CtrlIsDown()
 		{
@@ -109,7 +100,7 @@ namespace GamanReader.Model
 			foreach (var line in lines) Debug.Print(line);
 
 			int counter = 0;
-			while (IsFileLocked(new FileInfo(LogFile)))
+			while (new FileInfo(LogFile).IsLocked())
 			{
 				counter++;
 				if (counter > 5) throw new IOException("Logfile is locked!");
@@ -126,7 +117,7 @@ namespace GamanReader.Model
 		/// </summary>
 		/// <param name="file">File to be checked</param>
 		/// <returns>Whether file is locked</returns>
-		public static bool IsFileLocked(FileInfo file)
+		public static bool IsLocked(this FileInfo file)
 		{
 			FileStream stream = null;
 
@@ -145,6 +136,26 @@ namespace GamanReader.Model
 			return false;
 		}
 
+		public static byte[] GetMd5Hash(this FileInfo file)
+		{
+			try
+			{
+
+				using (var stream = file.OpenRead())
+				{
+					using (var md5 = MD5.Create())
+					{
+						return md5.ComputeHash(stream);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+				throw;
+			}
+		}
+
 		/// <summary>
 		/// Get substring between indexes, including the index locations.
 		/// </summary>
@@ -152,6 +163,43 @@ namespace GamanReader.Model
 		/// <param name="startIndex"></param>
 		/// <param name="endIndex"></param>
 		/// <returns></returns>
-		public static string BetweenIndexes(this string input, int startIndex, int endIndex) => input.Substring(startIndex, endIndex - startIndex+1);
+		public static string BetweenIndexes(this string input, int startIndex, int endIndex) => input.Substring(startIndex, endIndex - startIndex + 1);
+
+		/// <summary>
+		/// Pause RaiseListChangedEvents and add items then call the event when done adding.
+		/// </summary>
+		public static void AddRange<T>(this BindingList<T> list, IEnumerable<T> items)
+		{
+			if (items == null) return;
+			list.RaiseListChangedEvents = false;
+			foreach (var item in items) list.Add(item);
+			list.RaiseListChangedEvents = true;
+			list.ResetBindings();
+		}
+
+		/// <summary>
+		/// Pause RaiseListChangedEvents, clear list and add items, then call ResetBindings event.
+		/// </summary>
+		// ReSharper disable once UnusedMember.Global
+		public static void SetRange<T>(this BindingList<T> list, IEnumerable<T> items)
+		{
+			list.RaiseListChangedEvents = false;
+			list.Clear();
+			foreach (var item in items) list.Add(item);
+			list.RaiseListChangedEvents = true;
+			list.ResetBindings();
+		}
+
+		/// <summary>
+		/// Returns path stored in a lnk shortcut.
+		/// </summary>
+		/// <param name="containerPath">Full path of shortcut file.</param>
+		public static string GetPathFromShortcut(string containerPath)
+		{
+			// IWshRuntimeLibrary is in the COM library "Windows Script Host Object Model"
+			var shell = new IWshRuntimeLibrary.WshShell();
+			var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(containerPath);
+			return shortcut.TargetPath;
+		}
 	}
 }

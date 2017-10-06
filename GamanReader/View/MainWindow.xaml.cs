@@ -29,11 +29,6 @@ namespace GamanReader.View
 		{
 			InitializeComponent();
 			_mainModel = (MainViewModel)DataContext;
-			foreach (var file in Directory.GetFiles(TempFolder))
-			{
-				File.Delete(file);
-			}
-			//
 			var firstPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 			Debug.Assert(firstPath != null, nameof(firstPath) + " != null");
 			string path = Path.Combine(firstPath, "7z.dll");
@@ -110,7 +105,8 @@ namespace GamanReader.View
 		private void DropFile(object sender, DragEventArgs e)
 		{
 			string containerPath = ((DataObject)e.Data).GetFileDropList()[0];
-			if (containerPath == null) return;
+			if (containerPath?.EndsWith(".lnk") ?? false) containerPath = GetPathFromShortcut(containerPath);
+			if (string.IsNullOrWhiteSpace(containerPath)) return; //todo report error
 			LoadContainer(containerPath);
 
 		}
@@ -160,6 +156,37 @@ namespace GamanReader.View
 				WindowStyle = WindowStyle.SingleBorderWindow;
 			}
 			_fullscreenOn = !_fullscreenOn;
+		}
+
+		private void SaveLibraryInfo(object sender, RoutedEventArgs e)
+		{
+			_mainModel.SaveLibraryInfo();
+		}
+
+		private void TextBox_KeyUp(object sender, KeyEventArgs e)
+		{
+			if (e.Key != Key.Enter) return;
+			_mainModel.Search();
+
+		}
+
+		private void Control_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			if (!(e.OriginalSource is DependencyObject source)) return;
+			if (!(ItemsControl.ContainerFromElement((ItemsControl)sender, source) is ListBoxItem lbItem)) return;
+			if (lbItem.Content is MangaInfo item) _mainModel.LoadFromMangaInfo(item);
+		}
+
+		private int _widthChange = 100;
+
+		private void IncreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
+		{
+			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth + _widthChange);
+		}
+
+		private void DecreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
+		{
+			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth - _widthChange);
 		}
 	}
 }

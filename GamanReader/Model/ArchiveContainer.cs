@@ -22,12 +22,14 @@ namespace GamanReader.Model
 		private readonly SevenZipExtractor _zipExtractor;
 
 		public override bool IsFolder => false;
+		
 
 		public override string GetFile(int index)
 		{
 			if (index == -1) return null;
 			var filename = FileNames[index];
-			var tempFile = Path.Combine(StaticHelpers.TempFolder, filename);
+			string generatedFolder = Path.Combine(StaticHelpers.TempFolder, ContainerPath.GetHashCode().ToString());
+			var tempFile = Path.Combine(generatedFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
 			if (File.Exists(tempFile)) return fullPath;
 			Directory.CreateDirectory(Path.GetDirectoryName(fullPath) ?? throw new DirectoryNotFoundException($"Directory not found for path {fullPath}"));

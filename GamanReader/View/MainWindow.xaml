@@ -20,7 +20,7 @@
             </view:TagTreePanel>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120" MinWidth="120"/>
+                    <ColumnDefinition x:Name="LeftColumn" Width="120" MinWidth="120" />
                     <ColumnDefinition Width="44*"/>
                     <ColumnDefinition Width="44*"/>
                     <ColumnDefinition Width="120" MinWidth="120" />
@@ -29,12 +29,12 @@
                 <Image gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Grid.Column="1" Grid.ColumnSpan="2" />
                 <Image gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Grid.Column="1" HorizontalAlignment="Right" />
                 <Image gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Grid.Column="2" HorizontalAlignment="Left" />
-                <Label Grid.Column="0" Content="{Binding LeftLabelText}" Margin="10,10,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Left" Width="105"/>
-                <Button Grid.Column="0" Content="Load Folder" Click="LoadFolderByDialog" Margin="10,35,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
-                <Button Grid.Column="0" Content="Load Zip" Click="LoadArchiveByDialog" Margin="10,60,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
-                <Button Grid.Column="0" Content="Open Random" Click="OpenRandom_Click"  Height="20"  Margin="10,85,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <Button Grid.Column="0" Content="See Tagged Items" Margin="10,110,0,0" Click="SeeTagged_Click" HorizontalAlignment="Left" Width="105" Height="20" VerticalAlignment="Top" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0"/>
-                <ToggleButton Grid.Column="0" Content="{Binding RtlToggleText}" Margin="10,135,0,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Left" Width="105" BorderBrush="{x:Null}" Background="#FF7C99E8" UseLayoutRounding="False">
+                <Label Grid.Column="0" Content="{Binding LeftLabelText}" Margin="10,10,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Left" Width="105" Grid.ColumnSpan="2"/>
+                <Button Grid.Column="0" Content="Load Folder" Click="LoadFolderByDialog" Margin="10,35,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="100"/>
+                <Button Grid.Column="0" Content="Load Zip" Click="LoadArchiveByDialog" Margin="10,60,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="100"/>
+                <Button Grid.Column="0" Content="Open Random" Click="OpenRandom_Click"  Height="20"  Margin="10,85,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="100" />
+                <Button Grid.Column="0" Content="See Tagged Items" Margin="10,110,0,0" Click="SeeTagged_Click" HorizontalAlignment="Left" Width="100" Height="20" VerticalAlignment="Top" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0"/>
+                <ToggleButton Grid.Column="0" Content="{Binding RtlToggleText}" Margin="10,135,0,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Left" Width="100" BorderBrush="{x:Null}" Background="#FF7C99E8" UseLayoutRounding="False">
                     <ToggleButton.Style>
                         <Style TargetType="{x:Type ToggleButton}">
                             <Setter Property="Template">
@@ -52,8 +52,8 @@
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
-                <Button Grid.Column="0" Content="Set Library Folder" Margin="10,160,0,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
-                <ToggleButton Grid.Column="0" Content="{Binding PageSizeToggleText}" Margin="10,185,0,0" IsChecked="{Binding DualPageIsChecked}" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="105">
+                <Button Grid.Column="0" Content="Set Library Folder" Margin="10,160,0,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="100"/>
+                <ToggleButton Grid.Column="0" Content="{Binding PageSizeToggleText}" Margin="10,185,0,0" IsChecked="{Binding DualPageIsChecked}" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="100">
                     <ToggleButton.Style>
                         <Style TargetType="{x:Type ToggleButton}">
                             <Setter Property="Template">
@@ -79,8 +79,12 @@
                 <TextBox Text="{Binding GoToIndexText}" HorizontalAlignment="Left" Margin="10,110,0,0" TextWrapping="Wrap" Width="105" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="20" VerticalAlignment="Top" KeyUp="GoToTextBox_KeyUp" Grid.Column="3" HorizontalContentAlignment="Center"/>
                 <Label Content="{Binding IndexLabelText}" Margin="10,135,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="105" Foreground="White" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" />
                 <Label Content="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,160,0,0" Width="105" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center"/>
-                <Button Grid.Column="0" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,210,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <Button Grid.Column="0" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,210,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="100" />
                 <view:MangaInfoPanel DataContext="{Binding MangaInfo}" Grid.Column="3" HorizontalAlignment="Left" Margin="0,185,0,0" VerticalAlignment="Top" Height="383"/>
+                <Button Grid.Column="0" Content="Save Library Info" Click="SaveLibraryInfo"  Height="20"  Margin="10,235,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="100" />
+                <Label Grid.Column="0" Content="Search Results:" Margin="10,260,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Left" Width="105" Grid.ColumnSpan="2"/>
+                <TextBox Grid.Column="0" Height="23" Margin="10,285,10,0" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp"/>
+                <ListBox Grid.Column="0" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" MouseDoubleClick="Control_OnMouseDoubleClick" ItemsSource="{Binding SearchResults}" Height="386" Margin="10,313,10,0" VerticalAlignment="Top" />
             </Grid>
         </DockPanel>
     </Grid>

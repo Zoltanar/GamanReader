@@ -1,5 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
@@ -21,7 +24,7 @@ namespace GamanReader.Model
 			get => _event;
 			set
 			{
-				_event = value.Trim();
+				_event = value?.Trim();
 				OnPropertyChanged();
 			}
 		}
@@ -30,7 +33,7 @@ namespace GamanReader.Model
 			get => _group;
 			set
 			{
-				_group = value.Trim();
+				_group = value?.Trim();
 				OnPropertyChanged();
 			}
 		}
@@ -39,7 +42,7 @@ namespace GamanReader.Model
 			get => _artist;
 			set
 			{
-				_artist = value.Trim();
+				_artist = value?.Trim();
 				OnPropertyChanged();
 			}
 		}
@@ -48,7 +51,7 @@ namespace GamanReader.Model
 			get => _title;
 			set
 			{
-				_title = value.Trim();
+				_title = value?.Trim();
 				OnPropertyChanged();
 			}
 		}
@@ -57,7 +60,7 @@ namespace GamanReader.Model
 			get => _parody;
 			set
 			{
-				_parody = value.Trim();
+				_parody = value?.Trim();
 				OnPropertyChanged();
 			}
 		}
@@ -66,7 +69,7 @@ namespace GamanReader.Model
 			get => _subber;
 			set
 			{
-				_subber = value.Trim();
+				_subber = value?.Trim();
 				OnPropertyChanged();
 			}
 		}
@@ -75,13 +78,19 @@ namespace GamanReader.Model
 		public bool Decensored { get; set; }
 		public bool English { get; set; }
 		public bool Digital { get; set; }
+		[Key,StringLength(1024)]
+		public string FilePath { get; set; }
 		#endregion
 
 		/// <summary>
 		/// Guesses manga information from filename.
 		/// </summary>
-		public MangaInfo(string filename)
+		public MangaInfo(string filePath)
 		{
+			FilePath = filePath;
+			var filename = Path.GetFileNameWithoutExtension(filePath);
+			if(filename == null) { }
+			Debug.Assert(filename != null, nameof(filename) + " != null");
 			var firstClosingBracket = filename.IndexOf(")", StringComparison.Ordinal);
 			if (filename.StartsWith("(") && firstClosingBracket > -1)
 			{
@@ -108,14 +117,16 @@ namespace GamanReader.Model
 			if (postTitleBracket > -1)
 			{
 				Title = filename.BetweenIndexes(0, postTitleBracket - 1);
-				if (filename[postTitleBracket] == '(')
+				var postTitleClosingBracket = filename.IndexOf(")", StringComparison.Ordinal);
+				if (filename[postTitleBracket] == '(' && postTitleClosingBracket > postTitleBracket)
 				{
-					Parody = filename.BetweenIndexes(postTitleBracket + 1, filename.IndexOf(")", StringComparison.Ordinal) - 1);
+					Parody = filename.BetweenIndexes(postTitleBracket + 1, postTitleClosingBracket - 1);
 				}
 				GetSubberAndFlags(filename);
 			}
 			else Title = filename;
 		}
+
 
 		public MangaInfo()
 		{
@@ -159,5 +170,7 @@ namespace GamanReader.Model
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
+
+		public override string ToString() => Title;
 	}
 }

@@ -17,13 +17,12 @@ namespace GamanReader.ViewModel
 #if DEBUG
 			if (DesignerProperties.GetIsInDesignMode(new DependencyObject())) return GetTagGroupsMockup();
 #endif
-			var tagDatabase = new TagDatabase();
-			var tagGroups = tagDatabase.Tags.GroupBy(i => i.Tag);
+			var tagGroups = StaticHelpers.LocalDatabase.Tags.GroupBy(i => i.Tag);
 			var groups = new List<TagGroup>();
 			foreach (var group in tagGroups)
 			{
 				if (!group.Any()) continue;
-				var tagNode = new TagGroup() { Name = group.Key };
+				var tagNode = new TagGroup { Name = group.Key };
 				foreach (var tag in group) tagNode.Children.Add(tag.TaggedItem);
 				groups.Add(tagNode);
 			}

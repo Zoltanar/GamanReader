@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using GamanReader.Model;
 using JetBrains.Annotations;
@@ -17,9 +18,12 @@ namespace GamanReader.ViewModel
 	{
 		public MainViewModel()
 		{
+			TitleText = "GamanReader";
 			RtlIsChecked = true;
 			DualPageIsChecked = true;
 			Directory.CreateDirectory(StoredDataFolder);
+			try { Directory.Delete(TempFolder, true); }
+			catch (IOException) { /*This can fail if folder is open or files are used by other applications.*/ }
 			Directory.CreateDirectory(TempFolder);
 		}
 
@@ -41,6 +45,8 @@ namespace GamanReader.ViewModel
 		private string _leftImageSource;
 		private string _rightImageSource;
 		private MangaInfo _mangaInfo;
+		private int _pageSize;
+		private string _searchText;
 
 		public string TitleText { get => _titleText; set { _titleText = value; OnPropertyChanged(); } }
 		public string ReplyText { get => _replyText; set { _replyText = value; OnPropertyChanged(); } }
@@ -59,11 +65,7 @@ namespace GamanReader.ViewModel
 				_rtlIsChecked = value;
 				RtlToggleText = value ? "◀ Right-to-Left ◀" : "▶ Left-to-Right ▶";
 				OnPropertyChanged();
-				if (_containerModel == null) return;
-				PopulateBox(ImageBox.Single, -1);
-				PopulateBox(ImageBox.Left, -1);
-				PopulateBox(ImageBox.Right, -1);
-				GoToIndex(CurrentIndex);
+				PopulateBoxes();
 			}
 		}
 		public bool DualPageIsChecked
@@ -72,60 +74,27 @@ namespace GamanReader.ViewModel
 			set
 			{
 				_dualPageIsChecked = value;
-				PageSize = _dualPageIsChecked ? 2 : 1;
+				_pageSize = _dualPageIsChecked ? 2 : 1;
 				PageSizeToggleText = value ? "Dual Page View" : "Single Page View";
 				OnPropertyChanged();
-				if (_containerModel == null) return;
-				PopulateBox(ImageBox.Single, -1);
-				PopulateBox(ImageBox.Left, -1);
-				PopulateBox(ImageBox.Right, -1);
-				GoToIndex(CurrentIndex);
+				SingleImageSource = null;
+				LeftImageSource = null;
+				RightImageSource = null;
+				PopulateBoxes();
 			}
 		}
-		public string SingleImageSource
-		{
-			get => _singleImageSource;
-			set
-			{
-				_singleImageSource = value;
-				OnPropertyChanged();
-			}
-		}
-		public string LeftImageSource
-		{
-			get => _leftImageSource;
-			set
-			{
-				_leftImageSource = value;
-				OnPropertyChanged();
-			}
-		}
-		public string RightImageSource
-		{
-			get => _rightImageSource;
-			set
-			{
-				_rightImageSource = value;
-				OnPropertyChanged();
-			}
-		}
-		public MangaInfo MangaInfo
-		{
-			get => _mangaInfo;
-			set
-			{
-				_mangaInfo = value;
-				OnPropertyChanged();
-			}
-		}
-		public int CurrentIndex
-		{
-			get => _containerModel.CurrentIndex;
-			set => _containerModel.CurrentIndex = value;
-		}
-		public int PageSize { get; private set; }
+		public string SingleImageSource { get => _singleImageSource; set { _singleImageSource = value; OnPropertyChanged(); } }
+		public string LeftImageSource { get => _leftImageSource; set { _leftImageSource = value; OnPropertyChanged(); } }
+		public string RightImageSource { get => _rightImageSource; set { _rightImageSource = value; OnPropertyChanged(); } }
+		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; OnPropertyChanged(); } }
+		public int CurrentIndex { get => _containerModel.CurrentIndex; set => _containerModel.CurrentIndex = value; }
 		public ObservableCollection<string> RecentItems => _recentFiles.Items;
 		public int TotalFiles => _containerModel.TotalFiles;
+
+		public string SearchText { get => _searchText; set { _searchText = value; OnPropertyChanged(); } }
+
+		public BindingList<MangaInfo> SearchResults { get; set; } = new BindingList<MangaInfo>();
+
 		#endregion
 
 		private void PopulateBox(ImageBox imagebox, int index)
@@ -168,7 +137,7 @@ namespace GamanReader.ViewModel
 			}
 		}
 
-		internal void GoToPage(int pageNumber)
+		public void GoToPage(int pageNumber)
 		{
 			if (_containerModel == null) return;
 			if (pageNumber < 0 || pageNumber > TotalFiles)
@@ -185,7 +154,7 @@ namespace GamanReader.ViewModel
 			PopulateBoxes();
 		}
 
-		internal void AddTag()
+		public void AddTag()
 		{
 			if (_containerModel == null) return;
 			StaticHelpers.AddTag(_containerModel.ContainerPath, _containerModel.IsFolder, TagText);
@@ -210,10 +179,10 @@ namespace GamanReader.ViewModel
 			else LoadArchive(fileOrFolder);
 		}
 
-		internal void GoBack(bool moveOne)
+		public void GoBack(bool moveOne)
 		{
 			if (_containerModel == null) return;
-			var moveNumber = moveOne ? 1 : PageSize;
+			var moveNumber = moveOne ? 1 : _pageSize;
 			CurrentIndex = Math.Max(-1, CurrentIndex - moveNumber);
 			PopulateBoxes();
 		}
@@ -221,18 +190,19 @@ namespace GamanReader.ViewModel
 		public void GoForward(bool moveOne)
 		{
 			if (_containerModel == null) return;
-			var moveNumber = moveOne ? 1 : PageSize;
+			var moveNumber = moveOne ? 1 : _pageSize;
 			CurrentIndex = Math.Min(TotalFiles - 1, CurrentIndex + moveNumber);
 			PopulateBoxes();
 		}
 
 		private void PopulateBoxes()
 		{
+			if (_containerModel == null) return;
 			ImageBox imagebox1;
-			if (PageSize == 1) imagebox1 = ImageBox.Single;
+			if (_pageSize == 1) imagebox1 = ImageBox.Single;
 			else imagebox1 = RtlIsChecked ? ImageBox.Right : ImageBox.Left;
 			PopulateBox(imagebox1, CurrentIndex);
-			if (PageSize == 1) return;
+			if (_pageSize == 1) return;
 			var imagebox2 = RtlIsChecked ? ImageBox.Left : ImageBox.Right;
 			PopulateBox(imagebox2, CurrentIndex + 1 > TotalFiles - 1 ? -1 : CurrentIndex + 1);
 			GoToIndexText = (CurrentIndex + 1).ToString();
@@ -249,7 +219,8 @@ namespace GamanReader.ViewModel
 				return;
 			}
 			SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
-			_containerModel = new ArchiveContainer(archivePath, zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName));
+			var files = zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
+			_containerModel = new ArchiveContainer(archivePath, files);
 			LoadContainer(archivePath);
 		}
 
@@ -282,7 +253,13 @@ namespace GamanReader.ViewModel
 
 		private void LoadContainer(string containerName)
 		{
-			MangaInfo = new MangaInfo(Path.GetFileNameWithoutExtension(containerName));
+			if (_containerModel.TotalFiles == 0)
+			{
+				ReplyText = "No files found in container";
+				_containerModel = null;
+				return;
+			}
+			MangaInfo = new MangaInfo(containerName);
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
 			TitleText = $"{Path.GetFileName(containerName)} - {ProgramName}";
@@ -291,7 +268,7 @@ namespace GamanReader.ViewModel
 			IndexLabelText = $"/{_containerModel.TotalFiles}";
 			Settings.Save(_recentFiles.Items);
 		}
-		
+
 		#endregion
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -310,5 +287,38 @@ namespace GamanReader.ViewModel
 		}
 
 
+		public async void SaveLibraryInfo()
+		{
+			await Task.Run(() =>
+			{
+				LocalDatabase.Information.RemoveRange(LocalDatabase.Information);
+				var files = Directory.GetFiles(Settings.LibraryFolder);
+				var folders = Directory.GetDirectories(Settings.LibraryFolder);
+				int count = 0;
+				int total = files.Length + folders.Length;
+				foreach (var container in files.Concat(folders))
+				{
+					count++;
+					Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(container)}".PadRight(200)); //todo report progress
+					LocalDatabase.Information.Add(new MangaInfo(container));
+				}
+				Console.WriteLine();
+				LocalDatabase.SaveChanges();
+			});
+		}
+
+		public void Search()
+		{
+			SearchResults.Clear();
+			var results = LocalDatabase.Information.Where(x => x.Artist.ToLower().Equals(SearchText.ToLower())).ToList();
+			SearchResults.AddRange(results);
+		}
+
+		public void LoadFromMangaInfo(MangaInfo info)
+		{
+			var attributes = File.GetAttributes(info.FilePath);
+			if (attributes.HasFlag(FileAttributes.Directory)) LoadFolder(info.FilePath);
+			else LoadArchive(info.FilePath);
+		}
 	}
 }

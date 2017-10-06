@@ -7,17 +7,19 @@ using SQLite.CodeFirst;
 
 namespace GamanReader.Model
 {
-	public class TagDatabase : DbContext
+	public class GamanDatabase : DbContext
 	{
-		public TagDatabase() : base("TagDatabase") { }
+		public GamanDatabase() : base("TagDatabase") { }
 		public DbSet<TaggedItem> TaggedItems { get; set; }
+		public DbSet<MangaInfo> Information { get; set; }
 		public DbSet<IndividualTag> Tags { get; set; }
 		protected override void OnModelCreating(DbModelBuilder modelBuilder)
 		{
-			var sqliteConnectionInitializer = new SqliteCreateDatabaseIfNotExists<TagDatabase>(modelBuilder);
+			var sqliteConnectionInitializer = new SqliteCreateDatabaseIfNotExists<GamanDatabase>(modelBuilder);
 			Database.SetInitializer(sqliteConnectionInitializer);
 		}
 	}
+
 	public class TaggedItem
 	{
 		public int Id { get; set; }
@@ -35,7 +37,7 @@ namespace GamanReader.Model
 		[NotMapped]
 		public string GetName => System.IO.Path.GetFileName(Path);
 	}
-
+	
 	public class IndividualTag
 	{
 		public int Id { get; set; }
