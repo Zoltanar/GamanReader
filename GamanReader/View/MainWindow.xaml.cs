@@ -158,9 +158,9 @@ namespace GamanReader.View
 			_fullscreenOn = !_fullscreenOn;
 		}
 
-		private void SaveLibraryInfo(object sender, RoutedEventArgs e)
+		private void ReloadLibrary(object sender, RoutedEventArgs e)
 		{
-			_mainModel.SaveLibraryInfo();
+			_mainModel.ReloadLibraryInfo();
 		}
 
 		private void TextBox_KeyUp(object sender, KeyEventArgs e)

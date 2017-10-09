@@ -10,16 +10,37 @@
     </UserControl.DataContext>
     <Grid>
         <Label Content="Event:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="100" Height="15" VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
-        <Label Content="{Binding Event}" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top" Width="100" Height="15" VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
+        <Label HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top" Width="100" Height="15" VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0" Background="Transparent">
+            <Hyperlink Click="Hyperlink_Click" Tag="event:">
+                <Run Text="{Binding Event}" />
+            </Hyperlink>
+        </Label>
+
         <Label Content="Group:" HorizontalAlignment="Left" Margin="10,50,0,0" VerticalAlignment="Top" Width="100" Height="15" VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
-        <Label Content="{Binding Group}" HorizontalAlignment="Left" Margin="10,70,0,0" VerticalAlignment="Top" Width="100" Height="15" VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
+        <Label HorizontalAlignment="Left" Margin="10,70,0,0" VerticalAlignment="Top" Width="100" Height="15" VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0">
+            <Hyperlink Click="Hyperlink_Click" Tag="group:">
+                <Run Text="{Binding Group}" />
+            </Hyperlink>
+        </Label>
         <Label Content="Artist:" HorizontalAlignment="Left" Margin="10,90,0,0" VerticalAlignment="Top" Width="100" Height="15"  VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
-        <Label Content="{Binding Artist}" HorizontalAlignment="Left" Margin="10,110,0,0" VerticalAlignment="Top" Width="100" Height="15"  VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
+        <Label HorizontalAlignment="Left" Margin="10,110,0,0" VerticalAlignment="Top" Width="100" Height="15"  VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0">
+            <Hyperlink Click="Hyperlink_Click" Tag="artist:">
+                <Run Text="{Binding Artist}" />
+            </Hyperlink>
+        </Label>
         <Label Content="Title:" HorizontalAlignment="Left" Margin="10,130,0,0" VerticalAlignment="Top" Width="100" Height="15"  VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
         <TextBlock Text="{Binding Title}" HorizontalAlignment="Left" Margin="10,150,0,0" VerticalAlignment="Top" Width="100" Height="50"  Foreground="White" FontSize="10" Padding="0" TextWrapping="WrapWithOverflow"/>
         <Label Content="Parody:" HorizontalAlignment="Left" Margin="10,205,0,0" VerticalAlignment="Top" Width="100" Height="15"  VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
-        <TextBlock Text="{Binding Parody}" HorizontalAlignment="Left" Margin="10,225,0,0" VerticalAlignment="Top" Width="100" Height="50"  Foreground="White" FontSize="10" Padding="0"/>
+        <Label HorizontalAlignment="Left" Margin="10,225,0,0" VerticalAlignment="Top" Width="100" Height="50"  Foreground="White" FontSize="10" Padding="0">
+        <Hyperlink Click="Hyperlink_Click" Tag="parody:">
+            <Run Text="{Binding Parody}" />
+        </Hyperlink>
+        </Label>
         <Label Content="Subber:" HorizontalAlignment="Left" Margin="10,280,0,0" VerticalAlignment="Top" Width="100" Height="15"  VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
-        <TextBlock Text="{Binding Subber}" HorizontalAlignment="Left" Margin="10,300,0,0" VerticalAlignment="Top" Width="100" Height="50" Foreground="White" FontSize="10" Padding="0" TextWrapping="WrapWithOverflow"/>
+        <Label HorizontalAlignment="Left" Margin="10,300,0,0" VerticalAlignment="Top" Width="100" Height="50" Foreground="White" FontSize="10" Padding="0">
+            <Hyperlink Click="Hyperlink_Click" Tag="subber:">
+                <Run Text="{Binding Subber}" />
+            </Hyperlink>
+        </Label>
     </Grid>
 </UserControl>

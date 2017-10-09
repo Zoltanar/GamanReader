@@ -27,6 +27,7 @@ namespace GamanReader.ViewModel
 			Directory.CreateDirectory(TempFolder);
 		}
 
+
 		#region Properties
 		private Container _containerModel;
 		private string _rtlToggleText;
@@ -287,11 +288,12 @@ namespace GamanReader.ViewModel
 		}
 
 
-		public async void SaveLibraryInfo()
+		public async void ReloadLibraryInfo()
 		{
 			await Task.Run(() =>
 			{
 				LocalDatabase.Information.RemoveRange(LocalDatabase.Information);
+				LocalDatabase.SaveChanges();
 				var files = Directory.GetFiles(Settings.LibraryFolder);
 				var folders = Directory.GetDirectories(Settings.LibraryFolder);
 				int count = 0;
@@ -310,8 +312,40 @@ namespace GamanReader.ViewModel
 		public void Search()
 		{
 			SearchResults.Clear();
-			var results = LocalDatabase.Information.Where(x => x.Artist.ToLower().Equals(SearchText.ToLower())).ToList();
+			var searchParts = SearchText.Split(':');
+			var type = searchParts.Length == 2 ? searchParts[0] : "";
+			var searchString = searchParts.Length == 2 ? searchParts[1] : SearchText;
+			MangaInfo[] results;
+			switch (type)
+			{
+				case "event":
+					results = LocalDatabase.Information.Where(x => x.Event.ToLower().Equals(searchString.ToLower())).ToArray();
+					break;
+				case "group":
+					results = LocalDatabase.Information.Where(x => x.Group.ToLower().Equals(searchString.ToLower())).ToArray();
+					break;
+				case "artist":
+					results = LocalDatabase.Information.Where(x => x.Artist.ToLower().Equals(searchString.ToLower())).ToArray();
+					break;
+				case "parody":
+					results = LocalDatabase.Information.Where(x => x.Parody.ToLower().Equals(searchString.ToLower())).ToArray();
+					break;
+				case "subber":
+					results = LocalDatabase.Information.Where(x => x.Subber.ToLower().Equals(searchString.ToLower())).ToArray();
+					break;
+				case "":
+					results = LocalDatabase.Information.Where(x => x.Title.ToLower().Contains(searchString.ToLower())).ToArray();
+					break;
+					default:
+					throw new ArgumentException("Argument is invalid.");
+			}
 			SearchResults.AddRange(results);
+		}
+
+		internal void Search(string searchString)
+		{
+			SearchText = searchString;
+			Search();
 		}
 
 		public void LoadFromMangaInfo(MangaInfo info)
