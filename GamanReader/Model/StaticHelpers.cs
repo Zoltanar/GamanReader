@@ -27,6 +27,8 @@ namespace GamanReader.Model
 		public const string ProgramName = "GamanReader";
 		private const string AllowedFormatsJson = "allowedformats.json";
 
+		public static readonly string[] RecognizedContainers = { ".zip", ".rar" };
+
 		public static GamanDatabase LocalDatabase { get; }
 
 		public static string[] AllowedFormats { get; }

@@ -219,10 +219,18 @@ namespace GamanReader.ViewModel
 				ReplyText = "Archive doesn't exist.";
 				return;
 			}
-			SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
-			var files = zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
-			_containerModel = new ArchiveContainer(archivePath, files);
-			LoadContainer(archivePath);
+			try
+			{
+				SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
+				var files = zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
+				_containerModel = new ArchiveContainer(archivePath, files);
+				LoadContainer(archivePath);
+			}
+			catch (Exception ex)
+			{
+				ReplyText = $"Failed - {ex.Message}";
+				return;
+			}
 		}
 
 		public void LoadFolder(string folderName)
@@ -298,15 +306,27 @@ namespace GamanReader.ViewModel
 				var folders = Directory.GetDirectories(Settings.LibraryFolder);
 				int count = 0;
 				int total = files.Length + folders.Length;
-				foreach (var container in files.Concat(folders))
+				foreach (var file in files)
 				{
 					count++;
-					Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(container)}".PadRight(200)); //todo report progress
-					LocalDatabase.Information.Add(new MangaInfo(container));
+					Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(file)}".PadRight(200)); //todo report progress
+					if (!FileIsSupported(file)) continue;
+					LocalDatabase.Information.Add(new MangaInfo(file));
+				}
+				foreach (var folder in folders)
+				{
+					count++;
+					Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(folder)}".PadRight(200)); //todo report progress
+					LocalDatabase.Information.Add(new MangaInfo(folder));
 				}
 				Console.WriteLine();
 				LocalDatabase.SaveChanges();
 			});
+		}
+
+		private bool FileIsSupported(string file)
+		{
+			return RecognizedContainers.Contains(Path.GetExtension(file));
 		}
 
 		public void Search()

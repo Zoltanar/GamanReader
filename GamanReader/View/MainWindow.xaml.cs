@@ -71,7 +71,7 @@ namespace GamanReader.View
 			void DeterminePathIsFolder()
 			{
 				var ext = Path.GetExtension(containerPath);
-				isFolder = !_recognizedContainers.Contains(ext);
+				isFolder = !RecognizedContainers.Contains(ext);
 			}
 		}
 
@@ -86,7 +86,6 @@ namespace GamanReader.View
 			}
 		}
 
-		private readonly string[] _recognizedContainers = { ".zip", ".rar" };
 
 
 		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)

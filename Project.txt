@@ -1,3 +1,2 @@
 TODO
-rar support
-gif support
+handle folders in archives

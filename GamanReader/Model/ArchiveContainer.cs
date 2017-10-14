@@ -29,7 +29,8 @@ namespace GamanReader.Model
 			if (index == -1) return null;
 			var filename = FileNames[index];
 			string generatedFolder = Path.Combine(StaticHelpers.TempFolder, ContainerPath.GetHashCode().ToString());
-			var tempFile = Path.Combine(generatedFolder, filename);
+			var ext = Path.GetExtension(filename);
+			var tempFile = Path.Combine(generatedFolder, index + ext);
 			var fullPath = Path.GetFullPath(tempFile);
 			if (File.Exists(tempFile)) return fullPath;
 			Directory.CreateDirectory(Path.GetDirectoryName(fullPath) ?? throw new DirectoryNotFoundException($"Directory not found for path {fullPath}"));
