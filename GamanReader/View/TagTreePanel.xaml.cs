@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using GamanReader.Model;
+using GamanReader.ViewModel;
 
 namespace GamanReader.View
 {
@@ -23,6 +24,11 @@ namespace GamanReader.View
 			if(window == null) throw new Exception("MainWindow not found.");
 			window.LoadContainer(item.Path, item.IsFolder);
 			Visibility = Visibility.Collapsed;
+		}
+
+		public void Refresh()
+		{
+			((TagTreeViewModel)DataContext).Refresh();
 		}
 	}
 }

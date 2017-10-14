@@ -229,7 +229,6 @@ namespace GamanReader.ViewModel
 			catch (Exception ex)
 			{
 				ReplyText = $"Failed - {ex.Message}";
-				return;
 			}
 		}
 

@@ -132,6 +132,7 @@ namespace GamanReader.View
 		private void AddTag(object sender, RoutedEventArgs e)
 		{
 			_mainModel.AddTag();
+			TagPanel.Refresh();
 		}
 
 		private void SeeTagged_Click(object sender, RoutedEventArgs e)
@@ -168,13 +169,16 @@ namespace GamanReader.View
 			_mainModel.Search();
 
 		}
-
+		
 		private void Control_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			if (!(e.OriginalSource is DependencyObject source)) return;
-			if (!(ItemsControl.ContainerFromElement((ItemsControl)sender, source) is ListBoxItem lbItem)) return;
-			if (lbItem.Content is MangaInfo item) _mainModel.LoadFromMangaInfo(item);
-		}
+			if (!(ItemsControl.ContainerFromElement((ItemsControl) sender, source) is ListBoxItem lbItem)) return;
+			if (lbItem.Content is MangaInfo item)
+			{
+				_mainModel.LoadFromMangaInfo(item);
+			}
+	}
 
 		private int _widthChange = 100;
 

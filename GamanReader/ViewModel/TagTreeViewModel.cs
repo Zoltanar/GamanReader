@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
@@ -10,12 +9,22 @@ namespace GamanReader.ViewModel
 {
 	public class TagTreeViewModel
 	{
-		public ObservableCollection<TagGroup> TagGroups { get; set; } = new ObservableCollection<TagGroup>(GetTagGroups());
+		public BindingList<TagGroup> TagGroups { get; } = new BindingList<TagGroup>();
 
-		private static IEnumerable<TagGroup> GetTagGroups()
+		public TagTreeViewModel()
 		{
+			Refresh();
+		}
+
+		public void Refresh()
+		{
+			TagGroups.Clear();
 #if DEBUG
-			if (DesignerProperties.GetIsInDesignMode(new DependencyObject())) return GetTagGroupsMockup();
+			if (DesignerProperties.GetIsInDesignMode(new DependencyObject()))
+			{
+				TagGroups.SetRange(GetTagGroupsMockup());
+				return;
+			}
 #endif
 			var tagGroups = StaticHelpers.LocalDatabase.Tags.GroupBy(i => i.Tag);
 			var groups = new List<TagGroup>();
@@ -26,11 +35,11 @@ namespace GamanReader.ViewModel
 				foreach (var tag in group) tagNode.Children.Add(tag.TaggedItem);
 				groups.Add(tagNode);
 			}
-			return groups;
+			TagGroups.SetRange(groups);
 		}
 
 #if DEBUG
-		private static IEnumerable<TagGroup> GetTagGroupsMockup()
+		private List<TagGroup> GetTagGroupsMockup()
 		{
 			var rnd = new Random();
 			var inGroups = new List<TagGroup>();
