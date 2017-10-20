@@ -1,8 +1,7 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using GamanReader.Model;
+using GamanReader.Model.Database;
 using GamanReader.ViewModel;
 
 namespace GamanReader.View
@@ -21,9 +20,7 @@ namespace GamanReader.View
 		{
 			if (!((sender as TreeViewItem)?.DataContext is TaggedItem item)) return;
 			var window = (MainWindow) Window.GetWindow(this);
-			if(window == null) throw new Exception("MainWindow not found.");
-			window.LoadContainer(item.Path, item.IsFolder);
-			Visibility = Visibility.Collapsed;
+			//window.LoadContainer(item.Path, item.IsFolder); //todo load mangainfo, remove taggeditem
 		}
 
 		public void Refresh()

@@ -163,11 +163,12 @@
     </ApplicationDefinition>
     <Compile Include="Model\ArchiveContainer.cs" />
     <Compile Include="Model\FolderContainer.cs" />
-    <Compile Include="Model\MangaInfo.cs" />
+    <Compile Include="Model\Database\LibraryFolder.cs" />
+    <Compile Include="Model\Database\MangaInfo.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="Model\Settings.cs" />
     <Compile Include="Model\RandomFile.cs" />
-    <Compile Include="Model\TagSystem.cs" />
+    <Compile Include="Model\Database\GamanDatabase.cs" />
     <Compile Include="View\MangaInfoPanel.xaml.cs">
       <DependentUpon>MangaInfoPanel.xaml</DependentUpon>
     </Compile>

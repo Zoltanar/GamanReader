@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 
-namespace GamanReader.Model
+namespace GamanReader.Model.Database
 {
 	public class MangaInfo : INotifyPropertyChanged
 	{
@@ -19,6 +22,12 @@ namespace GamanReader.Model
 		private string _parody;
 		private string _subber;
 
+		[Key, Column(Order = 0)]
+		public int LibraryFolderId { get; set; }
+		[Key, Column(Order = 1), StringLength(1024)]
+		public string SubPath { get; set; }
+
+		public string FilePath => Library.Path + SubPath;
 		public string Event
 		{
 			get => _event;
@@ -78,18 +87,33 @@ namespace GamanReader.Model
 		public bool Decensored { get; set; }
 		public bool English { get; set; }
 		public bool Digital { get; set; }
-		[Key,StringLength(1024)]
-		public string FilePath { get; set; }
+
+		public virtual LibraryFolder Library { get; set; }
+		public bool IsFolder { get; set; }
+		public virtual ICollection<string> Tags { get; set; }
+
 		#endregion
+
+		public static MangaInfo Create(string filePath)
+		{
+			var pathToFind = Directory.GetParent(filePath).FullName;
+			var item = new MangaInfo(filePath);
+			item.Library = StaticHelpers.LocalDatabase.Libraries.SingleOrDefault(x => x.Path == pathToFind) ??
+								StaticHelpers.LocalDatabase.Libraries.Single(x => x.Id == 1);
+			item.LibraryFolderId = item.Library.Id;
+			item.SubPath = item.Library.Id == 1 ? filePath : filePath.Replace(item.Library.Path, "");
+			item.IsFolder = File.GetAttributes(item.FilePath).HasFlag(FileAttributes.Directory);
+			if (!filePath.Equals(item.FilePath)) { }
+			return item;
+		}
 
 		/// <summary>
 		/// Guesses manga information from filename.
 		/// </summary>
-		public MangaInfo(string filePath)
+		private MangaInfo(string filePath)
 		{
-			FilePath = filePath;
+			Tags = new HashSet<string>();
 			var filename = Path.GetFileNameWithoutExtension(filePath);
-			if(filename == null) { }
 			Debug.Assert(filename != null, nameof(filename) + " != null");
 			var firstClosingBracket = filename.IndexOf(")", StringComparison.Ordinal);
 			if (filename.StartsWith("(") && firstClosingBracket > -1)
@@ -128,6 +152,22 @@ namespace GamanReader.Model
 		}
 
 
+		/// <summary>
+		/// Guesses manga information from filename.
+		/// </summary>
+		public static MangaInfo Create(string filePath, LibraryFolder library, bool isFolder)
+		{
+			var item = new MangaInfo(filePath)
+			{
+				LibraryFolderId = library.Id,
+				Library = library,
+				IsFolder = isFolder,
+				SubPath = filePath.Replace(library.Path, "")
+			};
+			if (!filePath.Equals(item.FilePath)) { }
+			return item;
+		}
+
 		public MangaInfo()
 		{
 			Title = "Unknown";
@@ -143,26 +183,19 @@ namespace GamanReader.Model
 			{
 				switch (match.Groups[1].Value)
 				{
-					case "Digital":
-						Digital = true;
-						break;
+					case "ENG":
 					case "English":
+						Tags.Add("English");
 						English = true;
 						break;
-					case "Decensored":
-						Decensored = true;
-						break;
-					case "Incomplete":
-						Incomplete = true;
-						break;
 					default:
-						Subber = match.Groups[1].Value;
+						Tags.Add(match.Groups[1].Value);
 						break;
 				}
 			}
 			if (matches3.Count > 0) Subber = matches3[0].Groups[1].Value;
 		}
-		
+
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		[NotifyPropertyChangedInvocator]

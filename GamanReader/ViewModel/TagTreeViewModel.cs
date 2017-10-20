@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using GamanReader.Model;
+using GamanReader.Model.Database;
 
 namespace GamanReader.ViewModel
 {

@@ -17,6 +17,10 @@ namespace GamanReader.Model
 		}
 
 		public override bool IsFolder => true;
+		public override void Dispose()
+		{
+			//not needed for folder
+		}
 
 		public override string GetFile(int index) => index == -1 ? null : FileNames[index];
 	}

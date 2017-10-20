@@ -9,6 +9,7 @@ using System.Threading;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using GamanReader.Model.Database;
 using Newtonsoft.Json;
 
 namespace GamanReader.Model
@@ -32,6 +33,7 @@ namespace GamanReader.Model
 		public static GamanDatabase LocalDatabase { get; }
 
 		public static string[] AllowedFormats { get; }
+		public static Random Random { get; } = new Random();
 
 		static StaticHelpers()
 		{
@@ -39,11 +41,34 @@ namespace GamanReader.Model
 			{
 				AllowedFormats = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(AllowedFormatsJson));
 				LocalDatabase = new GamanDatabase();
-				Directory.CreateDirectory(StoredDataFolder);
+				if (!LocalDatabase.Libraries.Any(x => x.Id == 1))
+				{
+					LocalDatabase.Libraries.Add(new LibraryFolder(""));
+					LocalDatabase.SaveChanges();
+				}
+					Directory.CreateDirectory(StoredDataFolder);
 			}
 			catch (Exception ex)
 			{
 				LogToFile($"Failed to load {AllowedFormatsJson} or TagDatabase.", ex);
+			}
+		}
+
+		public static MangaInfo GetOrCreateMangaInfo(string containerPath)
+		{
+			var item = GetByPath(containerPath);
+			if (item != null) return item;
+			var preSavedItem = MangaInfo.Create(containerPath);
+			LocalDatabase.Information.Add(preSavedItem);
+			LocalDatabase.SaveChanges();
+			item = GetByPath(containerPath);
+			return item;
+
+			MangaInfo GetByPath(string path)
+			{
+
+				var items = LocalDatabase.Information.Where(x => path.EndsWith(x.SubPath)).ToArray();
+				return items.FirstOrDefault(x => x.FilePath == path);
 			}
 		}
 

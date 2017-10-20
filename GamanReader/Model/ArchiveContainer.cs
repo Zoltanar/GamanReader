@@ -23,7 +23,6 @@ namespace GamanReader.Model
 
 		public override bool IsFolder => false;
 		
-
 		public override string GetFile(int index)
 		{
 			if (index == -1) return null;
@@ -39,6 +38,11 @@ namespace GamanReader.Model
 				_zipExtractor.ExtractFile(filename, stream);
 			}
 			return fullPath;
+		}
+
+		public override void Dispose()
+		{
+			_zipExtractor?.Dispose();
 		}
 	}
 }

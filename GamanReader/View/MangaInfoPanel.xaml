@@ -3,10 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:model="clr-namespace:GamanReader.Model"
+             xmlns:database="clr-namespace:GamanReader.Model.Database"
              mc:Ignorable="d" Height="360.001" Width="120">
     <UserControl.DataContext>
-        <model:MangaInfo></model:MangaInfo>
+        <database:MangaInfo></database:MangaInfo>
     </UserControl.DataContext>
     <Grid>
         <Label Content="Event:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="100" Height="15" VerticalContentAlignment="Center" Foreground="White" FontSize="10" Padding="0"/>
@@ -44,3 +44,4 @@
         </Label>
     </Grid>
 </UserControl>
+

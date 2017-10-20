@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 
 namespace GamanReader.Model
 {
-	public abstract class Container
+	public abstract class Container : IDisposable
 	{
 		public string ContainerPath { get; protected set; }
 		public int CurrentIndex { get; set; }
@@ -32,6 +33,8 @@ namespace GamanReader.Model
 				return extension != null && extension.Equals(ext);
 			});
 		}
+
+		public abstract void Dispose();
 	}
 
 }

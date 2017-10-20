@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using GamanReader.Model;
+using GamanReader.Model.Database;
 using JetBrains.Annotations;
 using SevenZip;
 using static GamanReader.Model.StaticHelpers;
@@ -165,19 +166,18 @@ namespace GamanReader.ViewModel
 
 		public void OpenRandom()
 		{
-			if (string.IsNullOrEmpty(Settings.LibraryFolder))
+			if (!LocalDatabase.Libraries.Any())
 			{
-				ReplyText = "Library Folder is not set";
+				ReplyText = "No Library Folders are set.";
 				return;
 			}
-			var fileOrFolder = RandomFile.GetRandomFileOrFolder(Settings.LibraryFolder, out bool isFolder, out string error);
-			if (fileOrFolder == null)
+			var item = LocalDatabase.Information.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+			if (item == null)
 			{
-				ReplyText = error;
+				ReplyText = "No items found.";
 				return;
 			}
-			if (isFolder) LoadFolder(fileOrFolder);
-			else LoadArchive(fileOrFolder);
+			LoadContainer(item);
 		}
 
 		public void GoBack(bool moveOne)
@@ -212,36 +212,29 @@ namespace GamanReader.ViewModel
 
 		#region Load Container
 
-		public void LoadArchive(string archivePath)
+		private void LoadArchive(MangaInfo item)
 		{
-			if (!File.Exists(archivePath))
+			if (!File.Exists(item.FilePath))
 			{
 				ReplyText = "Archive doesn't exist.";
 				return;
 			}
-			try
-			{
-				SevenZipExtractor zipFile = new SevenZipExtractor(archivePath);
+				SevenZipExtractor zipFile = new SevenZipExtractor(item.FilePath);
 				var files = zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
-				_containerModel = new ArchiveContainer(archivePath, files);
-				LoadContainer(archivePath);
-			}
-			catch (Exception ex)
-			{
-				ReplyText = $"Failed - {ex.Message}";
-			}
+			_containerModel?.Dispose();
+			_containerModel = new ArchiveContainer(item.FilePath, files);
 		}
 
-		public void LoadFolder(string folderName)
+		private void LoadFolder(MangaInfo item)
 		{
-			if (!Directory.Exists(folderName))
+			if (!Directory.Exists(item.FilePath))
 			{
 				ReplyText = "Folder doesn't exist.";
 				return;
 			}
-			var files = Directory.GetFiles(folderName).ToList();
+			var files = Directory.GetFiles(item.FilePath).ToList();
 			files.RemoveAll(i => Path.GetFileName(i) == "desktop.ini");
-			var folders = Directory.GetDirectories(folderName);
+			var folders = Directory.GetDirectories(item.FilePath);
 			if (files.Count + folders.Length == 0)
 			{
 				ReplyText = "Folder is empty.";
@@ -252,25 +245,36 @@ namespace GamanReader.ViewModel
 				var result = MessageBox.Show("Include sub-folders?", "Include Folders", MessageBoxButton.YesNo);
 				if (result == MessageBoxResult.Yes)
 				{
-					files.AddRange(Directory.GetFiles(folderName, "*", SearchOption.AllDirectories));
+					files.AddRange(Directory.GetFiles(item.FilePath, "*", SearchOption.AllDirectories));
 				}
 			}
-			_containerModel = new FolderContainer(folderName, files);
-			LoadContainer(folderName);
+			_containerModel?.Dispose();
+			_containerModel = new FolderContainer(item.FilePath, files);
 		}
 
-		private void LoadContainer(string containerName)
+		public void LoadContainer(MangaInfo item)
 		{
+			try
+			{
+			if(item.IsFolder) LoadFolder(item);
+			else LoadArchive(item);
+			}
+			catch(Exception ex)
+			{
+				ReplyText = $"Failed - {ex.Message}";
+				return;
+			}
+			if (_containerModel == null) return;
 			if (_containerModel.TotalFiles == 0)
 			{
 				ReplyText = "No files found in container";
 				_containerModel = null;
 				return;
 			}
-			MangaInfo = new MangaInfo(containerName);
+			MangaInfo = item;
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
-			TitleText = $"{Path.GetFileName(containerName)} - {ProgramName}";
+			TitleText = $"{Path.GetFileName(item.FilePath)} - {ProgramName}";
 			_recentFiles.Add(_containerModel.ContainerPath);
 			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
 			IndexLabelText = $"/{_containerModel.TotalFiles}";
@@ -301,26 +305,32 @@ namespace GamanReader.ViewModel
 			{
 				LocalDatabase.Information.RemoveRange(LocalDatabase.Information);
 				LocalDatabase.SaveChanges();
-				var files = Directory.GetFiles(Settings.LibraryFolder);
-				var folders = Directory.GetDirectories(Settings.LibraryFolder);
-				int count = 0;
-				int total = files.Length + folders.Length;
-				foreach (var file in files)
-				{
-					count++;
-					Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(file)}".PadRight(200)); //todo report progress
-					if (!FileIsSupported(file)) continue;
-					LocalDatabase.Information.Add(new MangaInfo(file));
-				}
-				foreach (var folder in folders)
-				{
-					count++;
-					Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(folder)}".PadRight(200)); //todo report progress
-					LocalDatabase.Information.Add(new MangaInfo(folder));
-				}
-				Console.WriteLine();
+				foreach(var library in LocalDatabase.Libraries) ReloadLibraryInfo(library);
 				LocalDatabase.SaveChanges();
 			});
+		}
+
+		private void ReloadLibraryInfo(LibraryFolder library)
+		{
+			if (string.IsNullOrWhiteSpace(library.Path)) return;
+			var files = Directory.GetFiles(library.Path);
+			var folders = Directory.GetDirectories(library.Path);
+			int count = 0;
+			int total = files.Length + folders.Length;
+			foreach (var file in files)
+			{
+				count++;
+				//Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(file)}".PadRight(200)); //todo report progress
+				if (!FileIsSupported(file)) continue;
+				LocalDatabase.Information.Add(MangaInfo.Create(file,library,false));
+			}
+			foreach (var folder in folders)
+			{
+				count++;
+				//Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(folder)}".PadRight(200)); //todo report progress
+				LocalDatabase.Information.Add(MangaInfo.Create(folder, library, true));
+			}
+			ReplyText = "Finished Reloading Library";
 		}
 
 		private bool FileIsSupported(string file)
@@ -365,13 +375,6 @@ namespace GamanReader.ViewModel
 		{
 			SearchText = searchString;
 			Search();
-		}
-
-		public void LoadFromMangaInfo(MangaInfo info)
-		{
-			var attributes = File.GetAttributes(info.FilePath);
-			if (attributes.HasFlag(FileAttributes.Directory)) LoadFolder(info.FilePath);
-			else LoadArchive(info.FilePath);
 		}
 	}
 }

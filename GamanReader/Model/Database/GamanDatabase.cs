@@ -5,18 +5,19 @@ using System.Linq;
 using System.Windows.Media;
 using SQLite.CodeFirst;
 
-namespace GamanReader.Model
+namespace GamanReader.Model.Database
 {
 	public class GamanDatabase : DbContext
 	{
 		public GamanDatabase() : base("TagDatabase") { }
 		public DbSet<TaggedItem> TaggedItems { get; set; }
+		public DbSet<LibraryFolder> Libraries { get; set; }
 		public DbSet<MangaInfo> Information { get; set; }
 		public DbSet<IndividualTag> Tags { get; set; }
 		protected override void OnModelCreating(DbModelBuilder modelBuilder)
 		{
 			var sqliteConnectionInitializer = new SqliteCreateDatabaseIfNotExists<GamanDatabase>(modelBuilder);
-			Database.SetInitializer(sqliteConnectionInitializer);
+			System.Data.Entity.Database.SetInitializer(sqliteConnectionInitializer);
 		}
 	}
 

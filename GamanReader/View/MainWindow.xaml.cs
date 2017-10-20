@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using GamanReader.Model;
+using GamanReader.Model.Database;
 using GamanReader.ViewModel;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -41,7 +40,11 @@ namespace GamanReader.View
 			SevenZipBase.SetLibraryPath(path);
 			RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.Fant);
 			var args = Environment.GetCommandLineArgs();
-			if (args.Length > 1) LoadContainer(args[1]);
+			if (args.Length > 1)
+			{
+				var item = GetOrCreateMangaInfo(args[1]);
+				LoadContainer(item);
+			}
 		}
 
 
@@ -50,7 +53,8 @@ namespace GamanReader.View
 			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true };
 			var result = folderPicker.ShowDialog();
 			if (result != CommonFileDialogResult.Ok) return;
-			LoadContainer(folderPicker.FileName, true);
+			var item = GetOrCreateMangaInfo(folderPicker.FileName);
+			LoadContainer(item);
 		}
 
 		private void LoadArchiveByDialog(object sender, RoutedEventArgs e)
@@ -58,21 +62,14 @@ namespace GamanReader.View
 			var filePicker = new OpenFileDialog { Filter = "Archives|*.zip;*.rar" };
 			bool? resultOk = filePicker.ShowDialog();
 			if (resultOk != true) return;
-			LoadContainer(filePicker.FileName, false);
+			var item = GetOrCreateMangaInfo(filePicker.FileName);
+			LoadContainer(item);
 		}
 
 
-		public void LoadContainer(string containerPath, bool? isFolder = null)
+		public void LoadContainer(MangaInfo item)
 		{
-			if (isFolder == null) DeterminePathIsFolder();
-			if (isFolder.Value) _mainModel.LoadFolder(containerPath);
-			else _mainModel.LoadArchive(containerPath);
-
-			void DeterminePathIsFolder()
-			{
-				var ext = Path.GetExtension(containerPath);
-				isFolder = !RecognizedContainers.Contains(ext);
-			}
+			_mainModel.LoadContainer(item);
 		}
 
 		private void RecentCb_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -81,7 +78,7 @@ namespace GamanReader.View
 			if (e.AddedItems[0] != null && !e.AddedItems[0].ToString().Equals(""))
 			{
 				var containerPath = e.AddedItems[0].ToString();
-				LoadContainer(containerPath);
+				//LoadContainer(containerPath); //todo list should have mangaInfo items
 				//TODO clear from list if it doesnt exist
 			}
 		}
@@ -106,7 +103,8 @@ namespace GamanReader.View
 			string containerPath = ((DataObject)e.Data).GetFileDropList()[0];
 			if (containerPath?.EndsWith(".lnk") ?? false) containerPath = GetPathFromShortcut(containerPath);
 			if (string.IsNullOrWhiteSpace(containerPath)) return; //todo report error
-			LoadContainer(containerPath);
+			var item = GetOrCreateMangaInfo(containerPath);
+			LoadContainer(item);
 
 		}
 
@@ -126,7 +124,8 @@ namespace GamanReader.View
 			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true };
 			var result = folderPicker.ShowDialog();
 			if (result != CommonFileDialogResult.Ok) return;
-			Settings.LibraryFolder = folderPicker.FileName;
+			LocalDatabase.Libraries.Add(new LibraryFolder(folderPicker.FileName));
+			LocalDatabase.SaveChanges();
 		}
 
 		private void AddTag(object sender, RoutedEventArgs e)
@@ -176,7 +175,7 @@ namespace GamanReader.View
 			if (!(ItemsControl.ContainerFromElement((ItemsControl) sender, source) is ListBoxItem lbItem)) return;
 			if (lbItem.Content is MangaInfo item)
 			{
-				_mainModel.LoadFromMangaInfo(item);
+				_mainModel.LoadContainer(item);
 			}
 	}
 

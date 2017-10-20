@@ -27,7 +27,7 @@ namespace GamanReaderTests
 			SevenZipBase.SetLibraryPath(path);
 		}
 
-		[TestMethod]
+		/*[TestMethod]
 		public void OpenFolder()
 		{
 			_viewModel.LoadFolder("..\\TestContainerFolder");
@@ -46,6 +46,6 @@ namespace GamanReaderTests
 		{
 			_viewModel.LoadArchive("..\\TestContainerFolder.zip");
 			Assert.AreEqual(7, _viewModel.TotalFiles);
-		}
+		}*/
 	}
 }

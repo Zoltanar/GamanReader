@@ -31,18 +31,7 @@ namespace GamanReader.Model
 				Save();
 			}
 		}
-
-		public static string LibraryFolder
-		{
-			get => _instance.LibraryFolder;
-			set
-			{
-				if (_instance.LibraryFolder == value) return;
-				_instance.LibraryFolder = value;
-				Save();
-			}
-		}
-
+		
 		public static void Save(ObservableCollection<string> items)
 		{
 			_instance.RecentFolders = items.ToList();
@@ -85,13 +74,11 @@ namespace GamanReader.Model
 		{
 			public List<string> RecentFolders { get; set; }
 			public int RecentListSize { get; set; }
-			public string LibraryFolder { get; set; }
 
 			public SettingsItem()
 			{
 				RecentListSize = 25;
 				RecentFolders = new List<string>();
-				LibraryFolder = null;
 			}
 		}		
 	}
