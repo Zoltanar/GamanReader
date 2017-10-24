@@ -159,7 +159,7 @@ namespace GamanReader.ViewModel
 		public void AddTag()
 		{
 			if (_containerModel == null) return;
-			StaticHelpers.AddTag(_containerModel.ContainerPath, _containerModel.IsFolder, TagText);
+			StaticHelpers.AddTag(MangaInfo, TagText);
 			//todo write reply
 			TagText = "";
 		}
@@ -171,7 +171,7 @@ namespace GamanReader.ViewModel
 				ReplyText = "No Library Folders are set.";
 				return;
 			}
-			var item = LocalDatabase.Information.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+			var item = LocalDatabase.Items.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
 			if (item == null)
 			{
 				ReplyText = "No items found.";
@@ -303,7 +303,7 @@ namespace GamanReader.ViewModel
 		{
 			await Task.Run(() =>
 			{
-				LocalDatabase.Information.RemoveRange(LocalDatabase.Information);
+				LocalDatabase.Items.RemoveRange(LocalDatabase.Items);
 				LocalDatabase.SaveChanges();
 				foreach(var library in LocalDatabase.Libraries) ReloadLibraryInfo(library);
 				LocalDatabase.SaveChanges();
@@ -320,15 +320,15 @@ namespace GamanReader.ViewModel
 			foreach (var file in files)
 			{
 				count++;
-				//Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(file)}".PadRight(200)); //todo report progress
+				ReplyText = $@"Processing item {count}/{total}..."; //todo report progress
 				if (!FileIsSupported(file)) continue;
-				LocalDatabase.Information.Add(MangaInfo.Create(file,library,false));
+				LocalDatabase.Items.Add(MangaInfo.Create(file,library,false));
 			}
 			foreach (var folder in folders)
 			{
 				count++;
-				//Console.Write($@"Processing item {count}/{total} - {Path.GetFileNameWithoutExtension(folder)}".PadRight(200)); //todo report progress
-				LocalDatabase.Information.Add(MangaInfo.Create(folder, library, true));
+				ReplyText =  $@"Processing item {count}/{total}..."; //todo report progress
+				LocalDatabase.Items.Add(MangaInfo.Create(folder, library, true));
 			}
 			ReplyText = "Finished Reloading Library";
 		}
@@ -348,22 +348,22 @@ namespace GamanReader.ViewModel
 			switch (type)
 			{
 				case "event":
-					results = LocalDatabase.Information.Where(x => x.Event.ToLower().Equals(searchString.ToLower())).ToArray();
+					results = LocalDatabase.Items.Where(x => x.Event.ToLower().Equals(searchString.ToLower())).ToArray();
 					break;
 				case "group":
-					results = LocalDatabase.Information.Where(x => x.Group.ToLower().Equals(searchString.ToLower())).ToArray();
+					results = LocalDatabase.Items.Where(x => x.Group.ToLower().Equals(searchString.ToLower())).ToArray();
 					break;
 				case "artist":
-					results = LocalDatabase.Information.Where(x => x.Artist.ToLower().Equals(searchString.ToLower())).ToArray();
+					results = LocalDatabase.Items.Where(x => x.Artist.ToLower().Equals(searchString.ToLower())).ToArray();
 					break;
 				case "parody":
-					results = LocalDatabase.Information.Where(x => x.Parody.ToLower().Equals(searchString.ToLower())).ToArray();
+					results = LocalDatabase.Items.Where(x => x.Parody.ToLower().Equals(searchString.ToLower())).ToArray();
 					break;
 				case "subber":
-					results = LocalDatabase.Information.Where(x => x.Subber.ToLower().Equals(searchString.ToLower())).ToArray();
+					results = LocalDatabase.Items.Where(x => x.Subber.ToLower().Equals(searchString.ToLower())).ToArray();
 					break;
 				case "":
-					results = LocalDatabase.Information.Where(x => x.Title.ToLower().Contains(searchString.ToLower())).ToArray();
+					results = LocalDatabase.Items.Where(x => x.Title.ToLower().Contains(searchString.ToLower())).ToArray();
 					break;
 					default:
 					throw new ArgumentException("Argument is invalid.");

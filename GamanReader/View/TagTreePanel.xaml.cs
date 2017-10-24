@@ -18,14 +18,28 @@ namespace GamanReader.View
 
 		private void ItemDoubleClicked(object sender, MouseButtonEventArgs e)
 		{
-			if (!((sender as TreeViewItem)?.DataContext is TaggedItem item)) return;
+			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
+			MangaInfo item = null;
+			if (preItem.DataContext is MangaInfo) item = preItem.DataContext as MangaInfo;
+			else if (preItem.DataContext is AutoTag) item = (preItem.DataContext as AutoTag).Item;
+			if (item == null) return;
 			var window = (MainWindow) Window.GetWindow(this);
-			//window.LoadContainer(item.Path, item.IsFolder); //todo load mangainfo, remove taggeditem
+			window.LoadContainer(item);
+		}
+
+		public static TreeViewItem VisualUpwardSearch(DependencyObject source)
+		{
+			while (source != null && !(source is TreeViewItem)) source = System.Windows.Media.VisualTreeHelper.GetParent(source);
+			return source as TreeViewItem;
 		}
 
 		public void Refresh()
 		{
 			((TagTreeViewModel)DataContext).Refresh();
+			foreach (TreeViewItem node in TreeStructure.Items)
+			{
+				node.IsExpanded = false;
+			}
 		}
 	}
 }

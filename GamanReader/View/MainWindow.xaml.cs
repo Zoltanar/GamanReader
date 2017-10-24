@@ -190,5 +190,10 @@ namespace GamanReader.View
 		{
 			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth - _widthChange);
 		}
+
+	private void Button_Click(object sender, RoutedEventArgs e)
+	{
+			var v = MangaInfo.Create(_mainModel.MangaInfo.FilePath);
 	}
+  }
 }

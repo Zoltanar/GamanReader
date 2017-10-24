@@ -84,6 +84,7 @@
                 <Label Grid.Column="0" Content="Search Results:" Margin="10,260,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Left" Width="105" Grid.ColumnSpan="2"/>
                 <TextBox Grid.Column="0" Height="23" Margin="10,285,10,0" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp"/>
                 <ListBox Grid.Column="0" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" MouseDoubleClick="Control_OnMouseDoubleClick" ItemsSource="{Binding SearchResults}" Height="386" Margin="10,313,10,0" VerticalAlignment="Top" />
+                <Button Content="Debug MangaInfo" Grid.Column="3" Margin="10,225,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="100" Click="Button_Click"/>
             </Grid>
         </DockPanel>
     </Grid>

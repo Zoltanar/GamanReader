@@ -59,7 +59,7 @@ namespace GamanReader.Model
 			var item = GetByPath(containerPath);
 			if (item != null) return item;
 			var preSavedItem = MangaInfo.Create(containerPath);
-			LocalDatabase.Information.Add(preSavedItem);
+			LocalDatabase.Items.Add(preSavedItem);
 			LocalDatabase.SaveChanges();
 			item = GetByPath(containerPath);
 			return item;
@@ -67,7 +67,7 @@ namespace GamanReader.Model
 			MangaInfo GetByPath(string path)
 			{
 
-				var items = LocalDatabase.Information.Where(x => path.EndsWith(x.SubPath)).ToArray();
+				var items = LocalDatabase.Items.Where(x => path.EndsWith(x.SubPath)).ToArray();
 				return items.FirstOrDefault(x => x.FilePath == path);
 			}
 		}
@@ -79,22 +79,9 @@ namespace GamanReader.Model
 			return source;
 		}
 
-		public static void AddTag(string itempath, bool isFolder, string tag)
+		public static void AddTag(MangaInfo item, string tag)
 		{
-			var hash = isFolder ? new byte[0] : new FileInfo(itempath).GetMd5Hash();
-			var taggedItem = LocalDatabase.TaggedItems.SingleOrDefault(i => isFolder ? i.Path == itempath : i.MD5Hash == hash);
-			if (taggedItem == null)
-			{
-				taggedItem = new TaggedItem
-				{
-					Path = itempath,
-					IsFolder = isFolder,
-					MD5Hash = hash,
-					Tags = new List<IndividualTag>()
-				};
-				LocalDatabase.TaggedItems.Add(taggedItem);
-			}
-			taggedItem.Tags.Add(new IndividualTag { Tag = tag });
+			item.UserTags.Add(new UserTag(item,tag));
 			LocalDatabase.SaveChanges();
 		}
 
@@ -190,7 +177,22 @@ namespace GamanReader.Model
 		/// <param name="startIndex"></param>
 		/// <param name="endIndex"></param>
 		/// <returns></returns>
-		public static string BetweenIndexes(this string input, int startIndex, int endIndex) => input.Substring(startIndex, endIndex - startIndex + 1);
+		public static string BetweenIndexes(this string input, int startIndex, int endIndex)
+		{
+			try
+			{
+				return input.Substring(startIndex, endIndex - startIndex + 1);
+			}
+			catch (Exception e)
+			{
+				return input;
+			}
+		} 
+
+		/// <summary>
+		/// Remove x number of characters from end of string
+		/// </summary>
+		public static string RemoveFromEnd(this string input, int numberOfCharacters) => input.Substring(0, input.Length - numberOfCharacters);
 
 		/// <summary>
 		/// Pause RaiseListChangedEvents and add items then call the event when done adding.

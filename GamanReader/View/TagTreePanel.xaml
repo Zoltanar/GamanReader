@@ -11,23 +11,22 @@
         <viewModel:TagTreeViewModel/>
     </UserControl.DataContext>
     <Grid>
-        <TreeView ItemsSource="{Binding TagGroups}">
+        <TreeView x:Name="TreeStructure" ItemsSource="{Binding TagGroups}">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}">
-                    <Setter Property="IsExpanded" Value="True"/>
-                    <EventSetter Event="MouseDoubleClick"
-                Handler="ItemDoubleClicked"/>
+                    <Setter Property="IsExpanded" Value="false"/>
+                    <EventSetter Event="MouseDoubleClick" Handler="ItemDoubleClicked"/>
                 </Style>
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate  ItemsSource="{Binding Children}">
                     <TextBlock Foreground="Green" Text="{Binding Name}" />
                     <HierarchicalDataTemplate.ItemTemplate>
-                        <DataTemplate DataType="{x:Type database:TaggedItem}" >
+                        <DataTemplate DataType="{x:Type database:MangaInfo}" >
                             <StackPanel Orientation="Horizontal" >
                                 <Image Source="{Binding GetImage}" Width="16" Height="16" Margin="3,0"/>
                                 <Viewbox Height="16">
-                                    <TextBlock Text="{Binding GetName}"/>
+                                    <TextBlock Text="{Binding Title}"/>
                                 </Viewbox>
                             </StackPanel>
                         </DataTemplate>
