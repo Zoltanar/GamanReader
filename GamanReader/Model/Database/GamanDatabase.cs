@@ -25,9 +25,8 @@ namespace GamanReader.Model.Database
 
 		public virtual MangaInfo Item { get; set; }
 
-		public IndividualTag(MangaInfo item, string tag)
+		protected IndividualTag(string tag)
 		{
-			ItemId = item.Id;
 			Tag = tag;
 		}
 
@@ -36,13 +35,16 @@ namespace GamanReader.Model.Database
 
 	public class AutoTag : IndividualTag
 	{
-		public AutoTag(MangaInfo item, string tag) : base(item,tag){}
+		public AutoTag(string tag) : base(tag){}
 		public AutoTag() { }
 		
 	}
 	public class UserTag : IndividualTag
 	{
-		public UserTag(MangaInfo item, string tag) : base(item,tag){ }
+		public UserTag(long itemId, string tag) : base(tag)
+		{
+			ItemId = itemId;
+		}
 		public UserTag() { }
 	}
 }

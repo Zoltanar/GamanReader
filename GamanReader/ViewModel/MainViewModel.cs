@@ -88,7 +88,7 @@ namespace GamanReader.ViewModel
 		public string SingleImageSource { get => _singleImageSource; set { _singleImageSource = value; OnPropertyChanged(); } }
 		public string LeftImageSource { get => _leftImageSource; set { _leftImageSource = value; OnPropertyChanged(); } }
 		public string RightImageSource { get => _rightImageSource; set { _rightImageSource = value; OnPropertyChanged(); } }
-		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; OnPropertyChanged(); } }
+		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; RefreshTextBox?.Invoke(_mangaInfo); OnPropertyChanged(); } }
 		public int CurrentIndex { get => _containerModel.CurrentIndex; set => _containerModel.CurrentIndex = value; }
 		public ObservableCollection<string> RecentItems => _recentFiles.Items;
 		public int TotalFiles => _containerModel.TotalFiles;
@@ -97,6 +97,8 @@ namespace GamanReader.ViewModel
 
 		public BindingList<MangaInfo> SearchResults { get; set; } = new BindingList<MangaInfo>();
 
+		public delegate void MyEventAction(MangaInfo item);
+		public event MyEventAction RefreshTextBox;
 		#endregion
 
 		private void PopulateBox(ImageBox imagebox, int index)
@@ -347,7 +349,7 @@ namespace GamanReader.ViewModel
 			MangaInfo[] results;
 			switch (type)
 			{
-				case "event":
+				/*case "event":
 					results = LocalDatabase.Items.Where(x => x.Event.ToLower().Equals(searchString.ToLower())).ToArray();
 					break;
 				case "group":
@@ -358,12 +360,12 @@ namespace GamanReader.ViewModel
 					break;
 				case "parody":
 					results = LocalDatabase.Items.Where(x => x.Parody.ToLower().Equals(searchString.ToLower())).ToArray();
-					break;
-				case "subber":
-					results = LocalDatabase.Items.Where(x => x.Subber.ToLower().Equals(searchString.ToLower())).ToArray();
+					break;*/
+				case "tag":
+					results = LocalDatabase.AutoTags.Where(x => x.Tag.ToLower().Equals(searchString.ToLower())).Select(y=>y.Item).ToArray();
 					break;
 				case "":
-					results = LocalDatabase.Items.Where(x => x.Title.ToLower().Contains(searchString.ToLower())).ToArray();
+					results = LocalDatabase.Items.Where(x => x.Name.ToLower().Contains(searchString.ToLower())).ToArray();
 					break;
 					default:
 					throw new ArgumentException("Argument is invalid.");

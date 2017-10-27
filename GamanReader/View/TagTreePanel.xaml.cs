@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using GamanReader.Model.Database;
@@ -20,10 +21,11 @@ namespace GamanReader.View
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
 			MangaInfo item = null;
-			if (preItem.DataContext is MangaInfo) item = preItem.DataContext as MangaInfo;
-			else if (preItem.DataContext is AutoTag) item = (preItem.DataContext as AutoTag).Item;
+			if (preItem.DataContext is MangaInfo info) item = info;
+			else if (preItem.DataContext is AutoTag tag) item = tag.Item;
 			if (item == null) return;
 			var window = (MainWindow) Window.GetWindow(this);
+			Debug.Assert(window != null, nameof(window) + " != null");
 			window.LoadContainer(item);
 		}
 

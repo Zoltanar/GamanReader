@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using GamanReader.Model.Database;
@@ -45,6 +46,24 @@ namespace GamanReader.View
 				var item = GetOrCreateMangaInfo(args[1]);
 				LoadContainer(item);
 			}
+			_mainModel.RefreshTextBox += RefreshTextBox;
+		}
+
+		private void RefreshTextBox(MangaInfo item)
+		{
+			if (item == null) return;
+			InfoBox.Inlines.Clear();
+			foreach (var inline in item.GetTbInlines())
+			{
+				InfoBox.Inlines.Add(inline);
+				if (inline is Hyperlink link) link.Click += TagLinkClicked;
+			}
+		}
+
+		private void TagLinkClicked(object sender, RoutedEventArgs e)
+		{
+			var text = ((Run) ((Hyperlink) sender).Inlines.FirstInline).Text.Trim('[', '(', '{', ']', ')', '}');
+			_mainModel.Search($"tag:{text}");
 		}
 
 
@@ -77,8 +96,8 @@ namespace GamanReader.View
 			if (e.AddedItems.Count == 0) return;
 			if (e.AddedItems[0] != null && !e.AddedItems[0].ToString().Equals(""))
 			{
-				var containerPath = e.AddedItems[0].ToString();
-				//LoadContainer(containerPath); //todo list should have mangaInfo items
+				var item = e.AddedItems[0] as MangaInfo;
+				LoadContainer(item); //todo list should have mangaInfo items
 				//TODO clear from list if it doesnt exist
 			}
 		}
@@ -137,8 +156,6 @@ namespace GamanReader.View
 		private void SeeTagged_Click(object sender, RoutedEventArgs e)
 		{
 			TagPanel.Visibility = TagPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-			var parentVis = ((DockPanel)TagPanel.Parent).Visibility;
-			Debug.WriteLine($"TagPanel.Visibility={TagPanel.Visibility}, Parent.Visibility={parentVis}");
 		}
 
 		private bool _fullscreenOn;
@@ -190,10 +207,6 @@ namespace GamanReader.View
 		{
 			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth - _widthChange);
 		}
-
-	private void Button_Click(object sender, RoutedEventArgs e)
-	{
-			var v = MangaInfo.Create(_mainModel.MangaInfo.FilePath);
-	}
+		
   }
 }

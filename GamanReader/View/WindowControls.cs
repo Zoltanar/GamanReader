@@ -47,8 +47,5 @@ namespace GamanReader.View
 					return;
 			}
 		}
-
-
-
 	}
 }

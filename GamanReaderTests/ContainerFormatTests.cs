@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using GamanReader.Model.Database;
 using GamanReader.ViewModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SevenZip;
@@ -27,25 +28,28 @@ namespace GamanReaderTests
 			SevenZipBase.SetLibraryPath(path);
 		}
 
-		/*[TestMethod]
+		[TestMethod]
 		public void OpenFolder()
 		{
-			_viewModel.LoadFolder("..\\TestContainerFolder");
+			var item = MangaInfo.Create("..\\TestContainerFolder");
+			_viewModel.LoadContainer(item);
 			Assert.AreEqual(7, _viewModel.TotalFiles);
 		}
 
 		[TestMethod]
 		public void OpenRar()
 		{
-			_viewModel.LoadArchive("..\\TestContainerFolder.rar");
+			var item = MangaInfo.Create("..\\TestContainerFolder.rar");
+			_viewModel.LoadContainer(item);
 			Assert.AreEqual(7, _viewModel.TotalFiles);
 		}
 
 		[TestMethod]
 		public void OpenZip()
 		{
-			_viewModel.LoadArchive("..\\TestContainerFolder.zip");
+			var item = MangaInfo.Create("..\\TestContainerFolder.zip");
+			_viewModel.LoadContainer(item);
 			Assert.AreEqual(7, _viewModel.TotalFiles);
-		}*/
+		}
 	}
 }

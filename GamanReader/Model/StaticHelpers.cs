@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -33,7 +32,6 @@ namespace GamanReader.Model
 		public static GamanDatabase LocalDatabase { get; }
 
 		public static string[] AllowedFormats { get; }
-		public static Random Random { get; } = new Random();
 
 		static StaticHelpers()
 		{
@@ -81,7 +79,7 @@ namespace GamanReader.Model
 
 		public static void AddTag(MangaInfo item, string tag)
 		{
-			item.UserTags.Add(new UserTag(item,tag));
+			item.UserTags.Add(new UserTag(item.Id,tag));
 			LocalDatabase.SaveChanges();
 		}
 
@@ -149,50 +147,6 @@ namespace GamanReader.Model
 			}
 			return false;
 		}
-
-		public static byte[] GetMd5Hash(this FileInfo file)
-		{
-			try
-			{
-
-				using (var stream = file.OpenRead())
-				{
-					using (var md5 = MD5.Create())
-					{
-						return md5.ComputeHash(stream);
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
-		}
-
-		/// <summary>
-		/// Get substring between indexes, including the index locations.
-		/// </summary>
-		/// <param name="input"></param>
-		/// <param name="startIndex"></param>
-		/// <param name="endIndex"></param>
-		/// <returns></returns>
-		public static string BetweenIndexes(this string input, int startIndex, int endIndex)
-		{
-			try
-			{
-				return input.Substring(startIndex, endIndex - startIndex + 1);
-			}
-			catch (Exception e)
-			{
-				return input;
-			}
-		} 
-
-		/// <summary>
-		/// Remove x number of characters from end of string
-		/// </summary>
-		public static string RemoveFromEnd(this string input, int numberOfCharacters) => input.Substring(0, input.Length - numberOfCharacters);
 
 		/// <summary>
 		/// Pause RaiseListChangedEvents and add items then call the event when done adding.

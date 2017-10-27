@@ -19,14 +19,14 @@
                 </Style>
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
-                <HierarchicalDataTemplate  ItemsSource="{Binding Children}">
+                <HierarchicalDataTemplate  ItemsSource="{Binding Items}">
                     <TextBlock Foreground="Green" Text="{Binding Name}" />
                     <HierarchicalDataTemplate.ItemTemplate>
                         <DataTemplate DataType="{x:Type database:MangaInfo}" >
                             <StackPanel Orientation="Horizontal" >
                                 <Image Source="{Binding GetImage}" Width="16" Height="16" Margin="3,0"/>
                                 <Viewbox Height="16">
-                                    <TextBlock Text="{Binding Title}"/>
+                                    <TextBlock Text="{Binding Name}"/>
                                 </Viewbox>
                             </StackPanel>
                         </DataTemplate>
