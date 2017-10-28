@@ -21,7 +21,6 @@ namespace GamanReader.Model
         public const string StoredDataFolder = "Stored Data";
 #endif
 		public const string TempFolder = StoredDataFolder + "\\Temp";
-		public const string SettingsJson = StoredDataFolder + "\\settings.json";
 		public const string LogFile = StoredDataFolder + "\\message.log";
 
 		public const string ProgramName = "GamanReader";
@@ -44,7 +43,7 @@ namespace GamanReader.Model
 					LocalDatabase.Libraries.Add(new LibraryFolder(""));
 					LocalDatabase.SaveChanges();
 				}
-					Directory.CreateDirectory(StoredDataFolder);
+				Directory.CreateDirectory(StoredDataFolder);
 			}
 			catch (Exception ex)
 			{
@@ -79,7 +78,7 @@ namespace GamanReader.Model
 
 		public static void AddTag(MangaInfo item, string tag)
 		{
-			item.UserTags.Add(new UserTag(item.Id,tag));
+			item.UserTags.Add(new UserTag(item.Id, tag));
 			LocalDatabase.SaveChanges();
 		}
 

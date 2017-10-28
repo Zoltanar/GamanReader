@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Documents;
 using System.Windows.Media;
+// ReSharper disable VirtualMemberCallInConstructor
 
 namespace GamanReader.Model.Database
 {
@@ -16,19 +18,16 @@ namespace GamanReader.Model.Database
 
 		[Key]
 		public long Id { get; set; }
-
 		public int LibraryFolderId { get; set; }
-
 		[StringLength(1024)]
 		public string SubPath { get; set; }
-
 		public string FilePath => Library.Path + SubPath;
 		public string Name { get; set; }
-
+		public DateTime LastOpened { get; set; }
 		public virtual LibraryFolder Library { get; set; }
 		public bool IsFolder { get; set; }
-		public ICollection<AutoTag> AutoTags { get; set; }
-		public ICollection<UserTag> UserTags { get; set; }
+		public virtual ICollection<AutoTag> AutoTags { get; set; }
+		public virtual ICollection<UserTag> UserTags { get; set; }
 
 		#endregion
 
@@ -41,7 +40,6 @@ namespace GamanReader.Model.Database
 			item.LibraryFolderId = item.Library.Id;
 			item.SubPath = item.Library.Id == 1 ? filePath : filePath.Replace(item.Library.Path, "");
 			item.IsFolder = File.GetAttributes(item.FilePath).HasFlag(FileAttributes.Directory);
-			if (!filePath.Equals(item.FilePath)) { }
 			return item;
 		}
 
@@ -100,7 +98,8 @@ namespace GamanReader.Model.Database
 
 		[NotMapped]
 		public ImageSource GetImage => IsFavorite() ? StaticHelpers.GetFavoritesIcon() : null;
-		
+
+
 		public List<Inline> GetTbInlines()
 		{
 			var list = new List<Inline>();

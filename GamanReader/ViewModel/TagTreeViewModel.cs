@@ -20,7 +20,8 @@ namespace GamanReader.ViewModel
 		public void Refresh()
 		{
 			TagGroups.Clear();
-			TagGroups.Add(GetNode("Auto Tags", LocalDatabase.AutoTags.ToArray().GroupBy(i => i.Tag,StringComparer.OrdinalIgnoreCase)));
+			TagGroups.Add(GetNode("Auto Tags", LocalDatabase.AutoTags.ToArray().GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
+			TagGroups.Add(GetNode("User Tags", LocalDatabase.UserTags.ToArray().GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
 		}
 		
 		private TreeViewItem GetNode(string header, IEnumerable<IGrouping<string, IndividualTag>> items)

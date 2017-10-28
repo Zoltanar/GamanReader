@@ -165,15 +165,14 @@
     <Compile Include="Model\FolderContainer.cs" />
     <Compile Include="Model\Database\LibraryFolder.cs" />
     <Compile Include="Model\Database\MangaInfo.cs" />
+    <Compile Include="Model\RecentItemList.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
-    <Compile Include="Model\Settings.cs" />
     <Compile Include="Model\Database\GamanDatabase.cs" />
     <Compile Include="View\TagTreePanel.xaml.cs">
       <DependentUpon>TagTreePanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModel\TagTreeViewModel.cs" />
     <Compile Include="Model\Container.cs" />
-    <Compile Include="Model\RecentItemList.cs" />
     <Compile Include="Model\StaticHelpers.cs" />
     <Compile Include="View\WindowControls.cs" />
     <Page Include="View\MainWindow.xaml">

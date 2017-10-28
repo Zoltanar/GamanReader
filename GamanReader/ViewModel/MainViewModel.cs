@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -42,7 +41,7 @@ namespace GamanReader.ViewModel
 		private string _goToIndexText;
 		private bool _rtlIsChecked;
 		private bool _dualPageIsChecked;
-		private readonly RecentItemList<string> _recentFiles = new RecentItemList<string>(Settings.RecentListSize, Settings.RecentFolders);
+		private readonly RecentItemList<MangaInfo> _recentItems = new RecentItemList<MangaInfo>(25,LocalDatabase.GetRecentItems(25));
 		private string _singleImageSource;
 		private string _leftImageSource;
 		private string _rightImageSource;
@@ -90,7 +89,7 @@ namespace GamanReader.ViewModel
 		public string RightImageSource { get => _rightImageSource; set { _rightImageSource = value; OnPropertyChanged(); } }
 		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; RefreshTextBox?.Invoke(_mangaInfo); OnPropertyChanged(); } }
 		public int CurrentIndex { get => _containerModel.CurrentIndex; set => _containerModel.CurrentIndex = value; }
-		public ObservableCollection<string> RecentItems => _recentFiles.Items;
+		public BindingList<MangaInfo> RecentItems => _recentItems.Items;
 		public int TotalFiles => _containerModel.TotalFiles;
 
 		public string SearchText { get => _searchText; set { _searchText = value; OnPropertyChanged(); } }
@@ -256,6 +255,7 @@ namespace GamanReader.ViewModel
 
 		public void LoadContainer(MangaInfo item)
 		{
+			if (MangaInfo == item) return;
 			try
 			{
 			if(item.IsFolder) LoadFolder(item);
@@ -277,10 +277,11 @@ namespace GamanReader.ViewModel
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
 			TitleText = $"{Path.GetFileName(item.FilePath)} - {ProgramName}";
-			_recentFiles.Add(_containerModel.ContainerPath);
+			_recentItems.Add(item);
+			item.LastOpened = DateTime.Now;
+			LocalDatabase.SaveChanges();
 			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
 			IndexLabelText = $"/{_containerModel.TotalFiles}";
-			Settings.Save(_recentFiles.Items);
 		}
 
 		#endregion

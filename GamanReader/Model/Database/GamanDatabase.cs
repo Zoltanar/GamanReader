@@ -1,5 +1,7 @@
-﻿using System.Data.Entity;
+﻿using System;
+using System.Data.Entity;
 using SQLite.CodeFirst;
+using System.Linq;
 
 namespace GamanReader.Model.Database
 {
@@ -10,12 +12,17 @@ namespace GamanReader.Model.Database
 		public DbSet<MangaInfo> Items { get; set; }
 		public DbSet<AutoTag> AutoTags { get; set; }
 		public DbSet<UserTag> UserTags { get; set; }
+
 		protected override void OnModelCreating(DbModelBuilder modelBuilder)
 		{
 			var sqliteConnectionInitializer = new SqliteCreateDatabaseIfNotExists<GamanDatabase>(modelBuilder);
 			System.Data.Entity.Database.SetInitializer(sqliteConnectionInitializer);
 		}
+
+		public IQueryable<MangaInfo> GetRecentItems(int itemCount)
+			=> Items.Where(x=>x.LastOpened != DateTime.MinValue).OrderByDescending(x => x.LastOpened).Take(itemCount);
 	}
+	
 
 	public class IndividualTag
 	{

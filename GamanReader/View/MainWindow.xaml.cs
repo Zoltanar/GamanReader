@@ -97,7 +97,7 @@ namespace GamanReader.View
 			if (e.AddedItems[0] != null && !e.AddedItems[0].ToString().Equals(""))
 			{
 				var item = e.AddedItems[0] as MangaInfo;
-				LoadContainer(item); //todo list should have mangaInfo items
+				LoadContainer(item);
 				//TODO clear from list if it doesnt exist
 			}
 		}
