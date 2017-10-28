@@ -34,7 +34,6 @@ namespace GamanReader.ViewModel
 		private string _pageSizeToggleText;
 		private string _rightLabelText;
 		private string _leftLabelText;
-		private string _tagText;
 		private string _titleText;
 		private string _replyText;
 		private string _indexLabelText;
@@ -51,7 +50,6 @@ namespace GamanReader.ViewModel
 
 		public string TitleText { get => _titleText; set { _titleText = value; OnPropertyChanged(); } }
 		public string ReplyText { get => _replyText; set { _replyText = value; OnPropertyChanged(); } }
-		public string TagText { get => _tagText; set { _tagText = value; OnPropertyChanged(); } }
 		public string LeftLabelText { get => _leftLabelText; set { _leftLabelText = value; OnPropertyChanged(); } }
 		public string RightLabelText { get => _rightLabelText; set { _rightLabelText = value; OnPropertyChanged(); } }
 		public string RtlToggleText { get => _rtlToggleText; set { _rtlToggleText = value; OnPropertyChanged(); } }
@@ -90,7 +88,7 @@ namespace GamanReader.ViewModel
 		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; RefreshTextBox?.Invoke(_mangaInfo); OnPropertyChanged(); } }
 		public int CurrentIndex { get => _containerModel.CurrentIndex; set => _containerModel.CurrentIndex = value; }
 		public BindingList<MangaInfo> RecentItems => _recentItems.Items;
-		public int TotalFiles => _containerModel.TotalFiles;
+		public int TotalFiles => _containerModel?.TotalFiles ?? -1;
 
 		public string SearchText { get => _searchText; set { _searchText = value; OnPropertyChanged(); } }
 
@@ -157,12 +155,10 @@ namespace GamanReader.ViewModel
 			PopulateBoxes();
 		}
 
-		public void AddTag()
+		public void AddTag(string tag)
 		{
 			if (_containerModel == null) return;
-			StaticHelpers.AddTag(MangaInfo, TagText);
-			//todo write reply
-			TagText = "";
+			StaticHelpers.AddTag(MangaInfo, tag);
 		}
 
 		public void OpenRandom()
@@ -274,6 +270,7 @@ namespace GamanReader.ViewModel
 				return;
 			}
 			MangaInfo = item;
+			OnPropertyChanged(nameof(TotalFiles));
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
 			TitleText = $"{Path.GetFileName(item.FilePath)} - {ProgramName}";
@@ -323,7 +320,7 @@ namespace GamanReader.ViewModel
 			foreach (var file in files)
 			{
 				count++;
-				ReplyText = $@"Processing item {count}/{total}..."; //todo report progress
+				if(count % 10 == 0) ReplyText = $@"Processing item {count}/{total}..."; //todo report progress
 				if (!FileIsSupported(file)) continue;
 				LocalDatabase.Items.Add(MangaInfo.Create(file,library,false));
 			}

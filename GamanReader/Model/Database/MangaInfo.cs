@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -24,6 +23,7 @@ namespace GamanReader.Model.Database
 		public string FilePath => Library.Path + SubPath;
 		public string Name { get; set; }
 		public DateTime LastOpened { get; set; }
+		public DateTime DateAdded { get; set; }
 		public virtual LibraryFolder Library { get; set; }
 		public bool IsFolder { get; set; }
 		public virtual ICollection<AutoTag> AutoTags { get; set; }
@@ -50,6 +50,7 @@ namespace GamanReader.Model.Database
 		{
 			AutoTags = new HashSet<AutoTag>();
 			UserTags = new HashSet<UserTag>();
+			DateAdded = DateTime.Now;
 			// ReSharper disable once PossibleNullReferenceException
 			Name = Path.GetFileNameWithoutExtension(filePath).Trim();
 			var rgx1 = new Regex(@"\[([^];]*)\]");
@@ -68,9 +69,9 @@ namespace GamanReader.Model.Database
 				else AutoTags.Add(new AutoTag(match.Groups[1].Value));
 			}
 			foreach (Match match in matches2) AutoTags.Add(new AutoTag(match.Groups[1].Value));
-			
+
 		}
-		
+
 		/// <summary>
 		/// Guesses manga information from filename.
 		/// </summary>
@@ -146,21 +147,12 @@ namespace GamanReader.Model.Database
 						}
 						inBrackets--;
 						break;
-						default:
-							curRun.Text += c;
-							break;
-
+					default:
+						curRun.Text += c;
+						break;
 				}
 			}
-			if (curRun.Text.Length > 0)
-			{
-				list.Add(curRun);
-			}
-			foreach (var inline in list)
-			{
-				if(inline is Hyperlink link) Debug.WriteLine("Link: " +((Run) link.Inlines.FirstInline).Text);
-				else if(inline is Run run) Debug.WriteLine("Plain: " + run.Text);
-			}
+			if (curRun.Text.Length > 0) list.Add(curRun);
 			return list;
 		}
 	}

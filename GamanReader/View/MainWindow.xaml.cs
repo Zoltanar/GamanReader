@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -149,15 +150,10 @@ namespace GamanReader.View
 
 		private void AddTag(object sender, RoutedEventArgs e)
 		{
-			_mainModel.AddTag();
-			TagPanel.Refresh();
+			_mainModel.AddTag(TagText.Text);
+			TagPanel.AddTag(_mainModel.MangaInfo, TagText.Text);
 		}
-
-		private void SeeTagged_Click(object sender, RoutedEventArgs e)
-		{
-			TagPanel.Visibility = TagPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-		}
-
+		
 		private bool _fullscreenOn;
 		private void GoFullscreen(object sender, RoutedEventArgs e)
 		{
@@ -208,5 +204,21 @@ namespace GamanReader.View
 			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth - _widthChange);
 		}
 		
-  }
+		private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			if (!_contentLoaded) return;
+			if (_mainModel?.MangaInfo == null) return;
+			var value = (int)e.NewValue;
+			IndexPopup.Child = new TextBlock(new Run($"Value: {value}")){Foreground = Brushes.Blue, Background = Brushes.Violet};
+		}
+
+		private void IndexPopup_OnDragCompleted(object sender, DragCompletedEventArgs e)
+		{
+			if (_mainModel?.MangaInfo == null) return;
+			var value = (int)((Slider)e.Source).Value;
+			if (value == _mainModel.CurrentIndex) return;
+			_mainModel.GoToPage(value);
+		}
+
+	}
 }

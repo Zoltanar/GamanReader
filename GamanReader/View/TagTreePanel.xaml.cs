@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -42,6 +43,11 @@ namespace GamanReader.View
 			{
 				node.IsExpanded = false;
 			}
+		}
+
+		internal void AddTag(MangaInfo item, string tag)
+		{
+			((TagTreeViewModel)DataContext).AddTag(item,tag);
 		}
 	}
 }
