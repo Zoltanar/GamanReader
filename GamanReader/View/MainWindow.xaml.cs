@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using GamanReader.Model.Database;
 using GamanReader.ViewModel;
+using JetBrains.Annotations;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SevenZip;
@@ -23,8 +24,9 @@ namespace GamanReader.View
 	/// </summary>
 	public partial class MainWindow
 	{
-		[JetBrains.Annotations.NotNull]
+		[NotNull]
 		private readonly MainViewModel _mainModel;
+		private bool _fullscreenOn;
 
 		public MainWindow()
 		{
@@ -66,8 +68,7 @@ namespace GamanReader.View
 			var text = ((Run) ((Hyperlink) sender).Inlines.FirstInline).Text.Trim('[', '(', '{', ']', ')', '}');
 			_mainModel.Search($"tag:{text}");
 		}
-
-
+		
 		private void LoadFolderByDialog(object sender, RoutedEventArgs e)
 		{
 			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true };
@@ -85,8 +86,7 @@ namespace GamanReader.View
 			var item = GetOrCreateMangaInfo(filePicker.FileName);
 			LoadContainer(item);
 		}
-
-
+		
 		public void LoadContainer(MangaInfo item)
 		{
 			_mainModel.LoadContainer(item);
@@ -102,9 +102,7 @@ namespace GamanReader.View
 				//TODO clear from list if it doesnt exist
 			}
 		}
-
-
-
+		
 		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
 		{
 			if (e.Key != Key.Enter) return;
@@ -154,7 +152,6 @@ namespace GamanReader.View
 			TagPanel.AddTag(_mainModel.MangaInfo, TagText.Text);
 		}
 		
-		private bool _fullscreenOn;
 		private void GoFullscreen(object sender, RoutedEventArgs e)
 		{
 			if (!_fullscreenOn)
@@ -192,7 +189,7 @@ namespace GamanReader.View
 			}
 	}
 
-		private int _widthChange = 100;
+		private readonly int _widthChange = 100;
 
 		private void IncreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
 		{
@@ -206,19 +203,62 @@ namespace GamanReader.View
 		
 		private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
-			if (!_contentLoaded) return;
-			if (_mainModel?.MangaInfo == null) return;
+			// ReSharper disable once ConstantConditionalAccessQualifier
+			if (_mainModel?.MangaInfo == null) return; //required because this is fired before initalization is completed
 			var value = (int)e.NewValue;
 			IndexPopup.Child = new TextBlock(new Run($"Value: {value}")){Foreground = Brushes.Blue, Background = Brushes.Violet};
 		}
 
-		private void IndexPopup_OnDragCompleted(object sender, DragCompletedEventArgs e)
+		private void Slider_OnDragCompleted(object sender, DragCompletedEventArgs e)
 		{
-			if (_mainModel?.MangaInfo == null) return;
+			if (_mainModel.MangaInfo == null) return;
 			var value = (int)((Slider)e.Source).Value;
 			if (value == _mainModel.CurrentIndex) return;
 			_mainModel.GoToPage(value);
 		}
 
+		private void ImageBox_OnMouseUp(object sender, MouseButtonEventArgs e)
+		{
+			switch (e.ChangedButton)
+			{
+				case MouseButton.Left:
+					_mainModel.GoForward(CtrlIsDown());
+					break;
+				case MouseButton.Right:
+					_mainModel.GoBack(CtrlIsDown());
+					break;
+				case MouseButton.Middle:
+					_mainModel.GoForward(true);
+					break;
+
+			}
+		}
+
+		/// <summary>
+		/// Go forward on mousewheel inwards and back on outwards.
+		/// </summary>
+		private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
+		{
+			if (e.Delta < 0) _mainModel.GoForward(CtrlIsDown());
+			else if (e.Delta > 0) _mainModel.GoBack(CtrlIsDown());
+		}
+
+		/// <summary>
+		/// Direction-sensitive left and right arrow keys handler.
+		/// </summary>
+		private void HandleKeys(object sender, KeyEventArgs e)
+		{
+			switch (e.Key)
+			{
+				case Key.Left:
+					if (_mainModel.RtlIsChecked) _mainModel.GoForward(CtrlIsDown());
+					else _mainModel.GoBack(CtrlIsDown());
+					return;
+				case Key.Right:
+					if (_mainModel.RtlIsChecked) _mainModel.GoBack(CtrlIsDown());
+					else _mainModel.GoForward(CtrlIsDown());
+					return;
+			}
+		}
 	}
 }

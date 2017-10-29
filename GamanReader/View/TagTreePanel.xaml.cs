@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -34,15 +33,6 @@ namespace GamanReader.View
 		{
 			while (source != null && !(source is TreeViewItem)) source = System.Windows.Media.VisualTreeHelper.GetParent(source);
 			return source as TreeViewItem;
-		}
-
-		public void Refresh()
-		{
-			((TagTreeViewModel)DataContext).Refresh();
-			foreach (TreeViewItem node in TreeStructure.Items)
-			{
-				node.IsExpanded = false;
-			}
 		}
 
 		internal void AddTag(MangaInfo item, string tag)

@@ -11,7 +11,7 @@
         <viewModel:TagTreeViewModel/>
     </UserControl.DataContext>
     <Grid>
-        <TreeView x:Name="TreeStructure" ItemsSource="{Binding TagGroups}">
+        <TreeView ItemsSource="{Binding TagGroups}">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}">
                     <Setter Property="IsExpanded" Value="false"/>

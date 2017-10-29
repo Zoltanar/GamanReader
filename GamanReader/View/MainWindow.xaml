@@ -24,9 +24,9 @@
                     <ColumnDefinition Width="120" MinWidth="120" />
                 </Grid.ColumnDefinitions>
                 <!--Left Side Bar-->
-                <Image gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Grid.Column="1" Grid.ColumnSpan="2" KeyDown="HandleKeys" MouseLeftButtonUp="Grid_MouseLeftButtonUp" MouseRightButtonUp="Grid_MouseRightButtonUp"/>
-                <Image gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Grid.Column="1" HorizontalAlignment="Right" KeyDown="HandleKeys" MouseLeftButtonUp="Grid_MouseLeftButtonUp" MouseRightButtonUp="Grid_MouseRightButtonUp"/>
-                <Image gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Grid.Column="2" HorizontalAlignment="Left" KeyDown="HandleKeys" MouseLeftButtonUp="Grid_MouseLeftButtonUp" MouseRightButtonUp="Grid_MouseRightButtonUp"/>
+                <Image gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Grid.Column="1" Grid.ColumnSpan="2" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
+                <Image gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Grid.Column="1" HorizontalAlignment="Right" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
+                <Image gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Grid.Column="2" HorizontalAlignment="Left" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
                 <Label Grid.Column="0" Content="{Binding LeftLabelText}" Margin="10,10,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Left" Width="105" Grid.ColumnSpan="2"/>
                 <Button Grid.Column="3" Content="Folder" Click="LoadFolderByDialog" Margin="41,225,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="42"/>
                 <Button Grid.Column="3" Content="Zip" Click="LoadArchiveByDialog" Margin="88,225,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="27"/>
@@ -81,11 +81,11 @@
                 <TextBlock Text="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,160,0,0" Width="105" Height="60" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
                 <TextBlock x:Name="InfoBox" Grid.Column="3" Margin="10,400,5,10" TextWrapping="Wrap" Foreground="White"/>
                 <Label Content="Load" Grid.Column="3" HorizontalAlignment="Left" Margin="10,225,0,0" VerticalAlignment="Top" Height="20" Foreground="White" Padding="0" VerticalContentAlignment="Center"/>
-                <TabControl Grid.Column="0" HorizontalAlignment="Left" Height="664" Margin="10,35,0,0" VerticalAlignment="Top" Width="100">
+                <TabControl Grid.Column="0" Height="664" Margin="10,35,10,0" VerticalAlignment="Top" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" >
                     <TabItem Header="Search">
                         <Grid Background="#FFE5E5E5">
                             <TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp"/>
-                            <ListBox Margin="0,28,0,0"  MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" MouseDoubleClick="Control_OnMouseDoubleClick" ItemsSource="{Binding SearchResults}" />
+                            <ListBox Margin="0,28,0,0"  MouseDoubleClick="Control_OnMouseDoubleClick" ItemsSource="{Binding SearchResults}" />
                         </Grid>
                     </TabItem>
                     <TabItem Header="Tags">
@@ -95,8 +95,8 @@
                     <TabItem Header="Added"/>
                     <TabItem Header="Opened"/>
                 </TabControl>
-                <Slider x:Name="IndexSlider" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="689" Width="19" Orientation="Vertical" IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" Thumb.DragCompleted="IndexPopup_OnDragCompleted" />
-                <Popup x:Name="IndexPopup" Grid.Column="1" PlacementTarget="{Binding ElementName=IndexSlider}" StaysOpen="True" IsOpen="True" />
+                <Slider x:Name="IndexSlider" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="689" Width="19" Orientation="Vertical" IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" Thumb.DragCompleted="Slider_OnDragCompleted" />
+                <Popup x:Name="IndexPopup" Grid.Column="1" PlacementTarget="{Binding ElementName=IndexSlider}" IsOpen="True" />
             </Grid>
         </DockPanel>
     </Grid>

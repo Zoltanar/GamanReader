@@ -2,3 +2,4 @@ TODO
 handle folders in archives
 save search strings to tags
 make alias links between artist/group/parody names.
+auto handle doublesize images

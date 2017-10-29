@@ -26,7 +26,7 @@ namespace GamanReader.ViewModel
 
 		private TreeViewItem GetNode(string header, IEnumerable<IGrouping<string, IndividualTag>> items)
 		{
-			var node = new TreeViewItem();
+			var node = new TreeViewItem { Tag = header };
 			foreach (var set in items)
 			{
 				var subItem = new TreeViewItem { Tag = set.Key };

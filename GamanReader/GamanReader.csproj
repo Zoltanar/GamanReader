@@ -174,7 +174,6 @@
     <Compile Include="ViewModel\TagTreeViewModel.cs" />
     <Compile Include="Model\Container.cs" />
     <Compile Include="Model\StaticHelpers.cs" />
-    <Compile Include="View\WindowControls.cs" />
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
