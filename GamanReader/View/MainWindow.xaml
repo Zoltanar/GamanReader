@@ -76,24 +76,7 @@
                     </ToggleButton.Style>
                 </ToggleButton>
                 <Button Grid.Column="3" Content="Set Library Folder" Margin="10,230,0,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
-                <ToggleButton Grid.Column="3" Content="{Binding PageSizeToggleText}" Margin="10,255,0,0" IsChecked="{Binding DualPageIsChecked}" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="105">
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                        <Border Background="{TemplateBinding Background}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsChecked" Value="True"/>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>
+                <Button Grid.Column="3" Click="ChangePageMode" Content="{Binding PageModeText}" Margin="10,255,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="105"/>
                 <Button Grid.Column="3" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,280,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
                 <Button Grid.Column="3" Content="Reload Library" Click="ReloadLibrary"  Height="20"  Margin="10,305,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
             </Grid>

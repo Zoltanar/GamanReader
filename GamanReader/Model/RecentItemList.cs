@@ -24,10 +24,7 @@ namespace GamanReader.Model
 				Items.Insert(0, item);
 				return;
 			}
-			if (Items.Count == Size)
-			{
-				Items.RemoveAt(Items.Count - 1);
-			}
+			if (Items.Count == Size) Items.RemoveAt(Items.Count - 1);
 			Items.Insert(0, item);
 		}
 	}

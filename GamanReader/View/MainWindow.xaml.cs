@@ -250,5 +250,10 @@ namespace GamanReader.View
 					return;
 			}
 		}
+
+		private void ChangePageMode(object sender, RoutedEventArgs e)
+		{
+			_mainModel.ChangePageMode();
+		}
 	}
 }
