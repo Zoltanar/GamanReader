@@ -46,7 +46,7 @@ namespace GamanReader.View
 			var args = Environment.GetCommandLineArgs();
 			if (args.Length > 1)
 			{
-				var item = GetOrCreateMangaInfo(args[1]);
+				var item = _mainModel.GetOrCreateMangaInfo(args[1]);
 				LoadContainer(item);
 			}
 			_mainModel.RefreshTextBox += RefreshTextBox;
@@ -74,7 +74,7 @@ namespace GamanReader.View
 			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true };
 			var result = folderPicker.ShowDialog();
 			if (result != CommonFileDialogResult.Ok) return;
-			var item = GetOrCreateMangaInfo(folderPicker.FileName);
+			var item = _mainModel.GetOrCreateMangaInfo(folderPicker.FileName);
 			LoadContainer(item);
 		}
 
@@ -83,24 +83,13 @@ namespace GamanReader.View
 			var filePicker = new OpenFileDialog { Filter = "Archives|*.zip;*.rar" };
 			bool? resultOk = filePicker.ShowDialog();
 			if (resultOk != true) return;
-			var item = GetOrCreateMangaInfo(filePicker.FileName);
+			var item = _mainModel.GetOrCreateMangaInfo(filePicker.FileName);
 			LoadContainer(item);
 		}
 		
 		public void LoadContainer(MangaInfo item)
 		{
 			_mainModel.LoadContainer(item);
-		}
-
-		private void RecentCb_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			if (e.AddedItems.Count == 0) return;
-			if (e.AddedItems[0] != null && !e.AddedItems[0].ToString().Equals(""))
-			{
-				var item = e.AddedItems[0] as MangaInfo;
-				LoadContainer(item);
-				//TODO clear from list if it doesnt exist
-			}
 		}
 		
 		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
@@ -121,7 +110,7 @@ namespace GamanReader.View
 			string containerPath = ((DataObject)e.Data).GetFileDropList()[0];
 			if (containerPath?.EndsWith(".lnk") ?? false) containerPath = GetPathFromShortcut(containerPath);
 			if (string.IsNullOrWhiteSpace(containerPath)) return; //todo report error
-			var item = GetOrCreateMangaInfo(containerPath);
+			var item = _mainModel.GetOrCreateMangaInfo(containerPath);
 			LoadContainer(item);
 
 		}
@@ -179,7 +168,7 @@ namespace GamanReader.View
 
 		}
 		
-		private void Control_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+		private void OpenItemFromListBox(object sender, MouseButtonEventArgs e)
 		{
 			if (!(e.OriginalSource is DependencyObject source)) return;
 			if (!(ItemsControl.ContainerFromElement((ItemsControl) sender, source) is ListBoxItem lbItem)) return;
@@ -207,6 +196,7 @@ namespace GamanReader.View
 			if (_mainModel?.MangaInfo == null) return; //required because this is fired before initalization is completed
 			var value = (int)e.NewValue;
 			IndexPopup.Child = new TextBlock(new Run($"Value: {value}")){Foreground = Brushes.Blue, Background = Brushes.Violet};
+			IndexPopup.IsOpen = true;
 		}
 
 		private void Slider_OnDragCompleted(object sender, DragCompletedEventArgs e)

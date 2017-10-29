@@ -54,21 +54,22 @@ namespace GamanReader.Model.Database
 			// ReSharper disable once PossibleNullReferenceException
 			Name = Path.GetFileNameWithoutExtension(filePath).Trim();
 			var rgx1 = new Regex(@"\[([^];]*)\]");
-			var rgx2 = new Regex(@"\{([^];]*)\}");
+			var rgx2 = new Regex(@"\{([^};]*)\}");
+			var rgx3 = new Regex(@"\(([^);]*)\)");
 			var matches = rgx1.Matches(Name);
 			var matches2 = rgx2.Matches(Name);
-			var rgx3 = new Regex(@"\(([^];]*)\)");
+			var matches3 = rgx3.Matches(Name);
 			foreach (Match match in matches)
 			{
 				var innerMatch = rgx3.Match(match.Groups[1].Value);
 				if (innerMatch.Success)
 				{
-					AutoTags.Add(new AutoTag(match.Groups[1].Value.Replace(innerMatch.Value, "")));
-					AutoTags.Add(new AutoTag(innerMatch.Groups[1].Value));
+					AutoTags.Add(new AutoTag(match.Groups[1].Value.Replace(innerMatch.Value, "").Trim()));
 				}
 				else AutoTags.Add(new AutoTag(match.Groups[1].Value));
 			}
-			foreach (Match match in matches2) AutoTags.Add(new AutoTag(match.Groups[1].Value));
+			foreach (Match match in matches2) AutoTags.Add(new AutoTag(match.Groups[1].Value.Trim()));
+			foreach (Match match in matches3) AutoTags.Add(new AutoTag(match.Groups[1].Value.Trim()));
 
 		}
 

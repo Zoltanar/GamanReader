@@ -51,24 +51,6 @@ namespace GamanReader.Model
 			}
 		}
 
-		public static MangaInfo GetOrCreateMangaInfo(string containerPath)
-		{
-			var item = GetByPath(containerPath);
-			if (item != null) return item;
-			var preSavedItem = MangaInfo.Create(containerPath);
-			LocalDatabase.Items.Add(preSavedItem);
-			LocalDatabase.SaveChanges();
-			item = GetByPath(containerPath);
-			return item;
-
-			MangaInfo GetByPath(string path)
-			{
-
-				var items = LocalDatabase.Items.Where(x => path.EndsWith(x.SubPath)).ToArray();
-				return items.FirstOrDefault(x => x.FilePath == path);
-			}
-		}
-
 		public static ImageSource GetFavoritesIcon()
 		{
 			var uriSource = new Uri(@"/GamanReader;component/Resources/favorites.ico", UriKind.Relative);

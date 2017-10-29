@@ -40,7 +40,8 @@ namespace GamanReader.ViewModel
 		private string _goToIndexText;
 		private bool _rtlIsChecked;
 		private bool _dualPageIsChecked;
-		private readonly RecentItemList<MangaInfo> _recentItems = new RecentItemList<MangaInfo>(25,LocalDatabase.GetRecentItems(25));
+		private readonly RecentItemList<MangaInfo> _lastOpened = new RecentItemList<MangaInfo>(25, LocalDatabase.GetLastOpened(25));
+		private readonly RecentItemList<MangaInfo> _lastAdded = new RecentItemList<MangaInfo>(25, LocalDatabase.GetLastAdded(25));
 		private string _singleImageSource;
 		private string _leftImageSource;
 		private string _rightImageSource;
@@ -87,8 +88,9 @@ namespace GamanReader.ViewModel
 		public string RightImageSource { get => _rightImageSource; set { _rightImageSource = value; OnPropertyChanged(); } }
 		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; RefreshTextBox?.Invoke(_mangaInfo); OnPropertyChanged(); } }
 		public int CurrentIndex { get => _containerModel.CurrentIndex; set => _containerModel.CurrentIndex = value; }
-		public BindingList<MangaInfo> RecentItems => _recentItems.Items;
-		public int TotalFiles => _containerModel?.TotalFiles ?? -1;
+		public BindingList<MangaInfo> LastOpenedItems => _lastOpened.Items;
+		public BindingList<MangaInfo> LastAddedItems => _lastAdded.Items;
+		public int TotalFiles => _containerModel?.TotalFiles ?? 1;
 
 		public string SearchText { get => _searchText; set { _searchText = value; OnPropertyChanged(); } }
 
@@ -274,7 +276,7 @@ namespace GamanReader.ViewModel
 			GoToIndex(0);
 			ReplyText = _containerModel.TotalFiles + " images.";
 			TitleText = $"{Path.GetFileName(item.FilePath)} - {ProgramName}";
-			_recentItems.Add(item);
+			_lastOpened.Add(item);
 			item.LastOpened = DateTime.Now;
 			LocalDatabase.SaveChanges();
 			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
@@ -320,14 +322,14 @@ namespace GamanReader.ViewModel
 			foreach (var file in files)
 			{
 				count++;
-				if(count % 10 == 0) ReplyText = $@"Processing item {count}/{total}..."; //todo report progress
+				if(count % 10 == 0) ReplyText = $@"Processing item {count}/{total}...";
 				if (!FileIsSupported(file)) continue;
 				LocalDatabase.Items.Add(MangaInfo.Create(file,library,false));
 			}
 			foreach (var folder in folders)
 			{
 				count++;
-				ReplyText =  $@"Processing item {count}/{total}..."; //todo report progress
+				if (count % 10 == 0) ReplyText = $@"Processing item {count}/{total}...";
 				LocalDatabase.Items.Add(MangaInfo.Create(folder, library, true));
 			}
 			ReplyText = "Finished Reloading Library";
@@ -375,6 +377,24 @@ namespace GamanReader.ViewModel
 		{
 			SearchText = searchString;
 			Search();
+		}
+
+		public MangaInfo GetOrCreateMangaInfo(string containerPath)
+		{
+			var item = GetByPath(containerPath);
+			if (item != null) return item;
+			var preSavedItem = MangaInfo.Create(containerPath);
+			LocalDatabase.Items.Add(preSavedItem);
+			LocalDatabase.SaveChanges();
+			item = GetByPath(containerPath);
+			_lastAdded.Add(item);
+			return item;
+
+			MangaInfo GetByPath(string path)
+			{
+				var items = LocalDatabase.Items.Where(x => path.EndsWith(x.SubPath)).ToArray();
+				return items.FirstOrDefault(x => x.FilePath == path);
+			}
 		}
 	}
 }

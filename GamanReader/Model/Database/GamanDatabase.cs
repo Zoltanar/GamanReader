@@ -19,10 +19,12 @@ namespace GamanReader.Model.Database
 			System.Data.Entity.Database.SetInitializer(sqliteConnectionInitializer);
 		}
 
-		public IQueryable<MangaInfo> GetRecentItems(int itemCount)
-			=> Items.Where(x=>x.LastOpened != DateTime.MinValue).OrderByDescending(x => x.LastOpened).Take(itemCount);
+		public IQueryable<MangaInfo> GetLastOpened(int itemCount)
+			=> Items.Where(x => x.LastOpened != DateTime.MinValue).OrderByDescending(x => x.LastOpened).Take(itemCount);
+
+		public IQueryable<MangaInfo> GetLastAdded(int itemCount) => Items.OrderByDescending(x => x.DateAdded).Take(itemCount);
 	}
-	
+
 
 	public class IndividualTag
 	{
@@ -42,9 +44,9 @@ namespace GamanReader.Model.Database
 
 	public class AutoTag : IndividualTag
 	{
-		public AutoTag(string tag) : base(tag){}
+		public AutoTag(string tag) : base(tag) { }
 		public AutoTag() { }
-		
+
 	}
 	public class UserTag : IndividualTag
 	{
