@@ -22,6 +22,7 @@ namespace GamanReader.Model
 #endif
 		public const string TempFolder = StoredDataFolder + "\\Temp";
 		public const string LogFile = StoredDataFolder + "\\message.log";
+		public const string LoadFailedImage = "loadfailedn.png";
 
 		public const string ProgramName = "GamanReader";
 		private const string AllowedFormatsJson = "allowedformats.json";

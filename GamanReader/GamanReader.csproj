@@ -236,6 +236,9 @@
     <Content Include="7z.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="loadfailedn.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Resource Include="Resources\favorites.ico" />
     <Resource Include="Resources\goldstar.ico" />
     <Resource Include="Resources\goldstar.jpg" />

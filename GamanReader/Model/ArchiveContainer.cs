@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SevenZip;
@@ -22,7 +23,7 @@ namespace GamanReader.Model
 		private readonly SevenZipExtractor _zipExtractor;
 
 		public override bool IsFolder => false;
-		
+
 		public override string GetFile(int index)
 		{
 			if (index == -1) return null;
@@ -33,24 +34,18 @@ namespace GamanReader.Model
 			var fullPath = Path.GetFullPath(tempFile);
 			if (File.Exists(tempFile)) return fullPath;
 			Directory.CreateDirectory(Path.GetDirectoryName(fullPath) ?? throw new DirectoryNotFoundException($"Directory not found for path {fullPath}"));
-#if DEBUG
 			try
 			{
 				using (var stream = File.OpenWrite(tempFile))
 				{
-					_zipExtractor.ExtractFile(filename, stream); 
+					_zipExtractor.ExtractFile(filename, stream);
 				}
 			}
-			catch(System.Exception ex)
-			{ 
-				//todo handle SevenZip.ExtractionFailedException
+			catch (System.Exception ex)
+			{
+				Debug.WriteLine($"Eror in ArchiveContainer.GetFile - {ex.Message}");
+				return File.Exists(tempFile) ? fullPath : Path.GetFullPath(StaticHelpers.LoadFailedImage);
 			}
-#else
-				using (var stream = File.OpenWrite(tempFile))
-				{
-					_zipExtractor.ExtractFile(filename, stream); 
-				}
-#endif
 			return fullPath;
 		}
 

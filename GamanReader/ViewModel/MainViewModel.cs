@@ -286,9 +286,9 @@ namespace GamanReader.ViewModel
 			{
 				var img1 = new Bitmap(_containerModel.GetFile(CurrentIndex));
 				var ratio1 = img1.PhysicalDimension.Width / img1.PhysicalDimension.Height;
-				ImageBox imagebox1 = ratio1 >= 1 ? ImageBox.Single : (RtlIsChecked ? ImageBox.Right : ImageBox.Left);
+				ImageBox imagebox1 = ratio1 > 1 ? ImageBox.Single : (RtlIsChecked ? ImageBox.Right : ImageBox.Left);
 				PopulateBox(imagebox1, CurrentIndex);
-				if (ratio1 >= 1)
+				if (ratio1 > 1)
 				{
 					LeftImageSource = null;
 					SetLabelText(imagebox2, "(none)");
@@ -303,14 +303,9 @@ namespace GamanReader.ViewModel
 				return;
 			}
 			var filename2 = _containerModel.GetFile(CurrentIndex + 1);
-			if (filename2 == null)
-			{
-				PopulateBox(imagebox2, -1);
-				return;
-			}
 			var img2 = new Bitmap(filename2);
 			var ratio2 = img2.PhysicalDimension.Width / img2.PhysicalDimension.Height;
-			PopulateBox(imagebox2, ratio2 >= 1 ? -1 : CurrentIndex + 1);
+			PopulateBox(imagebox2, ratio2 > 1 ? -1 : CurrentIndex + 1);
 		}
 
 		#region Load Container
