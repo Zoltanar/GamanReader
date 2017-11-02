@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Data.Entity;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -9,9 +10,11 @@ using System.Windows;
 using GamanReader.Model;
 using GamanReader.Model.Database;
 using JetBrains.Annotations;
+using Microsoft.VisualBasic.FileIO;
 using SevenZip;
 using static GamanReader.Model.StaticHelpers;
 using Container = GamanReader.Model.Container;
+using SearchOption = System.IO.SearchOption;
 
 namespace GamanReader.ViewModel
 {
@@ -119,7 +122,7 @@ namespace GamanReader.ViewModel
 			}
 		}
 		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; RefreshTextBox?.Invoke(_mangaInfo); OnPropertyChanged(); } }
-		public int CurrentIndex { get => _containerModel.CurrentIndex; set => _containerModel.CurrentIndex = value; }
+		public int CurrentIndex { get => _containerModel?.CurrentIndex ?? -1; set => _containerModel.CurrentIndex = value; }
 		public BindingList<MangaInfo> LastOpenedItems => _lastOpened.Items;
 		public BindingList<MangaInfo> LastAddedItems => _lastAdded.Items;
 		public int TotalFiles => _containerModel?.TotalFiles ?? 1;
@@ -132,7 +135,7 @@ namespace GamanReader.ViewModel
 
 		private void PopulateBox(ImageBox imagebox, int index)
 		{
-			var filename = _containerModel.GetFile(index);
+			var filename = _containerModel?.GetFile(index);
 			SetImage(imagebox, filename);
 			SetLabelText(imagebox, filename == null ? "" : $"({index + 1}) {Path.GetFileName(filename)}");
 		}
@@ -213,7 +216,9 @@ namespace GamanReader.ViewModel
 		{
 			if (_containerModel == null) return;
 			var moveNumber = moveOne ? 1 : 2;
-			CurrentIndex = Math.Max(-1, CurrentIndex - moveNumber);
+			var targetIndex = Math.Max(-1, CurrentIndex - moveNumber);
+			if (targetIndex == CurrentIndex) return;
+			CurrentIndex = targetIndex;
 			PopulateBoxes();
 		}
 
@@ -248,20 +253,48 @@ namespace GamanReader.ViewModel
 			IndexLabelText = $"/{TotalFiles}";
 		}
 
+		public void CloseContainer()
+		{
+			_containerModel.Dispose();
+			_containerModel = null;
+			MangaInfo = null;
+			switch (PageView)
+			{
+				case PageMode.Single:
+					PopulateBox(ImageBox.Single, -1);
+					break;
+				case PageMode.Auto:
+				case PageMode.Dual:
+					PopulateBox(ImageBox.Left, -1);
+					PopulateBox(ImageBox.Right, -1);
+					break;
+			}
+			GoToIndexText = "";
+			IndexLabelText = "Closed";
+			TitleText = "Gaman Reader";
+		}
+
 		private void PopulateBoxesAuto()
 		{
 			//first, get first image
-			var img1 = new Bitmap(_containerModel.GetFile(CurrentIndex));
-			var ratio1 = img1.PhysicalDimension.Width / img1.PhysicalDimension.Height;
-			ImageBox imagebox1 = ratio1 >= 1 ? ImageBox.Single : (RtlIsChecked ? ImageBox.Right : ImageBox.Left);
 			ImageBox imagebox2 = RtlIsChecked ? ImageBox.Left : ImageBox.Right;
-			PopulateBox(imagebox1, CurrentIndex);
-			if (ratio1 >= 1)
+			if (CurrentIndex == -1)
 			{
-				LeftImageSource = null;
-				SetLabelText(imagebox2, "(none)");
-				RightImageSource = null;
-				return;
+				PopulateBox(RtlIsChecked ? ImageBox.Right : ImageBox.Left, CurrentIndex);
+			}
+			else
+			{
+				var img1 = new Bitmap(_containerModel.GetFile(CurrentIndex));
+				var ratio1 = img1.PhysicalDimension.Width / img1.PhysicalDimension.Height;
+				ImageBox imagebox1 = ratio1 >= 1 ? ImageBox.Single : (RtlIsChecked ? ImageBox.Right : ImageBox.Left);
+				PopulateBox(imagebox1, CurrentIndex);
+				if (ratio1 >= 1)
+				{
+					LeftImageSource = null;
+					SetLabelText(imagebox2, "(none)");
+					RightImageSource = null;
+					return;
+				}
 			}
 			SingleImageSource = null;
 			if (CurrentIndex + 1 >= TotalFiles)
@@ -269,7 +302,13 @@ namespace GamanReader.ViewModel
 				PopulateBox(imagebox2, -1);
 				return;
 			}
-			var img2 = new Bitmap(_containerModel.GetFile(CurrentIndex + 1));
+			var filename2 = _containerModel.GetFile(CurrentIndex + 1);
+			if (filename2 == null)
+			{
+				PopulateBox(imagebox2, -1);
+				return;
+			}
+			var img2 = new Bitmap(filename2);
 			var ratio2 = img2.PhysicalDimension.Width / img2.PhysicalDimension.Height;
 			PopulateBox(imagebox2, ratio2 >= 1 ? -1 : CurrentIndex + 1);
 		}
@@ -402,22 +441,14 @@ namespace GamanReader.ViewModel
 			SearchResults.Clear();
 			var searchParts = SearchText.Split(':');
 			var type = searchParts.Length == 2 ? searchParts[0] : "";
-			var searchString = searchParts.Length == 2 ? searchParts[1] : SearchText;
+			var searchString = (searchParts.Length == 2 ? searchParts[1] : SearchText).Trim();
 			MangaInfo[] results;
 			switch (type)
 			{
-				/*case "event":
-					results = LocalDatabase.Items.Where(x => x.Event.ToLower().Equals(searchString.ToLower())).ToArray();
+				case "alias":
+					var alias = LocalDatabase.Aliases.FirstOrDefault(x=>x.Name.ToLower().Equals(searchString.ToLower()));
+					results = LocalDatabase.AutoTags.Where(x => alias.Tags.Contains(x.Tag.ToLower())).Select(y => y.Item).ToArray();
 					break;
-				case "group":
-					results = LocalDatabase.Items.Where(x => x.Group.ToLower().Equals(searchString.ToLower())).ToArray();
-					break;
-				case "artist":
-					results = LocalDatabase.Items.Where(x => x.Artist.ToLower().Equals(searchString.ToLower())).ToArray();
-					break;
-				case "parody":
-					results = LocalDatabase.Items.Where(x => x.Parody.ToLower().Equals(searchString.ToLower())).ToArray();
-					break;*/
 				case "tag":
 					results = LocalDatabase.AutoTags.Where(x => x.Tag.ToLower().Equals(searchString.ToLower())).Select(y => y.Item).ToArray();
 					break;
@@ -427,8 +458,11 @@ namespace GamanReader.ViewModel
 				default:
 					throw new ArgumentException("Argument is invalid.");
 			}
-			SearchResults.AddRange(results);
+			if (NoBlacklisted) results = results.Where(x => x.AutoTags.All(y => y.Tag.ToLower() != "blacklisted")).ToArray();
+			SearchResults.AddRange(results.Distinct().OrderBy(x=>x.Name));
 		}
+
+		public bool NoBlacklisted { get; set; } = true;
 
 		internal void Search(string searchString)
 		{
@@ -436,23 +470,7 @@ namespace GamanReader.ViewModel
 			Search();
 		}
 
-		public MangaInfo GetOrCreateMangaInfo(string containerPath)
-		{
-			var item = GetByPath(containerPath);
-			if (item != null) return item;
-			var preSavedItem = MangaInfo.Create(containerPath);
-			LocalDatabase.Items.Add(preSavedItem);
-			LocalDatabase.SaveChanges();
-			item = GetByPath(containerPath);
-			_lastAdded.Add(item);
-			return item;
 
-			MangaInfo GetByPath(string path)
-			{
-				var items = LocalDatabase.Items.Where(x => path.EndsWith(x.SubPath)).ToArray();
-				return items.FirstOrDefault(x => x.FilePath == path);
-			}
-		}
 
 		public void ChangePageMode()
 		{
@@ -472,5 +490,71 @@ namespace GamanReader.ViewModel
 
 		private enum ImageBox { Single, Left, Right }
 		private enum PageMode { Single, Dual, Auto }
+
+		/// <summary>
+		/// Returns true if deleted or false if not
+		/// </summary>
+		/// <param name="item"></param>
+		/// <returns>true if deleted</returns>
+		public bool DeleteItem(MangaInfo item)
+		{
+			CloseContainer();
+			if (item.IsFolder) FileSystem.DeleteDirectory(item.FilePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.DoNothing);
+			else FileSystem.DeleteFile(item.FilePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.DoNothing);
+			bool stillExists = item.IsFolder ? Directory.Exists(item.FilePath) : File.Exists(item.FilePath);
+			if (!stillExists)
+			{
+				LocalDatabase.Items.Remove(item);
+				LocalDatabase.SaveChanges();
+			}
+			return !stillExists;
+		}
+
+		public async void GetLibraryAdditions()
+		{
+			int additions = 0;
+			await Task.Run(() =>
+			{
+				LocalDatabase.Items.Load();
+				foreach (var library in LocalDatabase.Libraries) additions += GetLibraryAdditions(library);
+				LocalDatabase.SaveChanges();
+			});
+			ReplyText = $"Finished getting new additions ({additions})";
+		}
+
+		private int GetLibraryAdditions(LibraryFolder library)
+		{
+			if (string.IsNullOrWhiteSpace(library.Path)) return 0;
+			int additions = 0;
+			var files = Directory.GetFiles(library.Path);
+			var folders = Directory.GetDirectories(library.Path);
+			var presentFiles = LocalDatabase.Items.Local.Where(x => !x.IsFolder).Select(x=>x.FilePath).ToArray();
+			var presentFolders = LocalDatabase.Items.Local.Where(x => x.IsFolder).Select(x=>x.FilePath).ToArray();
+			int count = 0;
+			int total = files.Length + folders.Length;
+			foreach (var file in files)
+			{
+				count++;
+				if (count % 10 == 0) ReplyText = $@"Processing item {count}/{total}...";
+				if (!FileIsSupported(file)) continue;
+				if (presentFiles.Contains(file)) continue;
+				additions++;
+				LocalDatabase.Items.Add(MangaInfo.Create(file, library, false));
+			}
+			foreach (var folder in folders)
+			{
+				count++;
+				if (count % 10 == 0) ReplyText = $@"Processing item {count}/{total}...";
+				if (presentFolders.Contains(folder)) continue;
+				additions++;
+				LocalDatabase.Items.Add(MangaInfo.Create(folder, library, true));
+			}
+			return additions;
+		}
+
+		public MangaInfo GetOrCreateMangaInfo(string containerPath)
+		{
+			return LocalDatabase.GetOrCreateMangaInfo(containerPath, _lastAdded);
+		}
 	}
 }

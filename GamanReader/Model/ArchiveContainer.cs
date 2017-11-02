@@ -33,10 +33,24 @@ namespace GamanReader.Model
 			var fullPath = Path.GetFullPath(tempFile);
 			if (File.Exists(tempFile)) return fullPath;
 			Directory.CreateDirectory(Path.GetDirectoryName(fullPath) ?? throw new DirectoryNotFoundException($"Directory not found for path {fullPath}"));
-			using (var stream = File.OpenWrite(tempFile))
+#if DEBUG
+			try
 			{
-				_zipExtractor.ExtractFile(filename, stream); //todo handle SevenZip.ExtractionFailedException
+				using (var stream = File.OpenWrite(tempFile))
+				{
+					_zipExtractor.ExtractFile(filename, stream); 
+				}
 			}
+			catch(System.Exception ex)
+			{ 
+				//todo handle SevenZip.ExtractionFailedException
+			}
+#else
+				using (var stream = File.OpenWrite(tempFile))
+				{
+					_zipExtractor.ExtractFile(filename, stream); 
+				}
+#endif
 			return fullPath;
 		}
 

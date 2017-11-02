@@ -25,25 +25,29 @@
                 </Grid.ColumnDefinitions>
                 <!--Left Side Bar-->
                 <Label Grid.Column="0" Content="{Binding LeftLabelText}" Margin="10,10,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Left" Width="105" Grid.ColumnSpan="2"/>
-                <TabControl Grid.Column="0" Height="664" Margin="10,35,10,0" VerticalAlignment="Top" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" >
+                <TabControl Grid.Column="0" Margin="10,35,10,10" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="4">
                     <TabItem Header="Search">
                         <Grid Background="#FFE5E5E5">
                             <TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp"/>
-                            <ListBox Margin="0,28,0,0"  MouseDoubleClick="OpenItemFromListBox" ItemsSource="{Binding SearchResults}" />
+                            <ListBox Margin="0,28,0,0"  MouseDoubleClick="OpenItemFromListBox" ItemsSource="{Binding SearchResults}" KeyUp="DeleteItem"/>
                         </Grid>
                     </TabItem>
                     <TabItem Header="Tags">
                         <view:TagTreePanel x:Name="TagPanel" ></view:TagTreePanel>
                     </TabItem>
                     <TabItem Header="Libraries"/>
-                    <TabItem Header="Added"><ListBox ItemsSource="{Binding LastAddedItems}" MouseDoubleClick="OpenItemFromListBox" /></TabItem>
-                    <TabItem Header="Opened"><ListBox ItemsSource="{Binding LastOpenedItems}" MouseDoubleClick="OpenItemFromListBox" /></TabItem>
+                    <TabItem Header="Added">
+                        <ListBox ItemsSource="{Binding LastAddedItems}" MouseDoubleClick="OpenItemFromListBox" />
+                    </TabItem>
+                    <TabItem Header="Opened">
+                        <ListBox ItemsSource="{Binding LastOpenedItems}" MouseDoubleClick="OpenItemFromListBox" />
+                    </TabItem>
                 </TabControl>
                 <!--Center-->
                 <Image gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Grid.Column="1" Grid.ColumnSpan="2" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
                 <Image gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Grid.Column="1" HorizontalAlignment="Right" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
                 <Image gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Grid.Column="2" HorizontalAlignment="Left" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
-                <Slider x:Name="IndexSlider" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="689" Width="19" Orientation="Vertical" IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" Thumb.DragCompleted="Slider_OnDragCompleted" />
+                <Slider x:Name="IndexSlider" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,10" Width="19" Orientation="Vertical" IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" Thumb.DragCompleted="Slider_OnDragCompleted" />
                 <Popup x:Name="IndexPopup" Grid.Column="1" PlacementTarget="{Binding ElementName=IndexSlider}" StaysOpen="False" />
                 <!--Right Side Bar-->
                 <Label Content="{Binding RightLabelText}" Margin="0,10,10,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Right" Width="105" Grid.Column="3"/>
@@ -51,13 +55,14 @@
                 <Button Content="Add Tag" Margin="10,60,0,0" Click="AddTag" HorizontalAlignment="Left" Width="105" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
                 <TextBox Text="{Binding GoToIndexText}" HorizontalAlignment="Left" Margin="10,85,0,0" TextWrapping="Wrap" Width="64" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="20" VerticalAlignment="Top" KeyUp="GoToTextBox_KeyUp" Grid.Column="3" HorizontalContentAlignment="Center"/>
                 <Label Content="{Binding IndexLabelText}" Margin="79,85,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="36" Foreground="White" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <TextBlock Text="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,110,0,0" Width="105" Height="40" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="InfoBox" Grid.Column="3" Margin="10,330,5,10" TextWrapping="Wrap" Foreground="White"/>
-                <Label Content="Load" Grid.Column="3" HorizontalAlignment="Left" Margin="10,155,0,0" VerticalAlignment="Top" Height="20" Foreground="White" Padding="0" VerticalContentAlignment="Center"/>
-                <Button Grid.Column="3" Content="Folder" Click="LoadFolderByDialog" Margin="41,155,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="42"/>
-                <Button Grid.Column="3" Content="Zip" Click="LoadArchiveByDialog" Margin="88,155,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="27"/>
-                <Button Grid.Column="3" Content="Open Random" Click="OpenRandom_Click"  Height="20"  Margin="10,180,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <ToggleButton Grid.Column="3" Content="{Binding RtlToggleText}" Margin="10,205,0,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Left" Width="105" BorderBrush="{x:Null}" Background="#FF7C99E8" UseLayoutRounding="False">
+                <TextBlock Text="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,110,0,0" Width="105" Height="48" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding MangaInfo.Library.Path}" HorizontalAlignment="Left" Margin="10,415,0,0" Width="105" Height="50" VerticalAlignment="Top" Background="#FF86B5E4" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="InfoBox" Grid.Column="3" Margin="10,470,5,10" TextWrapping="Wrap" Foreground="White"/>
+                <Label Content="Load" Grid.Column="3" HorizontalAlignment="Left" Margin="10,163,0,0" VerticalAlignment="Top" Height="20" Foreground="White" Padding="0" VerticalContentAlignment="Center"/>
+                <Button Grid.Column="3" Content="Folder" Click="LoadFolderByDialog" Margin="41,163,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="42"/>
+                <Button Grid.Column="3" Content="Zip" Click="LoadArchiveByDialog" Margin="88,163,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="27"/>
+                <Button Grid.Column="3" Content="Open Random" Click="OpenRandom_Click"  Height="20"  Margin="10,188,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <ToggleButton Grid.Column="3" Content="{Binding RtlToggleText}" Margin="10,213,0,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Left" Width="105" BorderBrush="{x:Null}" Background="#FF7C99E8" UseLayoutRounding="False">
                     <ToggleButton.Style>
                         <Style TargetType="{x:Type ToggleButton}">
                             <Setter Property="Template">
@@ -75,10 +80,13 @@
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
-                <Button Grid.Column="3" Content="Set Library Folder" Margin="10,230,0,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
-                <Button Grid.Column="3" Click="ChangePageMode" Content="{Binding PageModeText}" Margin="10,255,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="105"/>
-                <Button Grid.Column="3" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,280,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <Button Grid.Column="3" Content="Reload Library" Click="ReloadLibrary"  Height="20"  Margin="10,305,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <Button Grid.Column="3" Content="Set Library Folder" Margin="10,238,0,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
+                <Button Grid.Column="3" Click="ChangePageMode" Content="{Binding PageModeText}" Margin="10,263,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="105"/>
+                <Button Grid.Column="3" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,288,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <Button Grid.Column="3" Content="Reload Library" Click="ReloadLibrary"  Height="20"  Margin="10,313,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <Button Grid.Column="3" Content="Get New Additions" Click="GetLibraryAdditions"  Height="20"  Margin="10,338,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <Button Grid.Column="3" Content="Close Container" Click="CloseContainer"  Height="20"  Margin="10,363,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+                <Button Grid.Column="3" Content="Create Alias" Click="CreateAlias"  Height="20"  Margin="10,388,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
             </Grid>
         </DockPanel>
     </Grid>

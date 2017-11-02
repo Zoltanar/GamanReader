@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -65,10 +66,10 @@ namespace GamanReader.View
 
 		private void TagLinkClicked(object sender, RoutedEventArgs e)
 		{
-			var text = ((Run) ((Hyperlink) sender).Inlines.FirstInline).Text.Trim('[', '(', '{', ']', ')', '}');
+			var text = ((Run)((Hyperlink)sender).Inlines.FirstInline).Text.Trim('[', '(', '{', ']', ')', '}');
 			_mainModel.Search($"tag:{text}");
 		}
-		
+
 		private void LoadFolderByDialog(object sender, RoutedEventArgs e)
 		{
 			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true };
@@ -86,12 +87,12 @@ namespace GamanReader.View
 			var item = _mainModel.GetOrCreateMangaInfo(filePicker.FileName);
 			LoadContainer(item);
 		}
-		
+
 		public void LoadContainer(MangaInfo item)
 		{
 			_mainModel.LoadContainer(item);
 		}
-		
+
 		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
 		{
 			if (e.Key != Key.Enter) return;
@@ -128,10 +129,10 @@ namespace GamanReader.View
 
 		private void SetLibraryFolder_Click(object sender, RoutedEventArgs e)
 		{
-			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true };
+			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true, Multiselect = true };
 			var result = folderPicker.ShowDialog();
 			if (result != CommonFileDialogResult.Ok) return;
-			LocalDatabase.Libraries.Add(new LibraryFolder(folderPicker.FileName));
+			foreach (var filename in folderPicker.FileNames) LocalDatabase.Libraries.Add(new LibraryFolder(filename));
 			LocalDatabase.SaveChanges();
 		}
 
@@ -140,7 +141,7 @@ namespace GamanReader.View
 			_mainModel.AddTag(TagText.Text);
 			TagPanel.AddTag(_mainModel.MangaInfo, TagText.Text);
 		}
-		
+
 		private void GoFullscreen(object sender, RoutedEventArgs e)
 		{
 			if (!_fullscreenOn)
@@ -167,18 +168,28 @@ namespace GamanReader.View
 			_mainModel.Search();
 
 		}
-		
+
 		private void OpenItemFromListBox(object sender, MouseButtonEventArgs e)
 		{
 			if (!(e.OriginalSource is DependencyObject source)) return;
-			if (!(ItemsControl.ContainerFromElement((ItemsControl) sender, source) is ListBoxItem lbItem)) return;
+			if (!(ItemsControl.ContainerFromElement((ItemsControl)sender, source) is ListBoxItem lbItem)) return;
 			if (lbItem.Content is MangaInfo item)
 			{
 				_mainModel.LoadContainer(item);
 			}
-	}
+		}
 
-		private readonly int _widthChange = 100;
+		private void DeleteItem(object sender, KeyEventArgs e)
+		{
+			var itemsControl = (ItemsControl)sender;
+			if (e.Key != Key.Delete) return; if (!(e.OriginalSource is DependencyObject source)) return;
+			if (!(ItemsControl.ContainerFromElement(itemsControl, source) is ListBoxItem lbItem)) return;
+			if (!(lbItem.Content is MangaInfo item)) return;
+			var deleted = _mainModel.DeleteItem(item);
+			if (deleted) ((IList<MangaInfo>)itemsControl.ItemsSource).Remove(item);
+		}
+
+		private readonly int _widthChange = 250;
 
 		private void IncreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
 		{
@@ -189,13 +200,13 @@ namespace GamanReader.View
 		{
 			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth - _widthChange);
 		}
-		
+
 		private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			// ReSharper disable once ConstantConditionalAccessQualifier
 			if (_mainModel?.MangaInfo == null) return; //required because this is fired before initalization is completed
 			var value = (int)e.NewValue;
-			IndexPopup.Child = new TextBlock(new Run($"Value: {value}")){Foreground = Brushes.Blue, Background = Brushes.Violet};
+			IndexPopup.Child = new TextBlock(new Run($"Value: {value}")) { Foreground = Brushes.Blue, Background = Brushes.Violet };
 			IndexPopup.IsOpen = true;
 		}
 
@@ -254,6 +265,22 @@ namespace GamanReader.View
 		private void ChangePageMode(object sender, RoutedEventArgs e)
 		{
 			_mainModel.ChangePageMode();
+		}
+
+		private void GetLibraryAdditions(object sender, RoutedEventArgs e)
+		{
+			_mainModel.GetLibraryAdditions();
+		}
+
+		private void CloseContainer(object sender, RoutedEventArgs e)
+		{
+			_mainModel.CloseContainer();
+		}
+
+		private void CreateAlias(object sender, RoutedEventArgs e)
+		{
+			var aliasWindow = new AliasWindow();
+			aliasWindow.Show();
 		}
 	}
 }
