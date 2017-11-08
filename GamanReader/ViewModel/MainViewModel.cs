@@ -453,7 +453,7 @@ namespace GamanReader.ViewModel
 				default:
 					throw new ArgumentException("Argument is invalid.");
 			}
-			if (NoBlacklisted) results = results.Where(x => x.AutoTags.All(y => y.Tag.ToLower() != "blacklisted")).ToArray();
+			if (NoBlacklisted) results = results.Where(x => x.UserTags.All(y => y.Tag.ToLower() != "blacklisted")).ToArray();
 			SearchResults.AddRange(results.Distinct().OrderBy(x=>x.Name));
 		}
 
@@ -514,6 +514,7 @@ namespace GamanReader.ViewModel
 				foreach (var library in LocalDatabase.Libraries) additions += GetLibraryAdditions(library);
 				LocalDatabase.SaveChanges();
 			});
+			_lastAdded.Items.SetRange(LocalDatabase.GetLastAdded(25));
 			ReplyText = $"Finished getting new additions ({additions})";
 		}
 

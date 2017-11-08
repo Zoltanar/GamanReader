@@ -22,6 +22,7 @@ namespace GamanReader.ViewModel
 			TagGroups.Clear();
 			TagGroups.Add(GetNode("Auto Tags", LocalDatabase.AutoTags.ToArray().GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
 			TagGroups.Add(GetNode("User Tags", LocalDatabase.UserTags.ToArray().GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
+			TagGroups.Add(GetNode("Aliases", LocalDatabase.Aliases.ToArray().GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase)));
 		}
 
 		private TreeViewItem GetNode(string header, IEnumerable<IGrouping<string, IndividualTag>> items)
@@ -31,6 +32,20 @@ namespace GamanReader.ViewModel
 			{
 				var subItem = new TreeViewItem { Tag = set.Key };
 				foreach (var item in set) subItem.Items.Add(item.Item);
+				subItem.Header = $"{set.Key} ({subItem.Items.Count} items)";
+				node.Items.Add(subItem);
+			}
+			SetHeader(node);
+			return node;
+		}
+
+		private TreeViewItem GetNode(string header, IEnumerable<IGrouping<string, Alias>> items)
+		{
+			var node = new TreeViewItem { Tag = header };
+			foreach (var set in items)
+			{
+				var subItem = new TreeViewItem { Tag = set.Key };
+				foreach (var item in set) subItem.Items.Add(item);
 				subItem.Header = $"{set.Key} ({subItem.Items.Count} items)";
 				node.Items.Add(subItem);
 			}

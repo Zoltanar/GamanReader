@@ -1,3 +1,5 @@
 TODO
 handle folders in archives
 save search strings to tags
+going backwords in auto mode
+buttons: add to fav, add to blacklist

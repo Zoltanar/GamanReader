@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
+using JetBrains.Annotations;
 
 namespace GamanReader.Model
 {
@@ -24,9 +25,9 @@ namespace GamanReader.Model
 			}
 			RecognizedExtensions.Add("*.gif");
 		}
-		protected static bool FileIsImage(string filename)
+		protected static bool FileIsImage([NotNull]string filename)
 		{
-			var ext = Path.GetExtension(filename);
+			var ext = Path.GetExtension(filename).ToLower();
 			return RecognizedExtensions.Exists(x =>
 			{
 				var extension = Path.GetExtension(x);

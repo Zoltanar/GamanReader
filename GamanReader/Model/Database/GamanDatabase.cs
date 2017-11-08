@@ -94,6 +94,8 @@ namespace GamanReader.Model.Database
 				AliasTags.Add(new AliasTag{AliasId = Id, Tag = iTag.Tag.ToLower()});
 			}
 		}
+
+		public override string ToString() => Name;
 	}
 
 

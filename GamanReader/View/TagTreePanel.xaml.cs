@@ -21,11 +21,21 @@ namespace GamanReader.View
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
 			MangaInfo item = null;
-			if (preItem.DataContext is MangaInfo info) item = info;
-			else if (preItem.DataContext is AutoTag tag) item = tag.Item;
-			if (item == null) return;
-			var window = (MainWindow) Window.GetWindow(this);
+			var window = (MainWindow)Window.GetWindow(this);
 			Debug.Assert(window != null, nameof(window) + " != null");
+			switch (preItem.DataContext)
+			{
+				case MangaInfo info:
+					item = info;
+					break;
+				case AutoTag tag:
+					item = tag.Item;
+					break;
+				case Alias alias:
+					((MainViewModel)window.DataContext).Search($"alias:{alias.Name}");
+					return;
+			}
+			if (item == null) return;
 			window.LoadContainer(item);
 		}
 
@@ -37,7 +47,7 @@ namespace GamanReader.View
 
 		internal void AddTag(MangaInfo item, string tag)
 		{
-			((TagTreeViewModel)DataContext).AddTag(item,tag);
+			((TagTreeViewModel)DataContext).AddTag(item, tag);
 		}
 	}
 }
