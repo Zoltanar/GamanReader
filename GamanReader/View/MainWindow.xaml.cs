@@ -128,19 +128,19 @@ namespace GamanReader.View
 			_mainModel.OpenRandom();
 		}
 
-		private void SetLibraryFolder_Click(object sender, RoutedEventArgs e)
+		private void AddLibraryFolder_Click(object sender, RoutedEventArgs e)
 		{
 			var folderPicker = new CommonOpenFileDialog { IsFolderPicker = true, AllowNonFileSystemItems = true, Multiselect = true };
 			var result = folderPicker.ShowDialog();
 			if (result != CommonFileDialogResult.Ok) return;
 			foreach (var filename in folderPicker.FileNames) LocalDatabase.Libraries.Add(new LibraryFolder(filename));
 			LocalDatabase.SaveChanges();
+			_mainModel.DisplayedPanel = MainViewModel.DisplayPanel.Libraries;
 		}
 
 		private void AddTag(object sender, RoutedEventArgs e)
 		{
 			_mainModel.AddTag(TagText.Text);
-			TagPanel.AddTag(_mainModel.MangaInfo, TagText.Text);
 		}
 
 		private void GoFullscreen(object sender, RoutedEventArgs e)
@@ -232,7 +232,6 @@ namespace GamanReader.View
 				case MouseButton.Middle:
 					_mainModel.GoForward(true);
 					break;
-
 			}
 		}
 

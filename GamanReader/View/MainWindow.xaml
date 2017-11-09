@@ -25,7 +25,7 @@
                 </Grid.ColumnDefinitions>
                 <!--Left Side Bar-->
                 <Label Grid.Column="0" Content="{Binding LeftLabelText}" Margin="10,10,0,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Left" Width="105"/>
-                <TabControl Grid.Column="0" Margin="10,35,10,10" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="4">
+                <TabControl Grid.Column="0" Margin="10,35,10,10" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="{Binding DisplayedPanel}">
                     <TabItem Header="Search">
                         <Grid Background="#FFE5E5E5">
                             <TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp"/>
@@ -47,13 +47,13 @@
                 <Image gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Grid.Column="1" Grid.ColumnSpan="2" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
                 <Image gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Grid.Column="1" HorizontalAlignment="Right" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
                 <Image gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Grid.Column="2" HorizontalAlignment="Left" KeyDown="HandleKeys" MouseUp="ImageBox_OnMouseUp" />
-                <Slider x:Name="IndexSlider" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,10" Width="19" Orientation="Vertical" IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" Thumb.DragCompleted="Slider_OnDragCompleted" />
+                <Slider x:Name="IndexSlider" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,10" Width="19" Orientation="Vertical" IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" Value="{Binding CurrentPage, Mode=OneWay}" Thumb.DragCompleted="Slider_OnDragCompleted" />
                 <Popup x:Name="IndexPopup" Grid.Column="1" PlacementTarget="{Binding ElementName=IndexSlider}" StaysOpen="False" />
                 <!--Right Side Bar-->
                 <Label Content="{Binding RightLabelText}" Margin="0,10,5,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Right" Width="105" Grid.Column="3"/>
                 <TextBox x:Name="TagText" Margin="10,35,0,0" TextWrapping="Wrap" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="105" Grid.Column="3" HorizontalContentAlignment="Center" />
                 <Button Content="Add Tag" Margin="10,60,0,0" Click="AddTag" HorizontalAlignment="Left" Width="105" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <TextBox Text="{Binding GoToIndexText}" HorizontalAlignment="Left" Margin="10,159,0,0" TextWrapping="Wrap" Width="64" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="20" VerticalAlignment="Top" KeyUp="GoToTextBox_KeyUp" Grid.Column="3" HorizontalContentAlignment="Center"/>
+                <TextBox Text="{Binding CurrentPage, Mode=OneWay}" HorizontalAlignment="Left" Margin="10,159,0,0" TextWrapping="Wrap" Width="64" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="20" VerticalAlignment="Top" KeyUp="GoToTextBox_KeyUp" Grid.Column="3" HorizontalContentAlignment="Center"/>
                 <Label Content="{Binding IndexLabelText}" Margin="79,159,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="36" Foreground="White" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" />
                 <TextBlock Text="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,184,0,0" Width="105" Height="48" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="{Binding MangaInfo.Library.Path}" HorizontalAlignment="Left" Margin="10,489,0,0" Width="105" Height="50" VerticalAlignment="Top" Background="#FF86B5E4" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
@@ -80,15 +80,15 @@
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
-                <Button Grid.Column="3" Content="Set Library Folder" Margin="10,312,0,0" VerticalAlignment="Top" Height="20" Click="SetLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
+                <Button Grid.Column="3" Content="Add Library Folder" Margin="10,312,0,0" VerticalAlignment="Top" Height="20" Click="AddLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
                 <Button Grid.Column="3" Click="ChangePageMode" Content="{Binding PageModeText}" Margin="10,337,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="105"/>
                 <Button Grid.Column="3" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,362,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
                 <Button Grid.Column="3" Content="Reload Library" Click="ReloadLibrary"  Height="20"  Margin="10,387,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
                 <Button Grid.Column="3" Content="Get New Additions" Click="GetLibraryAdditions"  Height="20"  Margin="10,412,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
                 <Button Grid.Column="3" Content="Close Container" Click="CloseContainer"  Height="20"  Margin="10,437,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
                 <Button Grid.Column="3" Content="Create Alias" Click="CreateAlias"  Height="20"  Margin="10,462,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <ToggleButton IsChecked="{Binding IsFavorite}" Content="Favorite" Margin="10,85,0,0" Click="AddTag" HorizontalAlignment="Left" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <ToggleButton IsChecked="{Binding IsBlacklist}" Content="Blacklist" Margin="0,85,5,0" Click="AddTag" HorizontalAlignment="Right" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
+                <ToggleButton IsChecked="{Binding IsFavorite}" Content="Favorite" Margin="10,85,0,0" HorizontalAlignment="Left" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
+                <ToggleButton IsChecked="{Binding IsBlacklist}" Content="Blacklist" Margin="0,85,5,0" HorizontalAlignment="Right" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
             </Grid>
         </DockPanel>
     </Grid>

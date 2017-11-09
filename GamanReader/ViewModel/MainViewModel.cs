@@ -30,7 +30,7 @@ namespace GamanReader.ViewModel
 			catch (IOException) { /*This can fail if folder is open or files are used by other applications.*/ }
 			Directory.CreateDirectory(TempFolder);
 		}
-		
+
 		#region Properties
 		private Container _containerModel;
 		private string _rtlToggleText;
@@ -40,7 +40,6 @@ namespace GamanReader.ViewModel
 		private string _titleText;
 		private string _replyText;
 		private string _indexLabelText;
-		private string _goToIndexText;
 		private bool _rtlIsChecked;
 		private PageMode _pageView;
 		private readonly RecentItemList<MangaInfo> _lastOpened = new RecentItemList<MangaInfo>(25, LocalDatabase.GetLastOpened(25));
@@ -58,7 +57,6 @@ namespace GamanReader.ViewModel
 		public string RtlToggleText { get => _rtlToggleText; set { _rtlToggleText = value; OnPropertyChanged(); } }
 		public string PageModeText { get => _pageModeText; set { _pageModeText = value; OnPropertyChanged(); } }
 		public string IndexLabelText { get => _indexLabelText; set { _indexLabelText = value; OnPropertyChanged(); } }
-		public string GoToIndexText { get => _goToIndexText; set { _goToIndexText = value; OnPropertyChanged(); } }
 		public bool RtlIsChecked
 		{
 			get => _rtlIsChecked;
@@ -121,7 +119,9 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged();
 			}
 		}
-		public MangaInfo MangaInfo { get => _mangaInfo;
+		public MangaInfo MangaInfo
+		{
+			get => _mangaInfo;
 			set
 			{
 				_mangaInfo = value;
@@ -129,8 +129,23 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged();
 				OnPropertyChanged(nameof(IsFavorite));
 				OnPropertyChanged(nameof(IsBlacklist));
-			} }
-		public int CurrentIndex { get => _containerModel?.CurrentIndex ?? -1; set => _containerModel.CurrentIndex = value; }
+			}
+		}
+
+		public int CurrentIndex
+		{
+			get => _containerModel?.CurrentIndex ?? -1;
+			set
+			{
+				_containerModel.CurrentIndex = value;
+				OnPropertyChanged(nameof(CurrentPage));
+			}
+		}
+
+		public int CurrentPage
+		{
+			get => (_containerModel?.CurrentIndex ?? -1) + 1;
+		}
 		public BindingList<MangaInfo> LastOpenedItems => _lastOpened.Items;
 		public BindingList<MangaInfo> LastAddedItems => _lastAdded.Items;
 		public int TotalFiles => _containerModel?.TotalFiles ?? 1;
@@ -202,6 +217,7 @@ namespace GamanReader.ViewModel
 		{
 			if (_containerModel == null) return;
 			LocalDatabase.AddTag(MangaInfo, tag);
+			DisplayedPanel = DisplayPanel.Tags;
 		}
 
 		public void OpenRandom()
@@ -211,7 +227,8 @@ namespace GamanReader.ViewModel
 				ReplyText = "No Library Folders are set.";
 				return;
 			}
-			var item = LocalDatabase.Items.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+			var item = NoBlacklisted ? LocalDatabase.Items.Where(x => !x.UserTags.Any(y => y.Tag.ToLower().Equals("blacklisted"))).OrderBy(z => Guid.NewGuid()).FirstOrDefault()
+				: LocalDatabase.Items.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
 			if (item == null)
 			{
 				ReplyText = "No items found.";
@@ -257,27 +274,17 @@ namespace GamanReader.ViewModel
 					PopulateBox(imagebox2, CurrentIndex + 1 > TotalFiles - 1 ? -1 : CurrentIndex + 1);
 					break;
 			}
-			GoToIndexText = (CurrentIndex + 1).ToString();
 			IndexLabelText = $"/{TotalFiles}";
 		}
 
 		public void CloseContainer()
 		{
-			_containerModel.Dispose();
+			_containerModel?.Dispose();
 			_containerModel = null;
 			MangaInfo = null;
-			switch (PageView)
-			{
-				case PageMode.Single:
-					PopulateBox(ImageBox.Single, -1);
-					break;
-				case PageMode.Auto:
-				case PageMode.Dual:
-					PopulateBox(ImageBox.Left, -1);
-					PopulateBox(ImageBox.Right, -1);
-					break;
-			}
-			GoToIndexText = "";
+			PopulateBox(ImageBox.Single, -1);
+			PopulateBox(ImageBox.Left, -1);
+			PopulateBox(ImageBox.Right, -1);
 			IndexLabelText = "Closed";
 			TitleText = "Gaman Reader";
 		}
@@ -386,7 +393,6 @@ namespace GamanReader.ViewModel
 			_lastOpened.Add(item);
 			item.LastOpened = DateTime.Now;
 			LocalDatabase.SaveChanges();
-			GoToIndexText = (_containerModel.CurrentIndex + 1).ToString();
 			IndexLabelText = $"/{_containerModel.TotalFiles}";
 		}
 
@@ -399,7 +405,7 @@ namespace GamanReader.ViewModel
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
-		
+
 		public async void ReloadLibraryInfo()
 		{
 			await Task.Run(() =>
@@ -449,7 +455,7 @@ namespace GamanReader.ViewModel
 			switch (type)
 			{
 				case "alias":
-					var alias = LocalDatabase.Aliases.FirstOrDefault(x=>x.Name.ToLower().Equals(searchString.ToLower()));
+					var alias = LocalDatabase.Aliases.FirstOrDefault(x => x.Name.ToLower().Equals(searchString.ToLower()));
 					results = LocalDatabase.AutoTags.Where(x => alias.Tags.Contains(x.Tag.ToLower())).Select(y => y.Item).ToArray();
 					break;
 				case "tag":
@@ -462,7 +468,8 @@ namespace GamanReader.ViewModel
 					throw new ArgumentException("Argument is invalid.");
 			}
 			if (NoBlacklisted) results = results.Where(x => x.UserTags.All(y => y.Tag.ToLower() != "blacklisted")).ToArray();
-			SearchResults.AddRange(results.Distinct().OrderBy(x=>x.Name));
+			SearchResults.AddRange(results.Distinct().OrderBy(x => x.Name));
+			DisplayedPanel = DisplayPanel.Search;
 		}
 
 		public bool NoBlacklisted { get; set; } = true;
@@ -473,8 +480,8 @@ namespace GamanReader.ViewModel
 			set
 			{
 				if (value == MangaInfo.UserTags.Any(x => x.Tag.ToLower().Equals("favorite"))) return;
-				if(value) LocalDatabase.AddTag(MangaInfo, "favorite");
-				else LocalDatabase.RemoveTag(MangaInfo,"favorite");
+				if (value) LocalDatabase.AddTag(MangaInfo, "favorite");
+				else LocalDatabase.RemoveTag(MangaInfo, "favorite");
 				OnPropertyChanged();
 			}
 		}
@@ -490,6 +497,30 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged();
 			}
 		}
+
+		private DisplayPanel _displayedPanel = DisplayPanel.Opened;
+
+		public object DisplayedPanel
+		{
+			get => (int)_displayedPanel;
+			set
+			{
+				switch (value)
+				{
+					case int iVal:
+						_displayedPanel = (DisplayPanel)iVal;
+						break;
+					case DisplayPanel eVal:
+						_displayedPanel = eVal;
+						break;
+					default:
+						throw new ArgumentException("Must pass object of type DisplayPanel or int");
+				}
+				OnPropertyChanged();
+			}
+		}
+
+		public enum DisplayPanel { Search, Tags, Libraries, Added, Opened }
 
 		internal void Search(string searchString)
 		{
@@ -548,6 +579,7 @@ namespace GamanReader.ViewModel
 			});
 			_lastAdded.Items.SetRange(LocalDatabase.GetLastAdded(25));
 			ReplyText = $"Finished getting new additions ({additions})";
+			DisplayedPanel = DisplayPanel.Added;
 		}
 
 		private int GetLibraryAdditions(LibraryFolder library)
@@ -556,8 +588,8 @@ namespace GamanReader.ViewModel
 			int additions = 0;
 			var files = Directory.GetFiles(library.Path);
 			var folders = Directory.GetDirectories(library.Path);
-			var presentFiles = LocalDatabase.Items.Local.Where(x => !x.IsFolder).Select(x=>x.FilePath).ToArray();
-			var presentFolders = LocalDatabase.Items.Local.Where(x => x.IsFolder).Select(x=>x.FilePath).ToArray();
+			var presentFiles = LocalDatabase.Items.Local.Where(x => !x.IsFolder).Select(x => x.FilePath).ToArray();
+			var presentFolders = LocalDatabase.Items.Local.Where(x => x.IsFolder).Select(x => x.FilePath).ToArray();
 			int count = 0;
 			int total = files.Length + folders.Length;
 			foreach (var file in files)
