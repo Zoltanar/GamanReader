@@ -166,6 +166,8 @@
       <DependentUpon>AliasWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Model\ArchiveContainer.cs" />
+    <Compile Include="Model\Database\Alias.cs" />
+    <Compile Include="Model\Database\IndividualTag.cs" />
     <Compile Include="Model\FolderContainer.cs" />
     <Compile Include="Model\Database\LibraryFolder.cs" />
     <Compile Include="Model\Database\MangaInfo.cs" />

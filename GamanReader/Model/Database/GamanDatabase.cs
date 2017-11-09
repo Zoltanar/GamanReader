@@ -1,14 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Entity;
 using SQLite.CodeFirst;
 using System.Linq;
+using GamanReader.View;
+
 // ReSharper disable VirtualMemberCallInConstructor
 
 namespace GamanReader.Model.Database
 {
 	public class GamanDatabase : DbContext
 	{
+		public TagTreePanel TagPanel;
 		public GamanDatabase() : base("TagDatabase") { }
 		public DbSet<LibraryFolder> Libraries { get; set; }
 		public DbSet<MangaInfo> Items { get; set; }
@@ -61,74 +63,25 @@ namespace GamanReader.Model.Database
 				return items.FirstOrDefault(x => x.FilePath == path);
 			}
 		}
-	}
+		
 
-	public class AliasTag
-	{
-		public int Id { get; set; }
-		public int AliasId { get; set; }
-		public string Tag { get; set; }
-		public virtual Alias Alias { get; set;}
-	}
-
-	public class Alias
-	{
-		public int Id { get; set; }
-		public string Name { get; set; }
-		public virtual List<AliasTag> AliasTags { get; set; }
-		public IEnumerable<string> Tags => AliasTags.Select(x => x.Tag);
-
-		public Alias() { }
-
-		public Alias(string name)
+		public void AddTag(MangaInfo item, string tag)
 		{
-			Name = name;
-			AliasTags = new List<AliasTag>();
+			if (item.UserTags.Any(x => x.Tag.ToLower().Equals(tag.ToLower()))) return;
+			item.UserTags.Add(new UserTag(item.Id, tag));
+			SaveChanges();
+			TagPanel.AddTag(item,tag);
 		}
 
-		public void AddTags(IEnumerable<IndividualTag> tags)
+		public void RemoveTag(MangaInfo item, string tag)
 		{
-			foreach (var iTag in tags)
-			{
-				if (Tags.Contains(iTag.Tag.ToLower())) continue;
-				AliasTags.Add(new AliasTag{AliasId = Id, Tag = iTag.Tag.ToLower()});
-			}
+			var tagItem = item.UserTags.FirstOrDefault(x => x.Tag.ToLower().Equals(tag.ToLower()));
+			if (tagItem == null) return;
+			item.UserTags.Remove(tagItem);
+			UserTags.Remove(tagItem);
+			SaveChanges();
+			TagPanel.RemoveTag(item, tag);
 		}
-
-		public override string ToString() => Name;
 	}
-
-
-	public class IndividualTag
-	{
-		public int Id { get; set; }
-		public long ItemId { get; set; }
-		public string Tag { get; set; }
-
-		public virtual MangaInfo Item { get; set; }
-
-		protected IndividualTag(string tag)
-		{
-			Tag = tag;
-		}
-
-		public IndividualTag() { }
-
-		public override string ToString() => Tag;
-	}
-
-	public class AutoTag : IndividualTag
-	{
-		public AutoTag(string tag) : base(tag) { }
-		public AutoTag() { }
-
-	}
-	public class UserTag : IndividualTag
-	{
-		public UserTag(long itemId, string tag) : base(tag)
-		{
-			ItemId = itemId;
-		}
-		public UserTag() { }
-	}
+	
 }

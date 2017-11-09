@@ -58,14 +58,7 @@ namespace GamanReader.Model
 			var source = new BitmapImage(uriSource);
 			return source;
 		}
-
-		public static void AddTag(MangaInfo item, string tag)
-		{
-			item.UserTags.Add(new UserTag(item.Id, tag));
-			LocalDatabase.SaveChanges();
-		}
-
-
+		
 		public static bool CtrlIsDown()
 		{
 			return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);

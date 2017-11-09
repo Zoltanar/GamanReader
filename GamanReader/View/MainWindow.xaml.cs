@@ -33,6 +33,7 @@ namespace GamanReader.View
 		{
 			InitializeComponent();
 			_mainModel = (MainViewModel)DataContext;
+			LocalDatabase.TagPanel = TagPanel;
 			var firstPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 			Debug.Assert(firstPath != null, nameof(firstPath) + " != null");
 			string path = Path.Combine(firstPath, "7z.dll");

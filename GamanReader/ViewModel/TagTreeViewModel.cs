@@ -68,6 +68,14 @@ namespace GamanReader.ViewModel
 			thisNode.Items.Add(item);
 			SetHeader(thisNode);
 		}
+		public void RemoveTag(MangaInfo item, string tag)
+		{
+			var userGroup = TagGroups[1];
+			TreeViewItem thisNode = userGroup.Items.Cast<TreeViewItem>().First(node => node.Tag.Equals(tag));
+			thisNode.Items.Remove(item);
+			SetHeader(thisNode);
+			//todo remove node if empty
+		}
 
 		public void SetHeader(TreeViewItem node)
 		{

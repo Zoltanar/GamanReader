@@ -45,9 +45,8 @@ namespace GamanReader.View
 			return source as TreeViewItem;
 		}
 
-		internal void AddTag(MangaInfo item, string tag)
-		{
-			((TagTreeViewModel)DataContext).AddTag(item, tag);
-		}
+		internal void AddTag(MangaInfo item, string tag) => ((TagTreeViewModel)DataContext).AddTag(item, tag);
+
+		internal void RemoveTag(MangaInfo item, string tag) => ((TagTreeViewModel)DataContext).RemoveTag(item, tag);
 	}
 }

@@ -121,7 +121,15 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged();
 			}
 		}
-		public MangaInfo MangaInfo { get => _mangaInfo; set { _mangaInfo = value; RefreshTextBox?.Invoke(_mangaInfo); OnPropertyChanged(); } }
+		public MangaInfo MangaInfo { get => _mangaInfo;
+			set
+			{
+				_mangaInfo = value;
+				RefreshTextBox?.Invoke(_mangaInfo);
+				OnPropertyChanged();
+				OnPropertyChanged(nameof(IsFavorite));
+				OnPropertyChanged(nameof(IsBlacklist));
+			} }
 		public int CurrentIndex { get => _containerModel?.CurrentIndex ?? -1; set => _containerModel.CurrentIndex = value; }
 		public BindingList<MangaInfo> LastOpenedItems => _lastOpened.Items;
 		public BindingList<MangaInfo> LastAddedItems => _lastAdded.Items;
@@ -193,7 +201,7 @@ namespace GamanReader.ViewModel
 		public void AddTag(string tag)
 		{
 			if (_containerModel == null) return;
-			StaticHelpers.AddTag(MangaInfo, tag);
+			LocalDatabase.AddTag(MangaInfo, tag);
 		}
 
 		public void OpenRandom()
@@ -458,6 +466,30 @@ namespace GamanReader.ViewModel
 		}
 
 		public bool NoBlacklisted { get; set; } = true;
+
+		public bool IsFavorite
+		{
+			get => MangaInfo?.UserTags.Any(x => x.Tag.ToLower().Equals("favorite")) ?? false;
+			set
+			{
+				if (value == MangaInfo.UserTags.Any(x => x.Tag.ToLower().Equals("favorite"))) return;
+				if(value) LocalDatabase.AddTag(MangaInfo, "favorite");
+				else LocalDatabase.RemoveTag(MangaInfo,"favorite");
+				OnPropertyChanged();
+			}
+		}
+
+		public bool IsBlacklist
+		{
+			get => MangaInfo?.UserTags.Any(x => x.Tag.ToLower().Equals("blacklisted")) ?? false;
+			set
+			{
+				if (value == MangaInfo.UserTags.Any(x => x.Tag.ToLower().Equals("blacklisted"))) return;
+				if (value) LocalDatabase.AddTag(MangaInfo, "blacklisted");
+				else LocalDatabase.RemoveTag(MangaInfo, "blacklisted");
+				OnPropertyChanged();
+			}
+		}
 
 		internal void Search(string searchString)
 		{
