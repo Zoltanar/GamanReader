@@ -11,7 +11,6 @@ using GamanReader.Model;
 using GamanReader.Model.Database;
 using JetBrains.Annotations;
 using Microsoft.VisualBasic.FileIO;
-using SevenZip;
 using static GamanReader.Model.StaticHelpers;
 using Container = GamanReader.Model.Container;
 using SearchOption = System.IO.SearchOption;
@@ -299,7 +298,8 @@ namespace GamanReader.ViewModel
 			}
 			else
 			{
-				var img1 = new Bitmap(_containerModel.GetFile(CurrentIndex));
+				var filename = _containerModel.GetFile(CurrentIndex);
+				var img1 = new Bitmap(filename);
 				var ratio1 = img1.PhysicalDimension.Width / img1.PhysicalDimension.Height;
 				ImageBox imagebox1 = ratio1 > 1 ? ImageBox.Single : (RtlIsChecked ? ImageBox.Right : ImageBox.Left);
 				PopulateBox(imagebox1, CurrentIndex);
@@ -332,10 +332,19 @@ namespace GamanReader.ViewModel
 				ReplyText = "Archive doesn't exist.";
 				return;
 			}
-			SevenZipExtractor zipFile = new SevenZipExtractor(item.FilePath);
-			var files = zipFile.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
 			_containerModel?.Dispose();
-			_containerModel = new ArchiveContainer(item.FilePath, files);
+			switch (Path.GetExtension(item.FilePath))
+			{
+				case ".zip":
+					_containerModel = new ZipContainer(item.FilePath, () => OnPropertyChanged(nameof(Extracted)));
+#pragma warning disable 4014
+					Task.Run(() => ((ZipContainer)_containerModel).ExtractAllAsync());
+#pragma warning restore 4014
+					break;
+				case ".rar":
+					_containerModel = new RarContainer(item.FilePath);
+					break;
+			}
 		}
 
 		private void LoadFolder(MangaInfo item)
@@ -382,6 +391,7 @@ namespace GamanReader.ViewModel
 			if (_containerModel.TotalFiles == 0)
 			{
 				ReplyText = "No files found in container";
+				MangaInfo = item;
 				_containerModel = null;
 				return;
 			}
@@ -519,6 +529,8 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged();
 			}
 		}
+
+		public int Extracted => _containerModel?.Extracted ?? 0;
 
 		public enum DisplayPanel { Search, Tags, Libraries, Added, Opened }
 

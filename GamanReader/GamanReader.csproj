@@ -138,6 +138,7 @@
       <HintPath>..\packages\System.Data.SQLite.Linq.1.0.105.2\lib\net46\System.Data.SQLite.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.ValueTuple, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.3.1\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
     </Reference>
@@ -171,7 +172,9 @@
     <Compile Include="Model\FolderContainer.cs" />
     <Compile Include="Model\Database\LibraryFolder.cs" />
     <Compile Include="Model\Database\MangaInfo.cs" />
+    <Compile Include="Model\RarContainer.cs" />
     <Compile Include="Model\RecentItemList.cs" />
+    <Compile Include="Model\ZipContainer.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="Model\Database\GamanDatabase.cs" />
     <Compile Include="View\TagTreePanel.xaml.cs">

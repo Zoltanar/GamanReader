@@ -89,6 +89,7 @@
                 <Button Grid.Column="3" Content="Create Alias" Click="CreateAlias"  Height="20"  Margin="10,462,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
                 <ToggleButton IsChecked="{Binding IsFavorite}" Content="Favorite" Margin="10,85,0,0" HorizontalAlignment="Left" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
                 <ToggleButton IsChecked="{Binding IsBlacklist}" Content="Blacklist" Margin="0,85,5,0" HorizontalAlignment="Right" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
+                <TextBlock Text="{Binding Path=Extracted, StringFormat='Extracted: {0}'}" Margin="0,110,5,0" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Right" Width="105" Grid.Column="3"/>
             </Grid>
         </DockPanel>
     </Grid>

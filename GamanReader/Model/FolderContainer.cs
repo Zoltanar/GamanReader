@@ -13,7 +13,6 @@ namespace GamanReader.Model
 			ContainerPath = containerPath;
 			CurrentIndex = 0;
 			FileNames = fileNames.Where(FileIsImage).ToArray();
-			TotalFiles = FileNames.Length;
 		}
 
 		public override bool IsFolder => true;

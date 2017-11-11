@@ -112,6 +112,7 @@ namespace GamanReader.View
 			string containerPath = ((DataObject)e.Data).GetFileDropList()[0];
 			if (containerPath?.EndsWith(".lnk") ?? false) containerPath = GetPathFromShortcut(containerPath);
 			if (string.IsNullOrWhiteSpace(containerPath)) return; //todo report error
+			if (!File.Exists(containerPath) && !Directory.Exists(containerPath)) return; //todo report error
 			var item = _mainModel.GetOrCreateMangaInfo(containerPath);
 			LoadContainer(item);
 
