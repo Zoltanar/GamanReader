@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -58,7 +59,7 @@ namespace GamanReader.Model
 			var source = new BitmapImage(uriSource);
 			return source;
 		}
-		
+
 		public static bool CtrlIsDown()
 		{
 			return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
@@ -158,6 +159,11 @@ namespace GamanReader.Model
 			var shell = new IWshRuntimeLibrary.WshShell();
 			var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(containerPath);
 			return shortcut.TargetPath;
+		}
+
+		public static bool UserIsSure(string message = "Are you sure?")
+		{
+			return MessageBox.Show(message, "Gaman Reader - Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes;
 		}
 	}
 }

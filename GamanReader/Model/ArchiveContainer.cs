@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace GamanReader.Model
 {
@@ -7,12 +8,13 @@ namespace GamanReader.Model
 	/// </summary>
 	internal abstract class ArchiveContainer : Container
 	{
-		protected ArchiveContainer(string containerPath)
+		protected ArchiveContainer(string containerPath, Action onPropertyChanged)
 		{
 			ContainerPath = containerPath;
 			CurrentIndex = 0;
 			GeneratedFolder = Path.Combine(StaticHelpers.TempFolder, ContainerPath.GetHashCode().ToString());
 			Directory.CreateDirectory(GeneratedFolder);
+			UpdateExtracted = onPropertyChanged;
 		}
 
 		protected readonly string GeneratedFolder;

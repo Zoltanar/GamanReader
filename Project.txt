@@ -2,11 +2,6 @@ TODO
 handle folders in archives
 save search strings to tags
 going backwords in auto mode
-unzip files async'ly
-on tag click, search alias if they have an alias, else tag
 zoom in lens
 remove tags from items with DEL key
-ask if user is sure on reloading libraries
 library flags include in random, include in get additions
-only close container if file to be deleted is file that is open
-delete container button

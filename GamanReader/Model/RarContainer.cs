@@ -8,7 +8,7 @@ namespace GamanReader.Model
 {
 	class RarContainer : ArchiveContainer
 	{
-		public RarContainer(string containerPath) : base(containerPath)
+		public RarContainer(string containerPath, Action onPropertyChanged) : base(containerPath, onPropertyChanged)
 		{
 			_rarExtractor = new SevenZipExtractor(containerPath);
 			var files = _rarExtractor.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
@@ -45,6 +45,11 @@ namespace GamanReader.Model
 			{
 				Debug.WriteLine($"Eror in RarContainer.GetFile - {ex.Message}");
 				return File.Exists(tempFile) ? fullPath : Path.GetFullPath(StaticHelpers.LoadFailedImage);
+			}
+			finally
+			{
+				Extracted++;
+				UpdateExtracted.Invoke();
 			}
 			return fullPath;
 		}

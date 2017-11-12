@@ -68,7 +68,7 @@ namespace GamanReader.View
 		private void TagLinkClicked(object sender, RoutedEventArgs e)
 		{
 			var text = ((Run)((Hyperlink)sender).Inlines.FirstInline).Text.Trim('[', '(', '{', ']', ')', '}');
-			_mainModel.Search($"tag:{text}");
+			_mainModel.Search($"alias:{text}");
 		}
 
 		private void LoadFolderByDialog(object sender, RoutedEventArgs e)
@@ -282,6 +282,11 @@ namespace GamanReader.View
 		{
 			var aliasWindow = new AliasWindow();
 			aliasWindow.Show();
+		}
+
+		private void DeleteContainer(object sender, RoutedEventArgs e)
+		{
+			_mainModel.DeleteCurrentItem();
 		}
 	}
 }

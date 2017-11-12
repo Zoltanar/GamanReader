@@ -342,7 +342,7 @@ namespace GamanReader.ViewModel
 #pragma warning restore 4014
 					break;
 				case ".rar":
-					_containerModel = new RarContainer(item.FilePath);
+					_containerModel = new RarContainer(item.FilePath, () => OnPropertyChanged(nameof(Extracted)));
 					break;
 			}
 		}
@@ -418,6 +418,7 @@ namespace GamanReader.ViewModel
 
 		public async void ReloadLibraryInfo()
 		{
+			if (!UserIsSure()) return;
 			await Task.Run(() =>
 			{
 				LocalDatabase.Items.RemoveRange(LocalDatabase.Items);
@@ -466,7 +467,8 @@ namespace GamanReader.ViewModel
 			{
 				case "alias":
 					var alias = LocalDatabase.Aliases.FirstOrDefault(x => x.Name.ToLower().Equals(searchString.ToLower()));
-					results = LocalDatabase.AutoTags.Where(x => alias.Tags.Contains(x.Tag.ToLower())).Select(y => y.Item).ToArray();
+					if (alias == null) goto case "tag";
+					else results = LocalDatabase.AutoTags.Where(x => alias.Tags.Contains(x.Tag.ToLower())).Select(y => y.Item).ToArray();
 					break;
 				case "tag":
 					results = LocalDatabase.AutoTags.Where(x => x.Tag.ToLower().Equals(searchString.ToLower())).Select(y => y.Item).ToArray();
@@ -561,6 +563,11 @@ namespace GamanReader.ViewModel
 		private enum ImageBox { Single, Left, Right }
 		private enum PageMode { Single, Dual, Auto }
 
+		public bool DeleteCurrentItem()
+		{
+			return DeleteItem(MangaInfo);
+		}
+
 		/// <summary>
 		/// Returns true if deleted or false if not
 		/// </summary>
@@ -568,7 +575,8 @@ namespace GamanReader.ViewModel
 		/// <returns>true if deleted</returns>
 		public bool DeleteItem(MangaInfo item)
 		{
-			CloseContainer();
+			if (!UserIsSure()) return false;
+			if(item.Id == MangaInfo.Id) CloseContainer();
 			if (item.IsFolder) FileSystem.DeleteDirectory(item.FilePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.DoNothing);
 			else FileSystem.DeleteFile(item.FilePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.DoNothing);
 			bool stillExists = item.IsFolder ? Directory.Exists(item.FilePath) : File.Exists(item.FilePath);

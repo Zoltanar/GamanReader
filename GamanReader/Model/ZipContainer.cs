@@ -9,13 +9,12 @@ namespace GamanReader.Model
 {
 	class ZipContainer : ArchiveContainer
 	{
-		public ZipContainer(string containerPath, Action onPropertyChanged) : base(containerPath)
+		public ZipContainer(string containerPath, Action onPropertyChanged) : base(containerPath, onPropertyChanged)
 		{
 			using (var archive = new ZipArchive(File.OpenRead(ContainerPath)))
 			{
 				FileNames = archive.Entries.OrderBy(e => e.Name).Where(f => FileIsImage(f.Name)).Select(x => x.Name).ToArray();
 			}
-			UpdateExtracted = onPropertyChanged;
 		}
 
 		public async Task ExtractAllAsync()
