@@ -89,10 +89,7 @@ namespace GamanReader.View
 			LoadContainer(item);
 		}
 
-		public void LoadContainer(MangaInfo item)
-		{
-			_mainModel.LoadContainer(item);
-		}
+		public void LoadContainer(MangaInfo item) => _mainModel.LoadContainer(item);
 
 		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -124,10 +121,7 @@ namespace GamanReader.View
 			e.Handled = regex.IsMatch(e.Text);
 		}
 
-		private void OpenRandom_Click(object sender, RoutedEventArgs e)
-		{
-			_mainModel.OpenRandom();
-		}
+		private void OpenRandom_Click(object sender, RoutedEventArgs e) => _mainModel.OpenRandom();
 
 		private void AddLibraryFolder_Click(object sender, RoutedEventArgs e)
 		{
@@ -139,10 +133,7 @@ namespace GamanReader.View
 			_mainModel.DisplayedPanel = MainViewModel.DisplayPanel.Libraries;
 		}
 
-		private void AddTag(object sender, RoutedEventArgs e)
-		{
-			_mainModel.AddTag(TagText.Text);
-		}
+		private void AddTag(object sender, RoutedEventArgs e) => _mainModel.AddTag(TagText.Text);
 
 		private void GoFullscreen(object sender, RoutedEventArgs e)
 		{
@@ -159,10 +150,7 @@ namespace GamanReader.View
 			_fullscreenOn = !_fullscreenOn;
 		}
 
-		private void ReloadLibrary(object sender, RoutedEventArgs e)
-		{
-			_mainModel.ReloadLibraryInfo();
-		}
+		private void ReloadLibrary(object sender, RoutedEventArgs e) => _mainModel.ReloadLibraryInfo();
 
 		private void TextBox_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -193,23 +181,15 @@ namespace GamanReader.View
 
 		private readonly int _widthChange = 250;
 
-		private void IncreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
-		{
-			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth + _widthChange);
-		}
+		private void IncreaseWidthOnMouseEnter(object sender, MouseEventArgs e) => LeftColumn.Width = new GridLength(LeftColumn.ActualWidth + _widthChange);
 
-		private void DecreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
-		{
-			LeftColumn.Width = new GridLength(LeftColumn.ActualWidth - _widthChange);
-		}
+		private void DecreaseWidthOnMouseEnter(object sender, MouseEventArgs e) => LeftColumn.Width = new GridLength(LeftColumn.ActualWidth - _widthChange);
 
 		private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			// ReSharper disable once ConstantConditionalAccessQualifier
-			if (_mainModel?.MangaInfo == null) return; //required because this is fired before initalization is completed
-			var value = (int)e.NewValue;
-			IndexPopup.Child = new TextBlock(new Run($"Value: {value}")) { Foreground = Brushes.Blue, Background = Brushes.Violet };
-			IndexPopup.IsOpen = true;
+			if (_mainModel?.MangaInfo == null) return; //required because this is fired before initalization is completed#
+			_mainModel.SliderPage = (int)e.NewValue;
 		}
 
 		private void Slider_OnDragCompleted(object sender, DragCompletedEventArgs e)
@@ -263,20 +243,11 @@ namespace GamanReader.View
 			}
 		}
 
-		private void ChangePageMode(object sender, RoutedEventArgs e)
-		{
-			_mainModel.ChangePageMode();
-		}
+		private void ChangePageMode(object sender, RoutedEventArgs e) => _mainModel.ChangePageMode();
 
-		private void GetLibraryAdditions(object sender, RoutedEventArgs e)
-		{
-			_mainModel.GetLibraryAdditions();
-		}
+		private void GetLibraryAdditions(object sender, RoutedEventArgs e) => _mainModel.GetLibraryAdditions();
 
-		private void CloseContainer(object sender, RoutedEventArgs e)
-		{
-			_mainModel.CloseContainer();
-		}
+		private void CloseContainer(object sender, RoutedEventArgs e) => _mainModel.CloseContainer();
 
 		private void CreateAlias(object sender, RoutedEventArgs e)
 		{
@@ -284,9 +255,7 @@ namespace GamanReader.View
 			aliasWindow.Show();
 		}
 
-		private void DeleteContainer(object sender, RoutedEventArgs e)
-		{
-			_mainModel.DeleteCurrentItem();
-		}
+		private void DeleteContainer(object sender, RoutedEventArgs e) =>_mainModel.DeleteCurrentItem();
 	}
+	
 }

@@ -101,6 +101,11 @@ namespace GamanReader.Model.Database
 		[NotMapped]
 		public ImageSource GetImage => IsFavorite() ? StaticHelpers.GetFavoritesIcon() : null;
 
+		[NotMapped]
+		public string InfoString => $"Type {(IsFolder ? "Folder" : Path.GetExtension(FilePath))}, {Size:##.##} MB, {Library.Path}";
+
+		[NotMapped]
+		private double Size => (double)(IsFolder ? new DirectoryInfo(FilePath).GetFiles().Sum(x => x.Length) : new FileInfo(FilePath).Length) / 1024 / 1024;
 
 		public List<Inline> GetTbInlines()
 		{

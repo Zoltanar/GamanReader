@@ -1,6 +1,6 @@
 ﻿namespace GamanReader.Model.Database
 {
-	public class IndividualTag
+	public abstract class IndividualTag
 	{
 		public int Id { get; set; }
 		public long ItemId { get; set; }
@@ -11,7 +11,7 @@
 
 		protected IndividualTag(long itemId, string tag) { ItemId = itemId; Tag = tag; }
 
-		public IndividualTag() { }
+		protected IndividualTag() { }
 
 		public override string ToString() => Tag;
 	}

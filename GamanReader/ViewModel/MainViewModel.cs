@@ -130,7 +130,6 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged(nameof(IsBlacklist));
 			}
 		}
-
 		public int CurrentIndex
 		{
 			get => _containerModel?.CurrentIndex ?? -1;
@@ -138,13 +137,10 @@ namespace GamanReader.ViewModel
 			{
 				_containerModel.CurrentIndex = value;
 				OnPropertyChanged(nameof(CurrentPage));
+				SliderPage = value+1;
 			}
 		}
-
-		public int CurrentPage
-		{
-			get => (_containerModel?.CurrentIndex ?? -1) + 1;
-		}
+		public int CurrentPage => (_containerModel?.CurrentIndex ?? -1) + 1;
 		public BindingList<MangaInfo> LastOpenedItems => _lastOpened.Items;
 		public BindingList<MangaInfo> LastAddedItems => _lastAdded.Items;
 		public int TotalFiles => _containerModel?.TotalFiles ?? 1;
@@ -153,6 +149,7 @@ namespace GamanReader.ViewModel
 		public BindingList<MangaInfo> SearchResults { get; set; } = new BindingList<MangaInfo>();
 		public delegate void MyEventAction(MangaInfo item);
 		public event MyEventAction RefreshTextBox;
+		
 		#endregion
 
 		private void PopulateBox(ImageBox imagebox, int index)
@@ -533,6 +530,17 @@ namespace GamanReader.ViewModel
 		}
 
 		public int Extracted => _containerModel?.Extracted ?? 0;
+		private int _sliderPage;
+
+		public int SliderPage
+		{
+			get => _sliderPage;
+			set
+			{
+				_sliderPage = value;
+				OnPropertyChanged();
+			}
+		}
 
 		public enum DisplayPanel { Search, Tags, Libraries, Added, Opened }
 

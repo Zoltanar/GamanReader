@@ -14,6 +14,9 @@ namespace GamanReader.Model
 			using (var archive = new ZipArchive(File.OpenRead(ContainerPath)))
 			{
 				FileNames = archive.Entries.OrderBy(e => e.Name).Where(f => FileIsImage(f.Name)).Select(x => x.Name).ToArray();
+				var namesWithoutExtension = FileNames.Select(Path.GetFileNameWithoutExtension).ToArray();
+				// ReSharper disable once AssignNullToNotNullAttribute
+				if (namesWithoutExtension.All(x => int.TryParse(x, out _))) FileNames = FileNames.OrderBy(x=>int.Parse(Path.GetFileNameWithoutExtension(x))).ToArray();
 			}
 		}
 
@@ -25,15 +28,14 @@ namespace GamanReader.Model
 			{
 				var archive = new ZipArchive(File.OpenRead(ContainerPath));
 				var entries = archive.Entries.OrderBy(e => e.Name).Where(f => FileIsImage(f.Name)).ToArray();
-				FileNames = entries.Select(x => x.Name).ToArray();
-				int index = -1;
+				var namesWithoutExtension = entries.Select(x=> Path.GetFileNameWithoutExtension(x.Name)).ToArray();
+				// ReSharper disable once AssignNullToNotNullAttribute
+				if (namesWithoutExtension.All(x => int.TryParse(x, out _))) entries = entries.OrderBy(x => int.Parse(Path.GetFileNameWithoutExtension(x.Name))).ToArray();
 				foreach (var entry in entries)
 				{
-					index++;
 					try
 					{
-						var ext = Path.GetExtension(entry.Name);
-						var tempFile = Path.Combine(GeneratedFolder, index + ext);
+						var tempFile = Path.Combine(GeneratedFolder, entry.Name);
 						if (File.Exists(tempFile)) continue;
 						var fileStream = File.OpenWrite(tempFile);
 						var zipStream = entry.Open();
@@ -55,8 +57,7 @@ namespace GamanReader.Model
 		{
 			if (index == -1) return null;
 			var filename = FileNames[index];
-			var ext = Path.GetExtension(filename);
-			var tempFile = Path.Combine(GeneratedFolder, index + ext);
+			var tempFile = Path.Combine(GeneratedFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
 			while (Extracted <= index) Thread.Sleep(250);
 			return fullPath;

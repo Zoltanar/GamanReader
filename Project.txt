@@ -5,3 +5,6 @@ going backwords in auto mode
 zoom in lens
 remove tags from items with DEL key
 library flags include in random, include in get additions
+show original file names, not index
+left panel horizontal mouse wheel scroll if no need for vertical
+add delete file on DEL key for all MangaInfo panels
