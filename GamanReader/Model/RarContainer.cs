@@ -30,8 +30,7 @@ namespace GamanReader.Model
 		{
 			if (index == -1) return null;
 			var filename = FileNames[index];
-			var ext = Path.GetExtension(filename);
-			var tempFile = Path.Combine(GeneratedFolder, index + ext);
+			var tempFile = Path.Combine(GeneratedFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
 			if (File.Exists(tempFile)) return fullPath;
 			try
