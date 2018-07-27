@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using GamanReader.Model.Database;
 
 namespace GamanReader.Model
 {
@@ -9,9 +10,8 @@ namespace GamanReader.Model
 	/// </summary>
 	internal class FolderContainer : Container
 	{
-		public FolderContainer(string containerPath, IEnumerable<string> fileNames)
+		public FolderContainer(MangaInfo item, IEnumerable<string> fileNames) : base(item)
 		{
-			ContainerPath = containerPath;
 			CurrentIndex = 0;
 			FileNames = fileNames.Where(FileIsImage).ToArray();
 		}

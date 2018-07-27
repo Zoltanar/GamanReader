@@ -8,9 +8,9 @@
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
         mc:Ignorable="d"
         Title="{Binding TitleText}" 
-        Height="740" Width="1260" Background="#FF4D1D1D" 
+        Height="946.5" Width="1260" Background="#FF4D1D1D" 
         MouseWheel="Window_MouseWheel" AllowDrop="True" Drop="DropFile" 
-        MinWidth="711" MinHeight="630">
+        MinWidth="711" MinHeight="630" Closing="Window_Closing">
     <Window.Resources>
         <Style x:Key="SliderButtonStyle" TargetType="{x:Type RepeatButton}">
             <Setter Property="SnapsToDevicePixels" Value="true"/>
@@ -145,7 +145,7 @@
                 <TextBox Text="{Binding CurrentPage, Mode=OneWay}" HorizontalAlignment="Left" Margin="10,135,0,0" TextWrapping="Wrap" Width="64" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="20" VerticalAlignment="Top" KeyUp="GoToTextBox_KeyUp" Grid.Column="3" HorizontalContentAlignment="Center"/>
                 <Label Content="{Binding IndexLabelText}" Margin="79,135,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="36" Foreground="White" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" />
                 <TextBlock Text="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,160,0,0" Width="105" Height="48" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="InfoBox" Grid.Column="3" Margin="10,615,5,10" TextWrapping="Wrap" Foreground="White"/>
+                <TextBlock x:Name="InfoBox" Grid.Column="3" Margin="10,615,5,91" TextWrapping="Wrap" Foreground="White"/>
                 <Label Content="Load" Grid.Column="3" HorizontalAlignment="Left" Margin="10,213,0,0" VerticalAlignment="Top" Height="20" Foreground="White" Padding="0" VerticalContentAlignment="Center"/>
                 <Button Grid.Column="3" Content="Folder" Click="LoadFolderByDialog" Margin="41,213,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="42"/>
                 <Button Grid.Column="3" Content="Zip" Click="LoadArchiveByDialog" Margin="88,213,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="27"/>
@@ -180,6 +180,7 @@
                 <TextBlock Text="{Binding Path=Extracted, StringFormat='Extracted: {0}'}" Margin="0,110,5,0" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Right" Width="105" Grid.Column="3"/>
                 <Button Grid.Column="3" Content="Delete Container" Click="DeleteContainer"  Height="20"  Margin="10,438,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
                 <TextBlock Text="{Binding MangaInfo.InfoString}" HorizontalAlignment="Left" Margin="10,488,0,0" Width="105" Height="122" VerticalAlignment="Top" Background="#FF86B5E4" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
+                <TextBox Grid.Column="3" HorizontalAlignment="Left" Margin="10,0,0,10" TextWrapping="Wrap" Text="{Binding MangaInfo.Notes}" Width="100" Height="76" VerticalAlignment="Bottom"/>
             </Grid>
         </DockPanel>
     </Grid>

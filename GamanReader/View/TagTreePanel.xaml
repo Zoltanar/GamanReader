@@ -20,10 +20,10 @@
                     <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Name}" MouseDoubleClick="MangaDoubleClicked"/>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type database:AutoTag}" >
-                    <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Item}" MouseDoubleClick="TagDoubleClicked"/>
+                    <ListBoxItem Content="{Binding Item}" MouseDoubleClick="TagDoubleClicked"/>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type database:Alias}" >
-                    <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Name}" MouseDoubleClick="AliasDoubleClicked"/>
+                    <ListBoxItem Content="{Binding Name}" MouseDoubleClick="AliasDoubleClicked"/>
                 </DataTemplate>
             </TreeView.Resources>
         </TreeView>

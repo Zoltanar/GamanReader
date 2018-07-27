@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -32,7 +33,7 @@ namespace GamanReader.View
 		public MainWindow()
 		{
 			InitializeComponent();
-			_mainModel = (MainViewModel)DataContext;
+	  _mainModel = (MainViewModel)DataContext;
 			LocalDatabase.TagPanel = TagPanel;
 			var firstPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 			Debug.Assert(firstPath != null, nameof(firstPath) + " != null");
@@ -259,6 +260,11 @@ namespace GamanReader.View
 		}
 
 		private void DeleteContainer(object sender, RoutedEventArgs e) =>_mainModel.DeleteCurrentItem();
+		
+	private void Window_Closing(object sender, CancelEventArgs e)
+	{
+		LocalDatabase.SaveChanges();
 	}
+  }
 	
 }

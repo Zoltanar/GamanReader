@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using GamanReader.Model.Database;
 
 namespace GamanReader.Model
 {
@@ -8,9 +9,8 @@ namespace GamanReader.Model
 	/// </summary>
 	internal abstract class ArchiveContainer : Container
 	{
-		protected ArchiveContainer(string containerPath, Action onPropertyChanged)
+		protected ArchiveContainer(MangaInfo item, Action onPropertyChanged) : base(item)
 		{
-			ContainerPath = containerPath;
 			CurrentIndex = 0;
 			GeneratedFolder = Path.Combine(StaticHelpers.TempFolder, ContainerPath.GetHashCode().ToString());
 			Directory.CreateDirectory(GeneratedFolder);

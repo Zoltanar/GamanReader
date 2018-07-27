@@ -2,18 +2,19 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using GamanReader.Model.Database;
 using SevenZip;
 
 namespace GamanReader.Model
 {
 	class RarContainer : ArchiveContainer
 	{
-		public RarContainer(string containerPath, Action onPropertyChanged) : base(containerPath, onPropertyChanged)
+		public RarContainer(MangaInfo item, Action onPropertyChanged) : base(item, onPropertyChanged)
 		{
-			_rarExtractor = new SevenZipExtractor(containerPath);
+			_rarExtractor = new SevenZipExtractor(ContainerPath);
 			var files = _rarExtractor.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
 			FileNames = files.Where(FileIsImage).ToArray();
-			if (new FileInfo(containerPath).Length > 40 * 1024 * 1024) ExtractAll();
+			if (new FileInfo(ContainerPath).Length > 40 * 1024 * 1024) ExtractAll();
 		}
 
 		private void ExtractAll()

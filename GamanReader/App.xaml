@@ -5,12 +5,14 @@
     <Application.Resources>
         <Style  x:Key="ColorItems" TargetType="ListBoxItem">
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
-                    <Setter Property="Background" Value="Pink" />
+                <DataTrigger Binding="{Binding Path=TimesBrowsed}" Value="0">
+                    <Setter Property="Background" Value="Gold" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Path=IsBlacklisted}" Value="True">
                     <Setter Property="Background" Value="Gray" />
-                    <Setter Property="Foreground" Value="Black" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
+                    <Setter Property="Background" Value="Pink" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>

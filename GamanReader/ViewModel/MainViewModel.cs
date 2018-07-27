@@ -335,13 +335,13 @@ namespace GamanReader.ViewModel
 			switch (Path.GetExtension(item.FilePath))
 			{
 				case ".zip":
-					_containerModel = new ZipContainer(item.FilePath, () => OnPropertyChanged(nameof(Extracted)));
+					_containerModel = new ZipContainer(item, () => OnPropertyChanged(nameof(Extracted)));
 #pragma warning disable 4014
 					Task.Run(() => ((ZipContainer)_containerModel).ExtractAllAsync());
 #pragma warning restore 4014
 					break;
 				case ".rar":
-					_containerModel = new RarContainer(item.FilePath, () => OnPropertyChanged(nameof(Extracted)));
+					_containerModel = new RarContainer(item, () => OnPropertyChanged(nameof(Extracted)));
 					break;
 			}
 		}
@@ -370,7 +370,7 @@ namespace GamanReader.ViewModel
 				}
 			}
 			_containerModel?.Dispose();
-			_containerModel = new FolderContainer(item.FilePath, files);
+			_containerModel = new FolderContainer(item, files);
 		}
 
 		public void LoadContainer(MangaInfo item)

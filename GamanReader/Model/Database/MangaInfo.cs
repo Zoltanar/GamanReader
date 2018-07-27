@@ -24,7 +24,9 @@ namespace GamanReader.Model.Database
 		public string Name { get; set; }
 		public DateTime LastOpened { get; set; }
 		public DateTime DateAdded { get; set; }
-		public virtual LibraryFolder Library { get; set; }
+		public int TimesBrowsed { get; set; }
+		public string Notes { get; set; }
+	public virtual LibraryFolder Library { get; set; }
 		public bool IsFolder { get; set; }
 		public virtual ICollection<AutoTag> AutoTags { get; set; }
 		public virtual ICollection<UserTag> UserTags { get; set; }
@@ -116,7 +118,8 @@ namespace GamanReader.Model.Database
 					$"{(IsFolder ? "Folder" : Path.GetExtension(FilePath))}",
 					$"{SizeMb:#0.##} MB{(FileCount > 0 ? $" ({SizeMb / FileCount:#0.##} ea)" : "")}",
 					$"{string.Join("\\", last2Folders)}",
-					$"{LastModified}"
+					$"{LastModified}",
+					$"Times Browsed: {TimesBrowsed}"
 				};
 				return string.Join(Environment.NewLine, text);
 			}

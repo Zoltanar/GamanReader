@@ -4,12 +4,13 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GamanReader.Model.Database;
 
 namespace GamanReader.Model
 {
 	class ZipContainer : ArchiveContainer
 	{
-		public ZipContainer(string containerPath, Action onPropertyChanged) : base(containerPath, onPropertyChanged)
+		public ZipContainer(MangaInfo item, Action onPropertyChanged) : base(item, onPropertyChanged)
 		{
 			using (var archive = new ZipArchive(File.OpenRead(ContainerPath)))
 			{
