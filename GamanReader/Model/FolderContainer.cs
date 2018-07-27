@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace GamanReader.Model
@@ -21,6 +22,13 @@ namespace GamanReader.Model
 			//not needed for folder
 		}
 
-		public override string GetFile(int index) => index == -1 ? null : FileNames[index];
+		public override string GetFile(int index, out string displayName)
+		{
+			displayName = null;
+			if (index == -1) return null;
+			var filename = FileNames[index];
+			displayName = Path.GetFileName(filename);
+			return filename;
+		}
 	}
 }

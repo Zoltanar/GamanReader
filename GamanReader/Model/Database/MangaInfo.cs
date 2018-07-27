@@ -96,16 +96,38 @@ namespace GamanReader.Model.Database
 		public override string ToString() => Name;
 
 
-		public bool IsFavorite() => UserTags.Any(item => item.Tag == "favorite");
+		public bool IsFavorite => UserTags.Any(x => x.Tag.ToLower().Equals("favorite"));
+
+		public bool IsBlacklisted => UserTags.Any(x => x.Tag.ToLower().Equals("blacklisted"));
 
 		[NotMapped]
-		public ImageSource GetImage => IsFavorite() ? StaticHelpers.GetFavoritesIcon() : null;
+		public ImageSource GetImage => IsFavorite ? StaticHelpers.GetFavoritesIcon() : null;
 
 		[NotMapped]
-		public string InfoString => $"Type {(IsFolder ? "Folder" : Path.GetExtension(FilePath))}, {Size:##.##} MB, {Library.Path}";
+		public string InfoString
+
+		{
+			get
+			{
+				string[] folders = Library.Path.Split('\\');
+				var last2Folders = folders.Length > 2 ? folders.Skip(folders.Length - 2) : folders;
+				var text = new List<string>
+				{
+					$"{(IsFolder ? "Folder" : Path.GetExtension(FilePath))}",
+					$"{SizeMb:#0.##} MB{(FileCount > 0 ? $" ({SizeMb / FileCount:#0.##} ea)" : "")}",
+					$"{string.Join("\\", last2Folders)}",
+					$"{LastModified}"
+				};
+				return string.Join(Environment.NewLine, text);
+			}
+		}
+
+		public int FileCount = 0;
 
 		[NotMapped]
-		private double Size => (double)(IsFolder ? new DirectoryInfo(FilePath).GetFiles().Sum(x => x.Length) : new FileInfo(FilePath).Length) / 1024 / 1024;
+		private double SizeMb => (double)(IsFolder ? new DirectoryInfo(FilePath).GetFiles().Sum(x => x.Length) : new FileInfo(FilePath).Length) / 1024 / 1024;
+		[NotMapped]
+		private DateTime LastModified => IsFolder ? new DirectoryInfo(FilePath).LastWriteTime : new FileInfo(FilePath).LastWriteTime;
 
 		public List<Inline> GetTbInlines()
 		{

@@ -12,7 +12,7 @@ namespace GamanReader.Model
 		public int CurrentIndex { get; set; }
 		public int TotalFiles => FileNames.Length;
 		protected string[] FileNames { get; set; }
-		public abstract string GetFile(int index);
+		public abstract string GetFile(int index, out string displayName);
 		public abstract bool IsFolder { get; }
 		public int Extracted { get; protected set; }
 

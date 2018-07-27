@@ -53,10 +53,12 @@ namespace GamanReader.Model
 			});
 		}
 
-		public override string GetFile(int index)
+		public override string GetFile(int index, out string displayName)
 		{
+			displayName = null;
 			if (index == -1) return null;
 			var filename = FileNames[index];
+			displayName = Path.GetFileName(filename);
 			var tempFile = Path.Combine(GeneratedFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
 			while (Extracted <= index) Thread.Sleep(250);

@@ -20,18 +20,28 @@ namespace GamanReader.Model
 		{
 			for (int index = 0; index < TotalFiles; index++)
 			{
-				GetFile(index);
+				GetFile(index, out _);
 			}
 		}
 
 		private readonly SevenZipExtractor _rarExtractor;
 
-		public override string GetFile(int index)
+		public override string GetFile(int index, out string displayName)
 		{
+			displayName = null;
 			if (index == -1) return null;
 			var filename = FileNames[index];
-			var tempFile = Path.Combine(GeneratedFolder, filename);
+			displayName = Path.GetFileName(filename);
+			string hashedFilename = filename.GetHashCode().ToString();
+			if (filename.Contains('\\'))
+			{
+				var folders = filename.Split('\\');
+				hashedFilename = Path.Combine(folders.Select(t => t.GetHashCode().ToString()).ToArray());
+			}
+			var tempFile = Path.Combine(GeneratedFolder, hashedFilename);
 			var fullPath = Path.GetFullPath(tempFile);
+			Directory.CreateDirectory(Directory.GetParent(fullPath).FullName);
+			
 			if (File.Exists(tempFile)) return fullPath;
 			try
 			{

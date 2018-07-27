@@ -202,6 +202,7 @@ namespace GamanReader.View
 
 		private void ImageBox_OnMouseUp(object sender, MouseButtonEventArgs e)
 		{
+			((UIElement) sender).Focus();
 			switch (e.ChangedButton)
 			{
 				case MouseButton.Left:
@@ -233,10 +234,12 @@ namespace GamanReader.View
 			switch (e.Key)
 			{
 				case Key.Left:
+					e.Handled = true;
 					if (_mainModel.RtlIsChecked) _mainModel.GoForward(CtrlIsDown());
 					else _mainModel.GoBack(CtrlIsDown());
 					return;
 				case Key.Right:
+					e.Handled = true;
 					if (_mainModel.RtlIsChecked) _mainModel.GoBack(CtrlIsDown());
 					else _mainModel.GoForward(CtrlIsDown());
 					return;

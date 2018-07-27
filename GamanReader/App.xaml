@@ -3,6 +3,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="View/MainWindow.xaml">
     <Application.Resources>
+        <Style  x:Key="ColorItems" TargetType="ListBoxItem">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
+                    <Setter Property="Background" Value="Pink" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Path=IsBlacklisted}" Value="True">
+                    <Setter Property="Background" Value="Gray" />
+                    <Setter Property="Foreground" Value="Black" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Application.Resources>
     <JumpList.JumpList>
         <JumpList ShowRecentCategory="True"/>

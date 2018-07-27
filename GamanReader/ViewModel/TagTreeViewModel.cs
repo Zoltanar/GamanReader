@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows.Controls;
 using GamanReader.Model.Database;
 using static GamanReader.Model.StaticHelpers;
 
@@ -10,7 +9,7 @@ namespace GamanReader.ViewModel
 {
 	public class TagTreeViewModel
 	{
-		public BindingList<TreeViewItem> TagGroups { get; } = new BindingList<TreeViewItem>();
+		public ObservableCollection<TagGroup> TagGroups { get; } = new ObservableCollection<TagGroup>();
 
 		public TagTreeViewModel()
 		{
@@ -25,12 +24,12 @@ namespace GamanReader.ViewModel
 			TagGroups.Add(GetNode("Aliases", LocalDatabase.Aliases.ToArray().GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase)));
 		}
 
-		private TreeViewItem GetNode(string header, IEnumerable<IGrouping<string, IndividualTag>> items)
+		private TagGroup GetNode(string header, IEnumerable<IGrouping<string, IndividualTag>> items)
 		{
-			var node = new TreeViewItem { Tag = header };
+			var node = new TagGroup { Name = header };
 			foreach (var set in items)
 			{
-				var subItem = new TreeViewItem { Tag = set.Key };
+				var subItem = new TagGroup { Name = set.Key };
 				foreach (var item in set) subItem.Items.Add(item.Item);
 				subItem.Header = $"{set.Key} ({subItem.Items.Count} items)";
 				node.Items.Add(subItem);
@@ -39,12 +38,12 @@ namespace GamanReader.ViewModel
 			return node;
 		}
 
-		private TreeViewItem GetNode(string header, IEnumerable<IGrouping<string, Alias>> items)
+		private TagGroup GetNode(string header, IEnumerable<IGrouping<string, Alias>> items)
 		{
-			var node = new TreeViewItem { Tag = header };
+			var node = new TagGroup { Name = header };
 			foreach (var set in items)
 			{
-				var subItem = new TreeViewItem { Tag = set.Key };
+				var subItem = new TagGroup { Name = set.Key };
 				foreach (var item in set) subItem.Items.Add(item);
 				subItem.Header = $"{set.Key} ({subItem.Items.Count} items)";
 				node.Items.Add(subItem);
@@ -56,12 +55,12 @@ namespace GamanReader.ViewModel
 		public void AddTag(MangaInfo item, string tag)
 		{
 			var userGroup = TagGroups[1];
-			TreeViewItem thisNode = userGroup.Items.Cast<TreeViewItem>().FirstOrDefault(node => node.Tag.Equals(tag));
+			TagGroup thisNode = userGroup.Items.Cast<TagGroup>().FirstOrDefault(node => node.Name.Equals(tag));
 			if (thisNode == null)
 			{
-				thisNode = new TreeViewItem
+				thisNode = new TagGroup
 				{
-					Tag = tag
+					Name = tag
 				};
 				userGroup.Items.Add(thisNode);
 			}
@@ -71,15 +70,24 @@ namespace GamanReader.ViewModel
 		public void RemoveTag(MangaInfo item, string tag)
 		{
 			var userGroup = TagGroups[1];
-			TreeViewItem thisNode = userGroup.Items.Cast<TreeViewItem>().First(node => node.Tag.Equals(tag));
+			TagGroup thisNode = userGroup.Items.Cast<TagGroup>().First(node => node.Name.Equals(tag));
 			thisNode.Items.Remove(item);
 			SetHeader(thisNode);
 			//todo remove node if empty
 		}
 
-		public void SetHeader(TreeViewItem node)
+		void SetHeader(TagGroup node)
 		{
-			node.Header = node.Items.Count == 1 ? $"{node.Tag} ({node.Items.Count} item)" : $"{node.Tag} ({node.Items.Count} items)";
+			node.Header = node.Items.Count == 1 ? $"{node.Name} ({node.Items.Count} item)" : $"{node.Name} ({node.Items.Count} items)";
 		}
+
+	}
+	public class TagGroup
+	{
+		public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();
+
+		public string Name { get; set; }
+
+		public string Header { get; set; }
 	}
 }

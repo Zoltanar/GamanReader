@@ -30,6 +30,7 @@ namespace GamanReader.ViewModel
 			Directory.CreateDirectory(TempFolder);
 		}
 
+		public const int MaxListItems = 400;
 		#region Properties
 		private Container _containerModel;
 		private string _rtlToggleText;
@@ -41,8 +42,8 @@ namespace GamanReader.ViewModel
 		private string _indexLabelText;
 		private bool _rtlIsChecked;
 		private PageMode _pageView;
-		private readonly RecentItemList<MangaInfo> _lastOpened = new RecentItemList<MangaInfo>(25, LocalDatabase.GetLastOpened(25));
-		private readonly RecentItemList<MangaInfo> _lastAdded = new RecentItemList<MangaInfo>(25, LocalDatabase.GetLastAdded(25));
+		private readonly RecentItemList<MangaInfo> _lastOpened = new RecentItemList<MangaInfo>(MaxListItems, LocalDatabase.GetLastOpened(MaxListItems));
+		private readonly RecentItemList<MangaInfo> _lastAdded = new RecentItemList<MangaInfo>(MaxListItems, LocalDatabase.GetLastAdded(MaxListItems));
 		private string _singleImageSource;
 		private string _leftImageSource;
 		private string _rightImageSource;
@@ -154,9 +155,10 @@ namespace GamanReader.ViewModel
 
 		private void PopulateBox(ImageBox imagebox, int index)
 		{
-			var filename = _containerModel?.GetFile(index);
+			string displayName = "";
+			var filename = _containerModel?.GetFile(index, out displayName);
 			SetImage(imagebox, filename);
-			SetLabelText(imagebox, filename == null ? "" : $"({index + 1}) {Path.GetFileName(filename)}");
+			SetLabelText(imagebox, filename == null ? "" : $"({index + 1}) {displayName}");
 		}
 
 		private void SetImage(ImageBox boxForImage, string file)
@@ -236,7 +238,7 @@ namespace GamanReader.ViewModel
 		public void GoBack(bool moveOne)
 		{
 			if (_containerModel == null) return;
-			var moveNumber = moveOne ? 1 : 2;
+			var moveNumber = PageView == PageMode.Single || moveOne ? 1 : 2;
 			var targetIndex = Math.Max(-1, CurrentIndex - moveNumber);
 			if (targetIndex == CurrentIndex) return;
 			CurrentIndex = targetIndex;
@@ -246,7 +248,7 @@ namespace GamanReader.ViewModel
 		public void GoForward(bool moveOne)
 		{
 			if (_containerModel == null) return;
-			var moveNumber = moveOne ? 1 : 2;
+			var moveNumber = PageView == PageMode.Single || moveOne ? 1 : 2;
 			if (moveNumber == 2 && DisplayingOnePage) moveNumber = 1;
 			CurrentIndex = Math.Min(TotalFiles - 1, CurrentIndex + moveNumber);
 			PopulateBoxes();
@@ -295,7 +297,7 @@ namespace GamanReader.ViewModel
 			}
 			else
 			{
-				var filename = _containerModel.GetFile(CurrentIndex);
+				var filename = _containerModel.GetFile(CurrentIndex, out _);
 				var img1 = new Bitmap(filename);
 				var ratio1 = img1.PhysicalDimension.Width / img1.PhysicalDimension.Height;
 				ImageBox imagebox1 = ratio1 > 1 ? ImageBox.Single : (RtlIsChecked ? ImageBox.Right : ImageBox.Left);
@@ -314,7 +316,7 @@ namespace GamanReader.ViewModel
 				PopulateBox(imagebox2, -1);
 				return;
 			}
-			var filename2 = _containerModel.GetFile(CurrentIndex + 1);
+			var filename2 = _containerModel.GetFile(CurrentIndex + 1, out string _);
 			var img2 = new Bitmap(filename2);
 			var ratio2 = img2.PhysicalDimension.Width / img2.PhysicalDimension.Height;
 			PopulateBox(imagebox2, ratio2 > 1 ? -1 : CurrentIndex + 1);
@@ -392,6 +394,7 @@ namespace GamanReader.ViewModel
 				_containerModel = null;
 				return;
 			}
+			item.FileCount = _containerModel.TotalFiles; //todo set this at container instead
 			MangaInfo = item;
 			OnPropertyChanged(nameof(TotalFiles));
 			GoToIndex(0);
@@ -481,11 +484,11 @@ namespace GamanReader.ViewModel
 			DisplayedPanel = DisplayPanel.Search;
 		}
 
-		public bool NoBlacklisted { get; set; } = true;
+		public bool NoBlacklisted { get; set; } = false;
 
 		public bool IsFavorite
 		{
-			get => MangaInfo?.UserTags.Any(x => x.Tag.ToLower().Equals("favorite")) ?? false;
+			get => MangaInfo?.IsFavorite ?? false;
 			set
 			{
 				if (value == MangaInfo.UserTags.Any(x => x.Tag.ToLower().Equals("favorite"))) return;
@@ -497,7 +500,7 @@ namespace GamanReader.ViewModel
 
 		public bool IsBlacklist
 		{
-			get => MangaInfo?.UserTags.Any(x => x.Tag.ToLower().Equals("blacklisted")) ?? false;
+			get => MangaInfo?.IsBlacklisted ?? false;
 			set
 			{
 				if (value == MangaInfo.UserTags.Any(x => x.Tag.ToLower().Equals("blacklisted"))) return;
@@ -605,7 +608,7 @@ namespace GamanReader.ViewModel
 				foreach (var library in LocalDatabase.Libraries) additions += GetLibraryAdditions(library);
 				LocalDatabase.SaveChanges();
 			});
-			_lastAdded.Items.SetRange(LocalDatabase.GetLastAdded(25));
+			_lastAdded.Items.SetRange(LocalDatabase.GetLastAdded(MaxListItems));
 			ReplyText = $"Finished getting new additions ({additions})";
 			DisplayedPanel = DisplayPanel.Added;
 		}
@@ -614,8 +617,8 @@ namespace GamanReader.ViewModel
 		{
 			if (string.IsNullOrWhiteSpace(library.Path)) return 0;
 			int additions = 0;
-			var files = Directory.GetFiles(library.Path);
-			var folders = Directory.GetDirectories(library.Path);
+			var files = new DirectoryInfo(library.Path).GetFiles().OrderBy(x=>x.LastWriteTime).Select(x=>x.FullName).ToArray();
+			var folders = new DirectoryInfo(library.Path).GetDirectories().OrderBy(x => x.LastWriteTime).Select(x => x.FullName).ToArray();
 			var presentFiles = LocalDatabase.Items.Local.Where(x => !x.IsFolder).Select(x => x.FilePath).ToArray();
 			var presentFolders = LocalDatabase.Items.Local.Where(x => x.IsFolder).Select(x => x.FilePath).ToArray();
 			int count = 0;

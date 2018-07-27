@@ -7,3 +7,5 @@ remove tags from items with DEL key
 library flags include in random, include in get additions
 left panel horizontal mouse wheel scroll if no need for vertical
 add delete file on DEL key for all MangaInfo panels
+hide side panels after a while and/or darker theme
+going back in auto page mode goes back 2 always.
