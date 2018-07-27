@@ -17,7 +17,13 @@
                     <TextBlock Foreground="Green" Text="{Binding Name}" />
                 </HierarchicalDataTemplate>
                 <DataTemplate DataType="{x:Type database:MangaInfo}" >
-                    <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Name}"/>
+                    <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Name}" MouseDoubleClick="MangaDoubleClicked"/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type database:AutoTag}" >
+                    <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Item}" MouseDoubleClick="TagDoubleClicked"/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type database:Alias}" >
+                    <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Name}" MouseDoubleClick="AliasDoubleClicked"/>
                 </DataTemplate>
             </TreeView.Resources>
         </TreeView>

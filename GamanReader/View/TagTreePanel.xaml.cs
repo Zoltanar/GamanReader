@@ -16,30 +16,38 @@ namespace GamanReader.View
 		{
 			InitializeComponent();
 		}
-
-		private void ItemDoubleClicked(object sender, MouseButtonEventArgs e)
+		
+		private void MangaDoubleClicked(object sender, MouseButtonEventArgs e)
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
-			MangaInfo item = null;
+			MangaInfo item = preItem.DataContext as MangaInfo;
+			if (item == null) return;
 			var window = (MainWindow)Window.GetWindow(this);
 			Debug.Assert(window != null, nameof(window) + " != null");
-			switch (preItem.DataContext)
-			{
-				case MangaInfo info:
-					item = info;
-					break;
-				case AutoTag tag:
-					item = tag.Item;
-					break;
-				case Alias alias:
-					((MainViewModel)window.DataContext).Search($"alias:{alias.Name}");
-					return;
-			}
-			if (item == null) return;
 			window.LoadContainer(item);
+	}
+
+		private void TagDoubleClicked(object sender, MouseButtonEventArgs e)
+		{
+			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
+			AutoTag tag = preItem.DataContext as AutoTag;
+			if (tag == null) return;
+			var window = (MainWindow)Window.GetWindow(this);
+			Debug.Assert(window != null, nameof(window) + " != null");
+			window.LoadContainer(tag.Item);
 		}
 
-		public static TreeViewItem VisualUpwardSearch(DependencyObject source)
+	private void AliasDoubleClicked(object sender, MouseButtonEventArgs e)
+		{
+			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
+			Alias alias = preItem.DataContext as Alias;
+			if (alias == null) return;
+			var window = (MainWindow)Window.GetWindow(this);
+			Debug.Assert(window != null, nameof(window) + " != null");
+			((MainViewModel)window.DataContext).Search($"alias:{alias.Name}");
+	}
+
+	public static TreeViewItem VisualUpwardSearch(DependencyObject source)
 		{
 			while (source != null && !(source is TreeViewItem)) source = System.Windows.Media.VisualTreeHelper.GetParent(source);
 			return source as TreeViewItem;
