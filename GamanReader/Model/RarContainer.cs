@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using GamanReader.Model.Database;
 using SevenZip;
 
@@ -9,25 +13,42 @@ namespace GamanReader.Model
 {
 	class RarContainer : ArchiveContainer
 	{
+
 		public RarContainer(MangaInfo item, Action onPropertyChanged) : base(item, onPropertyChanged)
 		{
-			_rarExtractor = new SevenZipExtractor(ContainerPath);
-			var files = _rarExtractor.ArchiveFileData.OrderBy(entry => entry.FileName).Select(af => af.FileName).ToArray();
-			FileNames = files.Where(FileIsImage).ToArray();
-			if (new FileInfo(ContainerPath).Length > 40 * 1024 * 1024) ExtractAll();
+			var bg = new BackgroundWorker();
+			bg.DoWork += ExtractAllWork;
+			bg.ProgressChanged += (sender, args) => onPropertyChanged();
+			bg.WorkerReportsProgress = true;
+			var rarExtractor = new SevenZipExtractor(ContainerPath);
+			FileNames = OrderFiles(rarExtractor.ArchiveFileData.Select(af => af.FileName));
+
+			bg.RunWorkerAsync();
 		}
 
-		private void ExtractAll()
+		private void ExtractAllWork(object sender, DoWorkEventArgs e)
 		{
+			var rarExtractor = new SevenZipExtractor(ContainerPath);
 			for (int index = 0; index < TotalFiles; index++)
 			{
-				GetFile(index, out _);
+				GetFile(index, out _, rarExtractor, sender as BackgroundWorker);
 			}
+			rarExtractor.Dispose();
 		}
 
-		private readonly SevenZipExtractor _rarExtractor;
-
 		public override string GetFile(int index, out string displayName)
+		{
+			var extractor = new SevenZipExtractor(ContainerPath);
+			try
+			{
+				return GetFile(index, out displayName, extractor, null);
+			}
+			finally
+			{
+				extractor.Dispose();
+			}
+		}
+		public string GetFile(int index, out string displayName, SevenZipExtractor extractor, BackgroundWorker worker)
 		{
 			displayName = null;
 			if (index == -1) return null;
@@ -42,29 +63,33 @@ namespace GamanReader.Model
 			var tempFile = Path.Combine(GeneratedFolder, hashedFilename);
 			var fullPath = Path.GetFullPath(tempFile);
 			Directory.CreateDirectory(Directory.GetParent(fullPath).FullName);
-			
-			if (File.Exists(tempFile)) return fullPath;
 			try
 			{
+				if (File.Exists(tempFile)) return fullPath;
 				using (var stream = File.OpenWrite(tempFile))
 				{
-					_rarExtractor.ExtractFile(filename, stream);
+					lock (this)
+					{
+						extractor.ExtractFile(filename, stream);
+					}
+
 				}
 			}
 			catch (Exception ex)
 			{
-				Debug.WriteLine($"Eror in RarContainer.GetFile - {ex.Message}");
+				Debug.WriteLine($"Error in RarContainer.GetFile - {ex.Message}");
 				return File.Exists(tempFile) ? fullPath : Path.GetFullPath(StaticHelpers.LoadFailedImage);
 			}
 			finally
 			{
+				worker?.ReportProgress(Extracted);
 				Extracted++;
 				UpdateExtracted.Invoke();
 			}
 			return fullPath;
 		}
 
-		public override void Dispose() => _rarExtractor.Dispose();
+		public override void Dispose() { }
 
 	}
 }

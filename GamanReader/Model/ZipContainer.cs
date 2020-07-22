@@ -14,26 +14,22 @@ namespace GamanReader.Model
 		{
 			using (var archive = new ZipArchive(File.OpenRead(ContainerPath)))
 			{
-				FileNames = archive.Entries.OrderBy(e => e.Name).Where(f => FileIsImage(f.Name)).Select(x => x.Name).ToArray();
-				var namesWithoutExtension = FileNames.Select(Path.GetFileNameWithoutExtension).ToArray();
-				// ReSharper disable once AssignNullToNotNullAttribute
-				if (namesWithoutExtension.All(x => int.TryParse(x, out _))) FileNames = FileNames.OrderBy(x=>int.Parse(Path.GetFileNameWithoutExtension(x))).ToArray();
+				FileNames = OrderFiles(archive.Entries.Select(af => af.Name));
 			}
 		}
 
-		public async Task ExtractAllAsync()
+		public async Task ExtractAllAsync(CancellationToken token)
 		{
 			var file = new FileInfo(ContainerPath);
-			if (!file.Extension.Equals(".zip")) return; //extract all if file is less than 40mb
+			var extensions = new[] {".zip", ".cbz"};
+			if (!extensions.Contains(file.Extension)) return; //extract all if file is less than 40mb
 			await Task.Run(() =>
 			{
-				var archive = new ZipArchive(File.OpenRead(ContainerPath));
-				var entries = archive.Entries.OrderBy(e => e.Name).Where(f => FileIsImage(f.Name)).ToArray();
-				var namesWithoutExtension = entries.Select(x=> Path.GetFileNameWithoutExtension(x.Name)).ToArray();
-				// ReSharper disable once AssignNullToNotNullAttribute
-				if (namesWithoutExtension.All(x => int.TryParse(x, out _))) entries = entries.OrderBy(x => int.Parse(Path.GetFileNameWithoutExtension(x.Name))).ToArray();
+				using var archive = new ZipArchive(File.OpenRead(ContainerPath));
+				var entries = FileNames.Select(f => archive.Entries.First(e => e.Name == f)).ToList();
 				foreach (var entry in entries)
 				{
+					if (token.IsCancellationRequested) return;
 					try
 					{
 						var tempFile = Path.Combine(GeneratedFolder, entry.Name);
@@ -50,8 +46,7 @@ namespace GamanReader.Model
 						UpdateExtracted.Invoke();
 					}
 				}
-				archive.Dispose();
-			});
+			}, token);
 		}
 
 		public override string GetFile(int index, out string displayName)
@@ -62,7 +57,7 @@ namespace GamanReader.Model
 			displayName = Path.GetFileName(filename);
 			var tempFile = Path.Combine(GeneratedFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
-			while (Extracted <= index) Thread.Sleep(250);
+			while (Extracted < index) Thread.Sleep(250);
 			return fullPath;
 		}
 

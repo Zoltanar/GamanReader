@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace GamanReader.Model
@@ -7,12 +7,13 @@ namespace GamanReader.Model
 	public class RecentItemList<T>
 	{
 		private readonly int _size;
-		public readonly BindingList<T> Items;
+		public readonly ObservableCollection<T> Items;
 		public RecentItemList(int size = 25, IEnumerable<T> items = null)
 		{
 			_size = size;
-			Items = new BindingList<T>();
-			if (items != null) Items.AddRange(items);
+			Items = new ObservableCollection<T>();
+			if (items == null) return;
+			Items.AddRange(items);
 		}
 		public void Add(T item)
 		{

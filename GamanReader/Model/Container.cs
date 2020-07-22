@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using GamanReader.Model.Database;
 using JetBrains.Annotations;
 
@@ -12,22 +14,24 @@ namespace GamanReader.Model
 		public MangaInfo Item { get;}
 		public string ContainerPath { get; }
 		int _pagesBrowsed;
-
+		private bool _addedTimeBrowsed;
 		public int CurrentIndex
 		{
 			get => _currentIndex;
 			set
 			{
 				if (value == _currentIndex) return;
-				_currentIndex = value;
-				_pagesBrowsed++;
-				if (_pagesBrowsed == 5) Item.TimesBrowsed++;
+				_pagesBrowsed += StaticHelpers.NumberBetween(0, 2, value - _currentIndex);
+		_currentIndex = value;
+				if (_addedTimeBrowsed || _pagesBrowsed <= Math.Min(TotalFiles*0.5, 15)) return;
+				Item.TimesBrowsed++;
+				_addedTimeBrowsed = true;
 
 			}
 		}
 
 		public int TotalFiles => FileNames.Length;
-		protected string[] FileNames { get; set; }
+		public string[] FileNames { get; protected set; }
 		public abstract string GetFile(int index, out string displayName);
 		public abstract bool IsFolder { get; }
 		public int Extracted { get; protected set; }
@@ -45,6 +49,7 @@ namespace GamanReader.Model
 			}
 			RecognizedExtensions.Add("*.gif");
 		}
+
 		protected static bool FileIsImage([NotNull]string filename)
 		{
 			var ext = Path.GetExtension(filename).ToLower();
@@ -62,6 +67,50 @@ namespace GamanReader.Model
 		}
 
 		public abstract void Dispose();
+
+		protected static string[] OrderFiles(IEnumerable<string> fileNames)
+		{
+			var list = fileNames.ToList();
+			var namesWithoutExtension = list.Select(Path.GetFileNameWithoutExtension).ToArray();
+			// ReSharper disable once AssignNullToNotNullAttribute
+			if (namesWithoutExtension.Count(x => int.TryParse(x, out _)) > list.Count() - 2)
+			{
+				return  list.OrderBy(x =>
+				{
+					var success = int.TryParse(Path.GetFileNameWithoutExtension(x), out var number);
+					return success ? number : int.MaxValue;
+				}).ToArray();
+			}
+			return list.Where(FileIsImage).OrderBy(ef => ef, new StringWithNumberComparer()).ToArray();
+		}
+
+		public class StringWithNumberComparer : IComparer<string>
+		{
+			//private static readonly Regex Pattern = new Regex(@"([a-z]+)([0-9]+)?([a-z]+)?");
+			private static readonly Regex Pattern = new Regex(@"(\D+)(\d+)?(\D+)?");
+			private static readonly Regex Pattern2 = new Regex(@"\d\d\d\d?.*");
+			public int Compare(string x, string y)
+			{
+				if (x == null && y == null) return 0;
+				if (x == null) return 1;
+				if (y == null) return -1;
+				var dirParts1 = x.Split('\\').ToList();
+				var dirParts2 = y.Split('\\').ToList();
+				while (dirParts1[0] == dirParts2[0])
+				{
+					dirParts1.RemoveAt(0);
+					dirParts2.RemoveAt(0);
+					if (dirParts1.Count == 0 || dirParts2.Count == 0) return string.CompareOrdinal(x, y);
+				}
+				if(Pattern2.IsMatch(dirParts1[0]) && Pattern2.IsMatch(dirParts2[0])) return string.CompareOrdinal(x, y);
+				var parts1 = Pattern.Match(dirParts1[0]);
+				var parts2 = Pattern.Match(dirParts2[0]);
+				if (parts1.Groups.Count <= 2 || parts2.Groups.Count <= 2 || parts1.Groups[1].Value != parts2.Groups[1].Value) return string.CompareOrdinal(x, y);
+				return parts1.Groups[2].Value != parts2.Groups[2].Value ?
+					int.Parse(parts1.Groups[2].Value).CompareTo(int.Parse(parts2.Groups[2].Value)) :
+					string.CompareOrdinal(x, y);
+			}
+		}
 	}
 
 }

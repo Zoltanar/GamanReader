@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RenameWebPFiles": {
+      "commandName": "Project",
+      "commandLineArgs": "\"G:\\Downloads\\Patreon Games\\Melody\\Melody-0.11-pc\\game - Copy\\images\""
+    }
+  }
+}

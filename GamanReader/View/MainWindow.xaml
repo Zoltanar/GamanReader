@@ -10,59 +10,59 @@
         Title="{Binding TitleText}" 
         Height="946.5" Width="1260" Background="#FF4D1D1D" 
         MouseWheel="Window_MouseWheel" AllowDrop="True" Drop="DropFile" 
-        MinWidth="711" MinHeight="630" Closing="Window_Closing">
-    <Window.Resources>
-        <Style x:Key="SliderButtonStyle" TargetType="{x:Type RepeatButton}">
-            <Setter Property="SnapsToDevicePixels" Value="true"/>
-            <Setter Property="OverridesDefaultStyle" Value="true"/>
-            <Setter Property="IsTabStop" Value="false"/>
-            <Setter Property="Focusable" Value="false"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type RepeatButton}">
-                        <Border Background="Transparent" />
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="ThumbStyle1" TargetType="{x:Type Thumb}">
-            <Setter Property="SnapsToDevicePixels" Value="true"/>
-            <Setter Property="OverridesDefaultStyle" Value="false"/>
-            <Setter Property="Height" Value="20"/>
-            <Setter Property="Width" Value="20"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Thumb}">
-                        <Canvas SnapsToDevicePixels="true">
-                            <Grid Height="20" Width="20">
-                                <Ellipse x:Name="Background" Fill="AliceBlue" Height="20" Width="20" Stroke="LightSkyBlue"/>
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Black" FontSize="9" Text="{Binding SliderPage, Mode=OneWay}" />
-                            </Grid>
-                        </Canvas>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter Property="Fill" TargetName="Background" Value="DeepSkyBlue"/>
-                            </Trigger>
-                            <Trigger Property="IsDragging" Value="true">
-                                <Setter Property="Fill" TargetName="Background" Value="Aquamarine"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="SliderStyle1" TargetType="{x:Type Slider}">
-            <Setter Property="OverridesDefaultStyle" Value="true"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid Margin="0,0,-3,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="5" MinWidth="{TemplateBinding MinWidth}" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Name="PART_Border" Grid.Column="1"
+        MinWidth="711" MinHeight="630" Closing="Window_Closing" Icon="../Resources/favicon.ico">
+	<Window.Resources>
+		<Style x:Key="SliderButtonStyle" TargetType="{x:Type RepeatButton}">
+			<Setter Property="SnapsToDevicePixels" Value="true"/>
+			<Setter Property="OverridesDefaultStyle" Value="true"/>
+			<Setter Property="IsTabStop" Value="false"/>
+			<Setter Property="Focusable" Value="false"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="{x:Type RepeatButton}">
+						<Border Background="Transparent" />
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+		<Style x:Key="ThumbStyle1" TargetType="{x:Type Thumb}">
+			<Setter Property="SnapsToDevicePixels" Value="true"/>
+			<Setter Property="OverridesDefaultStyle" Value="false"/>
+			<Setter Property="Height" Value="20"/>
+			<Setter Property="Width" Value="20"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="{x:Type Thumb}">
+						<Canvas SnapsToDevicePixels="true">
+							<Grid Height="20" Width="20">
+								<Ellipse x:Name="Background" Fill="AliceBlue" Height="20" Width="20" Stroke="LightSkyBlue"/>
+								<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Black" FontSize="9" Text="{Binding SliderPage, Mode=OneWay}" />
+							</Grid>
+						</Canvas>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="true">
+								<Setter Property="Fill" TargetName="Background" Value="DeepSkyBlue"/>
+							</Trigger>
+							<Trigger Property="IsDragging" Value="true">
+								<Setter Property="Fill" TargetName="Background" Value="Aquamarine"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+		<Style x:Key="SliderStyle1" TargetType="{x:Type Slider}">
+			<Setter Property="OverridesDefaultStyle" Value="true"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Slider">
+						<Grid Margin="0,0,-3,0">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*" />
+								<ColumnDefinition Width="5" MinWidth="{TemplateBinding MinWidth}" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Border Name="PART_Border" Grid.Column="1"
                                 BorderBrush="Green" BorderThickness="1" Padding="2"
                                     CornerRadius="10"
                                     Background="AliceBlue"
@@ -70,118 +70,148 @@
                                     Height="{TemplateBinding Height}"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Stretch" />
-                            <Track Name="PART_Track" Grid.Column="0" Grid.ColumnSpan="3" 
+							<Track Name="PART_Track" Grid.Column="0" Grid.ColumnSpan="3" 
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Stretch"
                                    Orientation="Vertical"
                                    Width="{TemplateBinding Width}"
                                    Height="{TemplateBinding Height}">
-                                <Track.Thumb>
-                                    <Thumb Style="{StaticResource ThumbStyle1}" />
-                                </Track.Thumb>
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderButtonStyle}"/>
-                                </Track.DecreaseRepeatButton>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderButtonStyle}"/>
-                                </Track.IncreaseRepeatButton>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="ImageStyle" TargetType="Image">
-            <EventSetter Event="PreviewKeyDown" Handler="HandleKeys"/>
-            <EventSetter Event="MouseUp" Handler="ImageBox_OnMouseUp"/>
-            <Setter Property="Focusable" Value="True"/>
-        </Style>
-    </Window.Resources>
-    <Window.DataContext>
-        <viewModel:MainViewModel/>
-    </Window.DataContext>
-    <Grid >
-        <DockPanel Grid.Row="0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition x:Name="LeftColumn" Width="120" MinWidth="120" />
-                    <ColumnDefinition Width="44*"/>
-                    <ColumnDefinition Width="44*"/>
-                    <ColumnDefinition Width="120" MinWidth="120" />
-                </Grid.ColumnDefinitions>
-                <!--Left Side Bar-->
-                <TabControl Grid.Column="0" Margin="10,35,10,10" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="{Binding DisplayedPanel}">
-                    <TabItem Header="Search">
-                        <Grid Background="#FFE5E5E5">
-                            <TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp"/>
-                            <ListBox Margin="0,28,0,0"  MouseDoubleClick="OpenItemFromListBox" ItemsSource="{Binding SearchResults}" KeyUp="DeleteItem" ItemContainerStyle="{StaticResource ColorItems}"/>
-                        </Grid>
-                    </TabItem>
-                    <TabItem Header="Tags">
-                        <view:TagTreePanel x:Name="TagPanel" />
-                    </TabItem>
-                    <TabItem Header="Libraries"/>
-                    <TabItem Header="Added">
-                        <ListBox ItemsSource="{Binding LastAddedItems}" MouseDoubleClick="OpenItemFromListBox" ItemContainerStyle="{StaticResource ColorItems}">
-                        </ListBox>
-                    </TabItem>
-                    <TabItem Header="Opened">
-                        <ListBox ItemsSource="{Binding LastOpenedItems}" MouseDoubleClick="OpenItemFromListBox" ItemContainerStyle="{StaticResource ColorItems}"/>
-                    </TabItem>
-                </TabControl>
-                <!--Center-->
-                <Image Grid.Column="1" Grid.ColumnSpan="2" gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Style="{StaticResource ImageStyle}" />
-                <Image Grid.Column="1" HorizontalAlignment="Right" gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Style="{StaticResource ImageStyle}" />
-                <Image Grid.Column="2" HorizontalAlignment="Left" gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Style="{StaticResource ImageStyle}" />
-                <Slider Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,10" Width="19" Orientation="Vertical" 
+								<Track.Thumb>
+									<Thumb Style="{StaticResource ThumbStyle1}" />
+								</Track.Thumb>
+								<Track.DecreaseRepeatButton>
+									<RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderButtonStyle}"/>
+								</Track.DecreaseRepeatButton>
+								<Track.IncreaseRepeatButton>
+									<RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderButtonStyle}"/>
+								</Track.IncreaseRepeatButton>
+							</Track>
+						</Grid>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+		<Style x:Key="ImageStyle" TargetType="Image">
+			<EventSetter Event="PreviewKeyDown" Handler="HandleKeys"/>
+			<EventSetter Event="MouseUp" Handler="ImageBox_OnMouseUp"/>
+			<Setter Property="Focusable" Value="True"/>
+		</Style>
+		<Style TargetType="Button" x:Key="BlueButtonStyle">
+			<Style.Setters>
+				<Setter Property="Height" Value="20"/>
+				<Setter Property="VerticalAlignment" Value="Top"/>
+				<Setter Property="HorizontalAlignment" Value="Left"/>
+				<Setter Property="HorizontalContentAlignment" Value="Center"/>
+				<Setter Property="Background" Value="#FF7C99E8"/>
+				<Setter Property="BorderBrush" Value="{x:Null}"/>
+				<Setter Property="BorderThickness" Value="0"/>
+			</Style.Setters>
+		</Style>
+	</Window.Resources>
+	<Window.DataContext>
+		<viewModel:MainViewModel/>
+	</Window.DataContext>
+	<Grid>
+		<DockPanel Grid.Row="0">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="120" MinWidth="120" />
+					<ColumnDefinition Width="44*"/>
+					<ColumnDefinition Width="44*"/>
+					<ColumnDefinition Width="120" MinWidth="120" />
+				</Grid.ColumnDefinitions>
+				<!--Center-->
+				<Image Grid.Column="1" Grid.ColumnSpan="2" gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource}" Style="{StaticResource ImageStyle}" />
+				<Image Grid.Column="1" HorizontalAlignment="Right" gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Style="{StaticResource ImageStyle}" />
+				<Image Grid.Column="2" HorizontalAlignment="Left" gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Style="{StaticResource ImageStyle}" />
+				<TextBlock Text="{Binding LeftLabelText}" Margin="10,10,10,0" Height="20" VerticalAlignment="Top" Foreground="Black" HorizontalAlignment="Left" Padding="5,0" Grid.Column="0" Grid.ColumnSpan="2">
+					<TextBlock.Background>
+						<SolidColorBrush Color="White" Opacity="0.25"/>
+					</TextBlock.Background>
+					<TextBlock.Effect>
+						<DropShadowEffect ShadowDepth="2" BlurRadius="1" Color="LightGray" />
+					</TextBlock.Effect>
+				</TextBlock>
+				<Slider Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,10" Width="19" Orientation="Vertical" 
                         IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" 
                         Value="{Binding CurrentPage, Mode=OneWay}" Thumb.DragCompleted="Slider_OnDragCompleted" Style="{DynamicResource SliderStyle1}" >
-                </Slider>
-                <!--Right Side Bar-->
-                <Label  Content="{Binding LeftLabelText}" Margin="10,10,10,0" HorizontalContentAlignment="Left"  VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" Grid.Column="0" Grid.ColumnSpan="2"/>
-                <Label Content="{Binding RightLabelText}" Margin="10,10,10,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" Grid.Column="2" Grid.ColumnSpan="2"/>
-                <TextBox x:Name="TagText" Margin="10,35,0,0" TextWrapping="Wrap" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="105" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <Button Content="Add Tag" Margin="10,60,0,0" Click="AddTag" HorizontalAlignment="Left" Width="105" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <TextBox Text="{Binding CurrentPage, Mode=OneWay}" HorizontalAlignment="Left" Margin="10,135,0,0" TextWrapping="Wrap" Width="64" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="20" VerticalAlignment="Top" KeyUp="GoToTextBox_KeyUp" Grid.Column="3" HorizontalContentAlignment="Center"/>
-                <Label Content="{Binding IndexLabelText}" Margin="79,135,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="36" Foreground="White" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <TextBlock Text="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,160,0,0" Width="105" Height="48" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="InfoBox" Grid.Column="3" Margin="10,615,5,91" TextWrapping="Wrap" Foreground="White"/>
-                <Label Content="Load" Grid.Column="3" HorizontalAlignment="Left" Margin="10,213,0,0" VerticalAlignment="Top" Height="20" Foreground="White" Padding="0" VerticalContentAlignment="Center"/>
-                <Button Grid.Column="3" Content="Folder" Click="LoadFolderByDialog" Margin="41,213,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="42"/>
-                <Button Grid.Column="3" Content="Zip" Click="LoadArchiveByDialog" Margin="88,213,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="27"/>
-                <Button Grid.Column="3" Content="Open Random" Click="OpenRandom_Click"  Height="20"  Margin="10,238,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <ToggleButton Grid.Column="3" Content="{Binding RtlToggleText}" Margin="10,263,0,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Left" Width="105" BorderBrush="{x:Null}" Background="#FF7C99E8" UseLayoutRounding="False">
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                        <Border Background="{TemplateBinding Background}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsChecked" Value="True"/>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>
-                <Button Grid.Column="3" Content="Add Library Folder" Margin="10,288,0,0" VerticalAlignment="Top" Height="20" Click="AddLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>
-                <Button Grid.Column="3" Click="ChangePageMode" Content="{Binding PageModeText}" Margin="10,313,0,0" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderThickness="0" Width="105"/>
-                <Button Grid.Column="3" Content="Fullscreen" Click="GoFullscreen"  Height="20"  Margin="10,338,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <Button Grid.Column="3" Content="Reload Library" Click="ReloadLibrary"  Height="20"  Margin="10,363,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <Button Grid.Column="3" Content="Get New Additions" Click="GetLibraryAdditions"  Height="20"  Margin="10,388,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <Button Grid.Column="3" Content="Close Container" Click="CloseContainer"  Height="20"  Margin="10,413,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <Button Grid.Column="3" Content="Create Alias" Click="CreateAlias"  Height="20"  Margin="10,463,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <ToggleButton IsChecked="{Binding IsFavorite}" Content="Favorite" Margin="10,85,0,0" HorizontalAlignment="Left" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <ToggleButton IsChecked="{Binding IsBlacklist}" Content="Blacklist" Margin="0,85,5,0" HorizontalAlignment="Right" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
-                <TextBlock Text="{Binding Path=Extracted, StringFormat='Extracted: {0}'}" Margin="0,110,5,0" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Right" Width="105" Grid.Column="3"/>
-                <Button Grid.Column="3" Content="Delete Container" Click="DeleteContainer"  Height="20"  Margin="10,438,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
-                <TextBlock Text="{Binding MangaInfo.InfoString}" HorizontalAlignment="Left" Margin="10,488,0,0" Width="105" Height="122" VerticalAlignment="Top" Background="#FF86B5E4" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
-                <TextBox Grid.Column="3" HorizontalAlignment="Left" Margin="10,0,0,10" TextWrapping="Wrap" Text="{Binding MangaInfo.Notes}" Width="100" Height="76" VerticalAlignment="Bottom"/>
-            </Grid>
-        </DockPanel>
-    </Grid>
+				</Slider>
+				<!--Left Side Bar-->
+				<TabControl Grid.Column="0" Margin="10,35,10,10" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="{Binding DisplayedPanel}" Background="Transparent">
+					<TabItem Header="Library">
+						<DockPanel>
+							<ComboBox ItemsSource="{Binding LibraryItemSelectors}" SelectedValue="{Binding LibraryItemSelector}" DockPanel.Dock="Top" />
+							<TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp" DockPanel.Dock="Top" Visibility="{Binding LibrarySearchVisibility}"/>
+							<ListBox ItemsSource="{Binding LibraryItems}" ItemStringFormat="{Binding LibraryItemFormat}" MouseDoubleClick="OpenItemFromListBox" ItemContainerStyle="{DynamicResource ColorItems}" Background="#CCFFFFFF" DockPanel.Dock="Bottom"/>
+						</DockPanel>
+					</TabItem>
+					<TabItem Header="Tags">
+						<view:TagTreePanel x:Name="TagPanel" />
+					</TabItem>
+					<TabItem Header="Pages">
+						<ListBox ItemsSource="{Binding Pages}"/>
+					</TabItem>
+					<TabItem Header="Stats">
+						<ListBox ItemsSource="{Binding Stats}"/>
+					</TabItem>
+				</TabControl>
+				<!--Right Side Bar-->
+				<TextBlock Text="{Binding RightLabelText}" Margin="10,10,10,0" Height="20" VerticalAlignment="Top" Foreground="Black" HorizontalAlignment="Right" Padding="5,0" Grid.Column="2" Grid.ColumnSpan="2">
+					<TextBlock.Background>
+						<SolidColorBrush Color="White" Opacity="0.25"/>
+					</TextBlock.Background>
+					<TextBlock.Effect>
+						<DropShadowEffect ShadowDepth="2" BlurRadius="1" Color="LightGray" />
+					</TextBlock.Effect>
+				</TextBlock>
+				<TextBox x:Name="TagText" Margin="10,35,0,0" TextWrapping="Wrap" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="105" Grid.Column="3" HorizontalContentAlignment="Center" />
+				<Button Content="Add Tag" Margin="10,60,0,0" Click="AddTag" Width="105"  Background="#FFE66767" Grid.Column="3" Style="{StaticResource BlueButtonStyle}"/>
+				<TextBox Text="{Binding CurrentPage, Mode=OneWay}" HorizontalAlignment="Left" Margin="10,160,0,0" TextWrapping="Wrap" Width="64" PreviewTextInput="GoToTextBox_PreviewTextInput" Height="20" VerticalAlignment="Top" KeyUp="GoToTextBox_KeyUp" Grid.Column="3" HorizontalContentAlignment="Center"/>
+				<Label Content="{Binding IndexLabelText}" Margin="79,160,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="36" Foreground="White" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" />
+				<TextBlock Text="{Binding ReplyText}" HorizontalAlignment="Left" Margin="10,185,0,0" Width="105" Height="48" VerticalAlignment="Top" Background="#FFE66767" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
+				<TextBlock x:Name="InfoBox" Grid.Column="3" Margin="10,625,5,91" TextWrapping="Wrap" Foreground="White"/>
+				<!--<Label Content="Load" Grid.Column="3" HorizontalAlignment="Left" Margin="10,213,0,0" VerticalAlignment="Top" Height="20" Foreground="White" Padding="0" VerticalContentAlignment="Center"/>-->
+				<!--<Button Grid.Column="3" Content="Folder" Click="LoadFolderByDialog" Margin="41,213,0,0" Width="42" Style="{StaticResource BlueButtonStyle}"/>-->
+				<!--<Button Grid.Column="3" Content="Zip" Click="LoadArchiveByDialog" Margin="88,213,0,0" Height="20" Width="27" Style="{StaticResource BlueButtonStyle}"/>-->
+				<Button Grid.Column="3" Content="Open Random" Click="OpenRandom_Click" Margin="10,238,0,0" Width="105" Style="{StaticResource BlueButtonStyle}" />
+				<Button Grid.Column="3" Content="Open Random (❤)" Click="OpenRandomFavorite_Click"  Height="20"  Margin="10,263,0,0" Width="105" Style="{StaticResource BlueButtonStyle}" />
+				<ToggleButton Grid.Column="3" Content="{Binding RtlToggleText}" Margin="10,288,0,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Left" Width="105" BorderBrush="{x:Null}" Background="#FF7C99E8" UseLayoutRounding="False">
+					<ToggleButton.Style>
+						<Style TargetType="{x:Type ToggleButton}">
+							<Setter Property="Template">
+								<Setter.Value>
+									<ControlTemplate TargetType="{x:Type ToggleButton}">
+										<Border Background="{TemplateBinding Background}">
+											<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+										</Border>
+									</ControlTemplate>
+								</Setter.Value>
+							</Setter>
+							<Style.Triggers>
+								<Trigger Property="IsChecked" Value="True"/>
+							</Style.Triggers>
+						</Style>
+					</ToggleButton.Style>
+				</ToggleButton>
+				<!--<Button Grid.Column="3" Content="Add Library Folder" Margin="10,288,0,0" VerticalAlignment="Top" Height="20" Click="AddLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>-->
+				<Button Grid.Column="3" Click="ChangePageMode" Content="{Binding PageModeText}" Margin="10,313,0,0" Width="105" Style="{StaticResource BlueButtonStyle}"/>
+				<Button Grid.Column="3" Content="Fullscreen" Click="GoFullscreen" Margin="10,338,0,0" Width="105" Style="{StaticResource BlueButtonStyle}" />
+				<!--<Button Grid.Column="3" Content="Reload Library" Click="ReloadLibrary"  Width="105"  Margin="10,363,0,0" Style="{StaticResource BlueButtonStyle}" />-->
+				<Button Grid.Column="3" Content="Debug" Click="DebugButtonClick"  Width="105"  Margin="10,363,0,0" Style="{StaticResource BlueButtonStyle}" IsEnabled="{Binding DebugOn}"/>
+				<Button Grid.Column="3" Content="Get New Additions" Click="GetLibraryAdditions" Margin="10,388,0,0" Width="105" Style="{StaticResource BlueButtonStyle}" />
+				<Button Grid.Column="3" Content="Close Container" Click="CloseContainer" Margin="10,413,0,0" Width="105"  Style="{StaticResource BlueButtonStyle}"/>
+				<Button Grid.Column="3" Content="Create Alias" Click="CreateAlias" Margin="10,463,0,0" Width="105"  Style="{StaticResource BlueButtonStyle}"/>
+				<ToggleButton IsChecked="{Binding IsFavorite}" Content="Favorite" Margin="10,85,0,0" HorizontalAlignment="Left" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
+				<ToggleButton IsChecked="{Binding IsBlacklist}" Content="Blacklist" Margin="0,85,5,0" HorizontalAlignment="Right" Width="50" Height="20" VerticalAlignment="Top" BorderThickness="0" Background="#FFE66767" Grid.Column="3" HorizontalContentAlignment="Center" />
+				<TextBlock Text="{Binding Path=Extracted, StringFormat='Extracted: {0}'}" Margin="0,110,5,0" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Right" Width="105" Grid.Column="3"/>
+				<TextBlock Text="Browsed:" Margin="0,130,5,0" Height="20" VerticalAlignment="Top" Foreground="White" Padding="0" HorizontalAlignment="Right" Width="105" Grid.Column="3"/>
+				<TextBox Text="{Binding MangaInfo.TimesBrowsed}" Margin="0,130,5,0" Height="20" VerticalAlignment="Top" Foreground="White" Background="Transparent" Padding="0" HorizontalAlignment="Right" Width="50" Grid.Column="3" BorderThickness="0"/>
+				<Button Grid.Column="3" Content="Delete Container" Click="DeleteContainer"  Height="20"  Margin="10,438,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105" />
+				<TextBlock Text="{Binding MangaInfo.InfoString}" HorizontalAlignment="Left" Margin="10,488,0,0" Width="105" Height="106" VerticalAlignment="Top" Background="#FF86B5E4" Padding="0" Grid.Column="3" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
+				<TextBox Text="{Binding AutoPlaySpeed, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Margin="10,600,0,0" TextWrapping="Wrap" Width="64" Height="20" VerticalAlignment="Top" Grid.Column="3" HorizontalContentAlignment="Center"/>
+				<Button Content="{Binding AutoPlayText}" Margin="79,600,0,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" HorizontalAlignment="Left" Width="36" Padding="0" Grid.Column="3" HorizontalContentAlignment="Center" Click="AutoPlayClick" />
+				<TextBox Grid.Column="3" HorizontalAlignment="Left" Margin="10,0,0,10" TextWrapping="Wrap" Text="{Binding MangaInfo.Notes}" Width="100" Height="76" VerticalAlignment="Bottom" SelectionChanged="TextBox_SelectionChanged"/>
+			</Grid>
+		</DockPanel>
+	</Grid>
 </Window>

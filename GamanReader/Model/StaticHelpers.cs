@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -19,7 +21,7 @@ namespace GamanReader.Model
 #if DEBUG
 		public const string StoredDataFolder = "..\\Release\\Stored Data";
 #else
-        public const string StoredDataFolder = "Stored Data";
+		public const string StoredDataFolder = "Stored Data";
 #endif
 		public const string TempFolder = StoredDataFolder + "\\Temp";
 		public const string LogFile = StoredDataFolder + "\\message.log";
@@ -28,7 +30,10 @@ namespace GamanReader.Model
 		public const string ProgramName = "GamanReader";
 		private const string AllowedFormatsJson = "allowedformats.json";
 
-		public static readonly string[] RecognizedContainers = { ".zip", ".rar" };
+		public static readonly string[] RecognizedContainers = {".zip", ".rar"};
+
+		public const string FavoriteTagString = "favorite";
+		public const string BlacklistedTagString = "blacklisted";
 
 		public static GamanDatabase LocalDatabase { get; }
 
@@ -45,6 +50,7 @@ namespace GamanReader.Model
 					LocalDatabase.Libraries.Add(new LibraryFolder(""));
 					LocalDatabase.SaveChanges();
 				}
+
 				Directory.CreateDirectory(StoredDataFolder);
 			}
 			catch (Exception ex)
@@ -52,6 +58,14 @@ namespace GamanReader.Model
 				LogToFile($"Failed to load {AllowedFormatsJson} or TagDatabase.", ex);
 			}
 		}
+
+		public static int NumberBetween(int min, int max, int value)
+		{
+			return Math.Min(Math.Max(value, min), max);
+		}
+
+		public static Expression<Func<MangaInfo, bool>> IsFavorited() => mi => mi.UserTags.Any(t => t.Tag.ToLower().Equals(FavoriteTagString));
+		public static Expression<Func<MangaInfo, bool>> IsBlacklisted() => mi => mi.UserTags.Any(t => t.Tag.ToLower().Equals(BlacklistedTagString));
 
 		public static ImageSource GetFavoritesIcon()
 		{
@@ -64,13 +78,14 @@ namespace GamanReader.Model
 		{
 			return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
 		}
+
 		/// <summary>
 		/// Print message to Debug and write it to log file.
 		/// </summary>
 		/// <param name="message">Message to be written</param>
 		public static void LogToFile(string message)
 		{
-			LogToFile(new[] { message });
+			LogToFile(new[] {message});
 		}
 
 		/// <summary>
@@ -80,7 +95,7 @@ namespace GamanReader.Model
 		/// <param name="exception">Exception to be written to file</param>
 		public static void LogToFile(string header, Exception exception)
 		{
-			LogToFile(new[] { header, exception.Message, exception.StackTrace });
+			LogToFile(new[] {header, exception.Message, exception.StackTrace});
 		}
 
 		private static void LogToFile(ICollection<string> lines)
@@ -94,6 +109,7 @@ namespace GamanReader.Model
 				if (counter > 5) throw new IOException("Logfile is locked!");
 				Thread.Sleep(25);
 			}
+
 			using (var writer = new StreamWriter(LogFile, true))
 			{
 				foreach (var line in lines) writer.WriteLine(line);
@@ -121,6 +137,7 @@ namespace GamanReader.Model
 			{
 				stream?.Close();
 			}
+
 			return false;
 		}
 
@@ -129,11 +146,15 @@ namespace GamanReader.Model
 		/// </summary>
 		public static void AddRange<T>(this BindingList<T> list, IEnumerable<T> items)
 		{
-			if (items == null) return;
 			list.RaiseListChangedEvents = false;
 			foreach (var item in items) list.Add(item);
 			list.RaiseListChangedEvents = true;
 			list.ResetBindings();
+		}
+
+		public static void AddRange<T>(this ObservableCollection<T> list, IEnumerable<T> items)
+		{
+			foreach (var item in items) list.Add(item);
 		}
 
 		/// <summary>
@@ -149,6 +170,12 @@ namespace GamanReader.Model
 			list.ResetBindings();
 		}
 
+		public static void SetRange<T>(this ObservableCollection<T> list, IEnumerable<T> items)
+		{
+			list.Clear();
+			foreach (var item in items) list.Add(item);
+		}
+
 		/// <summary>
 		/// Returns path stored in a lnk shortcut.
 		/// </summary>
@@ -157,13 +184,37 @@ namespace GamanReader.Model
 		{
 			// IWshRuntimeLibrary is in the COM library "Windows Script Host Object Model"
 			var shell = new IWshRuntimeLibrary.WshShell();
-			var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(containerPath);
+			var shortcut = (IWshRuntimeLibrary.IWshShortcut) shell.CreateShortcut(containerPath);
 			return shortcut.TargetPath;
 		}
 
 		public static bool UserIsSure(string message = "Are you sure?")
 		{
 			return MessageBox.Show(message, "Gaman Reader - Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes;
+		}
+
+		public static T RunWithRetries<T>(Func<T> action, Func<Exception, bool> exceptionAllowed, int maxTries, int? timeBetweenTries)
+		{
+			int tries = 0;
+			Exception exOuter;
+			do
+			{
+				try
+				{
+					return action();
+				}
+				catch (Exception ex)
+				{
+					exOuter = ex;
+					tries++;
+					if (exceptionAllowed(ex) && tries <= maxTries)
+					{
+						if (timeBetweenTries.HasValue) Thread.Sleep(timeBetweenTries.Value);
+						continue;
+					} throw;
+				}
+			} while (tries < maxTries);
+			throw exOuter;
 		}
 	}
 }

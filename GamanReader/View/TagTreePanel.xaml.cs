@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -17,24 +18,26 @@ namespace GamanReader.View
 			InitializeComponent();
 		}
 		
-		private void MangaDoubleClicked(object sender, MouseButtonEventArgs e)
+		private async void MangaDoubleClicked(object sender, MouseButtonEventArgs e)
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
 			MangaInfo item = preItem.DataContext as MangaInfo;
-			if (item == null) return;
-			var window = (MainWindow)Window.GetWindow(this);
-			Debug.Assert(window != null, nameof(window) + " != null");
-			window.LoadContainer(item);
-	}
+			await LoadContainer(item);
+		}
 
-		private void TagDoubleClicked(object sender, MouseButtonEventArgs e)
+		private async void TagDoubleClicked(object sender, MouseButtonEventArgs e)
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
 			AutoTag tag = preItem.DataContext as AutoTag;
-			if (tag == null) return;
+			await LoadContainer(tag?.Item);
+	}
+
+		private async Task LoadContainer(MangaInfo item)
+		{
+			if (item == null) return;
 			var window = (MainWindow)Window.GetWindow(this);
 			Debug.Assert(window != null, nameof(window) + " != null");
-			window.LoadContainer(tag.Item);
+			await window.LoadContainer(item);
 		}
 
 	private void AliasDoubleClicked(object sender, MouseButtonEventArgs e)
