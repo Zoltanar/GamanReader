@@ -68,12 +68,17 @@ namespace GamanReader.Model
 
 		public abstract void Dispose();
 
-		protected static string[] OrderFiles(IEnumerable<string> fileNames)
+		protected static string[] OrderFiles(IEnumerable<string> fileNames, out bool usingIntegers)
 		{
+			//todo allow user to choose different modes
+			//todo add mode int is parsed at the beginning
 			var list = fileNames.ToList();
 			var namesWithoutExtension = list.Select(Path.GetFileNameWithoutExtension).ToArray();
 			// ReSharper disable once AssignNullToNotNullAttribute
-			if (namesWithoutExtension.Count(x => int.TryParse(x, out _)) > list.Count() - 2)
+			var minNonInts = list.Count * 0.25;//Math.Min(list.Count * 0.25, 4);
+			var integers = namesWithoutExtension.Count(x => int.TryParse(x, out _));
+			usingIntegers = integers > list.Count - minNonInts;
+			if (usingIntegers)
 			{
 				return  list.OrderBy(x =>
 				{

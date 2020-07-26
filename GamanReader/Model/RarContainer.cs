@@ -21,7 +21,9 @@ namespace GamanReader.Model
 			bg.ProgressChanged += (sender, args) => onPropertyChanged();
 			bg.WorkerReportsProgress = true;
 			var rarExtractor = new SevenZipExtractor(ContainerPath);
-			FileNames = OrderFiles(rarExtractor.ArchiveFileData.Select(af => af.FileName));
+			var fileNames = OrderFiles(rarExtractor.ArchiveFileData.Select(af => af.FileName), out var usingIntegers);
+			if (!usingIntegers) fileNames = rarExtractor.ArchiveFileData.OrderBy(e => e.LastWriteTime).Select(f => f.FileName).ToArray();
+			FileNames = fileNames;
 
 			bg.RunWorkerAsync();
 		}

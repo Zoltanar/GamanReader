@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -12,12 +13,12 @@ namespace GamanReader.Model
 	{
 		public ZipContainer(MangaInfo item, Action onPropertyChanged) : base(item, onPropertyChanged)
 		{
-			using (var archive = new ZipArchive(File.OpenRead(ContainerPath)))
-			{
-				FileNames = OrderFiles(archive.Entries.Select(af => af.Name));
-			}
+			using var archive = new ZipArchive(File.OpenRead(ContainerPath));
+			var fileNames = OrderFiles(archive.Entries.Select(af => af.Name), out bool usingIntegers);
+			if (!usingIntegers) fileNames = archive.Entries.OrderBy(e => e.LastWriteTime).Select(f => f.Name).ToArray();
+			FileNames = fileNames;
 		}
-
+		
 		public async Task ExtractAllAsync(CancellationToken token)
 		{
 			var file = new FileInfo(ContainerPath);

@@ -12,7 +12,7 @@ namespace GamanReader.Model
 		public FolderContainer(MangaInfo item, IEnumerable<string> fileNames) : base(item)
 		{
 			CurrentIndex = 0;
-			FileNames = OrderFiles(fileNames);
+			FileNames = OrderFiles(fileNames, out _);
 		}
 
 		public override bool IsFolder => true;
