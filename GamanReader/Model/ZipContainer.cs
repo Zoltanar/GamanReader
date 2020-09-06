@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -15,7 +14,7 @@ namespace GamanReader.Model
 		{
 			using var archive = new ZipArchive(File.OpenRead(ContainerPath));
 			var fileNames = OrderFiles(archive.Entries.Select(af => af.Name), out bool usingIntegers);
-			if (!usingIntegers) fileNames = archive.Entries.OrderBy(e => e.LastWriteTime).Select(f => f.Name).ToArray();
+			if (false && !usingIntegers) fileNames = archive.Entries.OrderBy(e => e.LastWriteTime).Select(f => f.Name).ToArray();
 			FileNames = fileNames;
 		}
 		

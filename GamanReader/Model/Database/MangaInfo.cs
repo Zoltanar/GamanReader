@@ -19,8 +19,11 @@ namespace GamanReader.Model.Database
 {
 	public class MangaInfo : INotifyPropertyChanged, IFormattable
 	{
-		#region Properties
+		private static readonly Regex Rgx1 = new Regex(@"\[([^];]*)\]");
+		private static readonly Regex Rgx2 = new Regex(@"\{([^};]*)\}");
+		private static readonly Regex Rgx3 = new Regex(@"\(([^);]*)\)");
 
+		#region Properties
 		[Key]
 		public long Id { get; set; }
 		public int LibraryFolderId { get; set; }
@@ -63,9 +66,6 @@ namespace GamanReader.Model.Database
 			item.CalcCrc();
 			return item;
 		}
-		private static readonly Regex Rgx1 = new Regex(@"\[([^];]*)\]");
-		private static readonly Regex Rgx2 = new Regex(@"\{([^};]*)\}");
-		private static readonly Regex Rgx3 = new Regex(@"\(([^);]*)\)");
 
 		/// <summary>
 		/// Guesses manga information from filename.
@@ -131,7 +131,10 @@ namespace GamanReader.Model.Database
 		public bool IsFavorite => UserTags.Any(x => x.Tag.ToLower().Equals(StaticHelpers.FavoriteTagString));
 
 		public bool IsBlacklisted => UserTags.Any(x => x.Tag.ToLower().Equals(StaticHelpers.BlacklistedTagString));
-		
+
+		[NotMapped]
+		public bool? CantOpen { get; set; }
+
 		[NotMapped]
 		public ImageSource GetImage => IsFavorite ? StaticHelpers.GetFavoritesIcon() : null;
 
@@ -159,18 +162,10 @@ namespace GamanReader.Model.Database
 
 		private long? _length;
 
+		private long Length => _length ??= IsFolder ? GetImageFiles(new DirectoryInfo(FilePath)).Sum(x => x.Length) : new FileInfo(FilePath).Length;
+
 		[NotMapped]
-		public double SizeMb
-		{
-			get
-			{
-				if (!_length.HasValue)
-				{
-					_length = IsFolder ? new DirectoryInfo(FilePath).GetFiles().Sum(x => x.Length) : new FileInfo(FilePath).Length;
-				}
-				return _length.Value / 1024d / 1024d;
-			}
-		}
+		public double SizeMb => Length / 1024d / 1024d;
 
 		[NotMapped]
 		private DateTime LastModified => IsFolder ? new DirectoryInfo(FilePath).LastWriteTime : new FileInfo(FilePath).LastWriteTime;
@@ -219,7 +214,7 @@ namespace GamanReader.Model.Database
 							for (int index = list.Count - 1; index >= list.Count - (inBrackets-1); index--)
 							{
 								var item = list[index];
-								if(item is Hyperlink hpItem) (curHp.Tag as List<Hyperlink>).Add(hpItem);
+								if(item is Hyperlink hpItem) ((List<Hyperlink>) curHp.Tag).Add(hpItem);
 							}
 							list.Add(curHp);
 							curRun = new Run();
@@ -241,7 +236,7 @@ namespace GamanReader.Model.Database
 			var fsi = IsFolder ? (FileSystemInfo)new DirectoryInfo(FilePath) : new FileInfo(FilePath);
 			return fsi.Exists;
 		}
-
+		
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		[NotifyPropertyChangedInvocator]
@@ -261,11 +256,10 @@ namespace GamanReader.Model.Database
 				if(!directory.Exists) CRC32 = "Not Found";
 				else
 				{
-					var files = directory.GetFiles();
+					var files = GetImageFiles(directory);
 					if (!files.Any()) CRC32 = "0";
 					else
 					{
-						var sizemb = SizeMb;
 						if (_length > int.MaxValue)
 						{
 							//CRC32 = null;
@@ -304,6 +298,12 @@ namespace GamanReader.Model.Database
 					CRC32 = crc32.ToString("X8");
 				}
 			}
+		}
+
+		private static FileInfo[] GetImageFiles(DirectoryInfo directoryInfo)
+		{
+			var files = directoryInfo.GetFiles("*", SearchOption.AllDirectories);
+			return files.Where(fileInfo => Container.RecognizedExtensions.Contains(fileInfo.Extension)).ToArray();
 		}
 	}
 }

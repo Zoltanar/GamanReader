@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using GamanReader.Model.Database;
 
 namespace GamanReader.Model
@@ -26,7 +25,7 @@ namespace GamanReader.Model
 			displayName = null;
 			if (index == -1) return null;
 			var filename = FileNames[index];
-			displayName = filename.Remove(0, ContainerPath.Length+1);//Path.GetFileName(filename);
+			displayName = filename.Remove(0, ContainerPath.Length+1);
 			return filename;
 		}
 	}

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using GamanReader.Model.Database;
 using SevenZip;
 
@@ -22,7 +19,7 @@ namespace GamanReader.Model
 			bg.WorkerReportsProgress = true;
 			var rarExtractor = new SevenZipExtractor(ContainerPath);
 			var fileNames = OrderFiles(rarExtractor.ArchiveFileData.Select(af => af.FileName), out var usingIntegers);
-			if (!usingIntegers) fileNames = rarExtractor.ArchiveFileData.OrderBy(e => e.LastWriteTime).Select(f => f.FileName).ToArray();
+			if (false && !usingIntegers) fileNames = rarExtractor.ArchiveFileData.OrderBy(e => e.LastWriteTime).Select(f => f.FileName).ToArray();
 			FileNames = fileNames;
 
 			bg.RunWorkerAsync();

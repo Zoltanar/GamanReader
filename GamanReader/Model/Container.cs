@@ -11,7 +11,7 @@ namespace GamanReader.Model
 {
 	public abstract class Container : IDisposable
 	{
-		public MangaInfo Item { get;}
+		public MangaInfo Item { get; }
 		public string ContainerPath { get; }
 		int _pagesBrowsed;
 		private bool _addedTimeBrowsed;
@@ -22,8 +22,8 @@ namespace GamanReader.Model
 			{
 				if (value == _currentIndex) return;
 				_pagesBrowsed += StaticHelpers.NumberBetween(0, 2, value - _currentIndex);
-		_currentIndex = value;
-				if (_addedTimeBrowsed || _pagesBrowsed <= Math.Min(TotalFiles*0.5, 15)) return;
+				_currentIndex = value;
+				if (_addedTimeBrowsed || _pagesBrowsed <= Math.Min(TotalFiles * 0.5, 15)) return;
 				Item.TimesBrowsed++;
 				_addedTimeBrowsed = true;
 
@@ -39,25 +39,20 @@ namespace GamanReader.Model
 		protected Action UpdateExtracted;
 		private int _currentIndex;
 
-		private static readonly List<string> RecognizedExtensions = new List<string>();
+		public static readonly List<string> RecognizedExtensions = new List<string>();
 
 		static Container()
 		{
 			foreach (var imageCodec in ImageCodecInfo.GetImageEncoders())
 			{
-				RecognizedExtensions.AddRange(imageCodec.FilenameExtension.ToLowerInvariant().Split(';'));
+				RecognizedExtensions.AddRange(imageCodec.FilenameExtension.ToLowerInvariant().Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetExtension));
 			}
-			RecognizedExtensions.Add("*.gif");
+			RecognizedExtensions.Add(".gif");
 		}
 
-		protected static bool FileIsImage([NotNull]string filename)
+		protected static bool FileIsImage([NotNull] string filename)
 		{
-			var ext = Path.GetExtension(filename).ToLower();
-			return RecognizedExtensions.Exists(x =>
-			{
-				var extension = Path.GetExtension(x);
-				return extension != null && extension.Equals(ext);
-			});
+			return RecognizedExtensions.Contains(Path.GetExtension(filename).ToLower());
 		}
 
 		protected Container(MangaInfo item)
@@ -80,11 +75,11 @@ namespace GamanReader.Model
 			usingIntegers = integers > list.Count - minNonInts;
 			if (usingIntegers)
 			{
-				return  list.OrderBy(x =>
-				{
-					var success = int.TryParse(Path.GetFileNameWithoutExtension(x), out var number);
-					return success ? number : int.MaxValue;
-				}).ToArray();
+				return list.OrderBy(x =>
+			 {
+				 var success = int.TryParse(Path.GetFileNameWithoutExtension(x), out var number);
+				 return success ? number : int.MaxValue;
+			 }).ToArray();
 			}
 			return list.Where(FileIsImage).OrderBy(ef => ef, new StringWithNumberComparer()).ToArray();
 		}
@@ -107,7 +102,7 @@ namespace GamanReader.Model
 					dirParts2.RemoveAt(0);
 					if (dirParts1.Count == 0 || dirParts2.Count == 0) return string.CompareOrdinal(x, y);
 				}
-				if(Pattern2.IsMatch(dirParts1[0]) && Pattern2.IsMatch(dirParts2[0])) return string.CompareOrdinal(x, y);
+				if (Pattern2.IsMatch(dirParts1[0]) && Pattern2.IsMatch(dirParts2[0])) return string.CompareOrdinal(x, y);
 				var parts1 = Pattern.Match(dirParts1[0]);
 				var parts2 = Pattern.Match(dirParts2[0]);
 				if (parts1.Groups.Count <= 2 || parts2.Groups.Count <= 2 || parts1.Groups[1].Value != parts2.Groups[1].Value) return string.CompareOrdinal(x, y);

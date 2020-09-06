@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using GamanReader.Model.Database;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace GamanReader.Model
@@ -35,27 +36,26 @@ namespace GamanReader.Model
 		public const string FavoriteTagString = "favorite";
 		public const string BlacklistedTagString = "blacklisted";
 
-		public static GamanDatabase LocalDatabase { get; }
+		[NotNull] public static GamanDatabase LocalDatabase { get; }
 
 		public static string[] AllowedFormats { get; }
 
 		static StaticHelpers()
 		{
+			LocalDatabase = new GamanDatabase();
+			if (!LocalDatabase.Libraries.Any(x => x.Id == 1))
+			{
+				LocalDatabase.Libraries.Add(new LibraryFolder(""));
+				LocalDatabase.SaveChanges();
+			}
+			Directory.CreateDirectory(StoredDataFolder);
 			try
 			{
 				AllowedFormats = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(AllowedFormatsJson));
-				LocalDatabase = new GamanDatabase();
-				if (!LocalDatabase.Libraries.Any(x => x.Id == 1))
-				{
-					LocalDatabase.Libraries.Add(new LibraryFolder(""));
-					LocalDatabase.SaveChanges();
-				}
-
-				Directory.CreateDirectory(StoredDataFolder);
 			}
 			catch (Exception ex)
 			{
-				LogToFile($"Failed to load {AllowedFormatsJson} or TagDatabase.", ex);
+				LogToFile($"Failed to load {AllowedFormatsJson}", ex);
 			}
 		}
 
@@ -101,7 +101,6 @@ namespace GamanReader.Model
 		private static void LogToFile(ICollection<string> lines)
 		{
 			foreach (var line in lines) Debug.Print(line);
-
 			int counter = 0;
 			while (new FileInfo(LogFile).IsLocked())
 			{
@@ -109,11 +108,8 @@ namespace GamanReader.Model
 				if (counter > 5) throw new IOException("Logfile is locked!");
 				Thread.Sleep(25);
 			}
-
-			using (var writer = new StreamWriter(LogFile, true))
-			{
-				foreach (var line in lines) writer.WriteLine(line);
-			}
+			using var writer = new StreamWriter(LogFile, true);
+			foreach (var line in lines) writer.WriteLine(line);
 		}
 
 		/// <summary>
@@ -137,19 +133,7 @@ namespace GamanReader.Model
 			{
 				stream?.Close();
 			}
-
 			return false;
-		}
-
-		/// <summary>
-		/// Pause RaiseListChangedEvents and add items then call the event when done adding.
-		/// </summary>
-		public static void AddRange<T>(this BindingList<T> list, IEnumerable<T> items)
-		{
-			list.RaiseListChangedEvents = false;
-			foreach (var item in items) list.Add(item);
-			list.RaiseListChangedEvents = true;
-			list.ResetBindings();
 		}
 
 		public static void AddRange<T>(this ObservableCollection<T> list, IEnumerable<T> items)
@@ -207,14 +191,16 @@ namespace GamanReader.Model
 				{
 					exOuter = ex;
 					tries++;
-					if (exceptionAllowed(ex) && tries <= maxTries)
-					{
-						if (timeBetweenTries.HasValue) Thread.Sleep(timeBetweenTries.Value);
-						continue;
-					} throw;
+					if (!exceptionAllowed(ex) || tries > maxTries) throw;
+					if (timeBetweenTries.HasValue) Thread.Sleep(timeBetweenTries.Value);
 				}
 			} while (tries < maxTries);
 			throw exOuter;
+		}
+		
+		public static string ToSeconds(this TimeSpan ts)
+		{
+			return $"{ts.TotalSeconds:0.###}";
 		}
 	}
 }

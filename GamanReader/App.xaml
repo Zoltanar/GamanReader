@@ -1,6 +1,7 @@
 ﻿<Application x:Class="GamanReader.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
              StartupUri="View/MainWindow.xaml" DispatcherUnhandledException="App_DispatcherUnhandledException">
 	<Application.Resources>
 		<Style x:Key="FocusVisual">
@@ -76,6 +77,9 @@
 				<DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
 					<Setter Property="Background" Value="#77FFC0CB" />
 				</DataTrigger>
+				<DataTrigger Binding="{Binding Path=CantOpen}" Value="True">
+					<Setter Property="Background" Value="#EEFF0000" />
+				</DataTrigger>
 			</Style.Triggers>
 		</Style>
 		<Style x:Key="BrowsedItems" TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource ColorItems}">
@@ -84,6 +88,8 @@
 		<Style x:Key="AddedItems" TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource ColorItems}">
 			<Setter Property="ContentStringFormat" Value="D"/>
 		</Style>
+		<system:String x:Key="StopButtonString">⏹</system:String>
+		<system:String x:Key="PlayButtonString">▶</system:String>
 	</Application.Resources>
 	<JumpList.JumpList>
 		<JumpList ShowRecentCategory="True"/>
