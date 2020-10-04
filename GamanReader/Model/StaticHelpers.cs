@@ -25,6 +25,7 @@ namespace GamanReader.Model
 		public const string StoredDataFolder = "Stored Data";
 #endif
 		public const string TempFolder = StoredDataFolder + "\\Temp";
+		public const string ThumbFolder = StoredDataFolder + "\\Thumb";
 		public const string LogFile = StoredDataFolder + "\\message.log";
 		public const string LoadFailedImage = "loadfailedn.png";
 

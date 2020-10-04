@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using GamanReader.Model.Database;
+//using System.Linq;
 
 namespace GamanReader.Model
 {
@@ -11,10 +12,19 @@ namespace GamanReader.Model
 		public FolderContainer(MangaInfo item, IEnumerable<string> fileNames) : base(item)
 		{
 			CurrentIndex = 0;
+			//debug
+			/* order by date modified
+			FileNames =
+				fileNames
+					.Select(f => new System.IO.FileInfo(f))
+					.OrderBy(f => f.LastWriteTimeUtc)
+					.Select(f => f.FullName)
+					.ToArray();*/
 			FileNames = OrderFiles(fileNames, out _);
 		}
 
 		public override bool IsFolder => true;
+
 		public override void Dispose()
 		{
 			//not needed for folder

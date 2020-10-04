@@ -10,25 +10,33 @@ namespace GamanReader.Model
 {
 	class RarContainer : ArchiveContainer
 	{
+		private readonly int? _extractCount;
 
-		public RarContainer(MangaInfo item, Action onPropertyChanged) : base(item, onPropertyChanged)
+		public RarContainer(MangaInfo item, Action onPropertyChanged, int? extractCount = null) : base(item, onPropertyChanged)
 		{
 			var bg = new BackgroundWorker();
 			bg.DoWork += ExtractAllWork;
-			bg.ProgressChanged += (sender, args) => onPropertyChanged();
+			bg.ProgressChanged += (sender, args) => onPropertyChanged?.Invoke();
 			bg.WorkerReportsProgress = true;
 			var rarExtractor = new SevenZipExtractor(ContainerPath);
 			var fileNames = OrderFiles(rarExtractor.ArchiveFileData.Select(af => af.FileName), out var usingIntegers);
 			if (false && !usingIntegers) fileNames = rarExtractor.ArchiveFileData.OrderBy(e => e.LastWriteTime).Select(f => f.FileName).ToArray();
 			FileNames = fileNames;
-
+			_extractCount = extractCount;
 			bg.RunWorkerAsync();
 		}
 
+		public static int GetFileCount(string containerPath)
+		{
+			var rarExtractor = new SevenZipExtractor(containerPath);
+			return rarExtractor.ArchiveFileData.Select(af => af.FileName).Count(FileIsImage);
+		}
+		
 		private void ExtractAllWork(object sender, DoWorkEventArgs e)
 		{
+			if (TotalFiles == 0) return;
 			var rarExtractor = new SevenZipExtractor(ContainerPath);
-			for (int index = 0; index < TotalFiles; index++)
+			for (int index = 0; index < (_extractCount ?? TotalFiles); index++)
 			{
 				GetFile(index, out _, rarExtractor, sender as BackgroundWorker);
 			}
@@ -59,7 +67,7 @@ namespace GamanReader.Model
 				var folders = filename.Split('\\');
 				hashedFilename = Path.Combine(folders.Select(t => t.GetHashCode().ToString()).ToArray());
 			}
-			var tempFile = Path.Combine(GeneratedFolder, hashedFilename);
+			var tempFile = Path.Combine(GeneratedFolder, hashedFilename + Path.GetExtension(filename));
 			var fullPath = Path.GetFullPath(tempFile);
 			Directory.CreateDirectory(Directory.GetParent(fullPath).FullName);
 			try
@@ -83,7 +91,7 @@ namespace GamanReader.Model
 			{
 				worker?.ReportProgress(Extracted);
 				Extracted++;
-				UpdateExtracted.Invoke();
+				UpdateExtracted?.Invoke();
 			}
 			return fullPath;
 		}

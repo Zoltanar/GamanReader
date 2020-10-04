@@ -17,18 +17,25 @@ namespace GamanReader.Model
 			if (false && !usingIntegers) fileNames = archive.Entries.OrderBy(e => e.LastWriteTime).Select(f => f.Name).ToArray();
 			FileNames = fileNames;
 		}
-		
-		public async Task ExtractAllAsync(CancellationToken token)
+
+		public static int GetFileCount(string containerPath)
+		{
+			using var archive = new ZipArchive(File.OpenRead(containerPath));
+			return archive.Entries.Select(af => af.Name).Count(FileIsImage);
+		}
+
+		public async Task ExtractAllAsync(CancellationToken token, int? extractCount = null)
 		{
 			var file = new FileInfo(ContainerPath);
 			var extensions = new[] {".zip", ".cbz"};
-			if (!extensions.Contains(file.Extension)) return; //extract all if file is less than 40mb
+			if (!extensions.Contains(file.Extension)) return;
 			await Task.Run(() =>
 			{
 				using var archive = new ZipArchive(File.OpenRead(ContainerPath));
 				var entries = FileNames.Select(f => archive.Entries.First(e => e.Name == f)).ToList();
 				foreach (var entry in entries)
 				{
+					if (extractCount.HasValue && Extracted >= extractCount.Value) return;
 					if (token.IsCancellationRequested) return;
 					try
 					{
@@ -43,7 +50,7 @@ namespace GamanReader.Model
 					finally
 					{
 						Extracted++;
-						UpdateExtracted.Invoke();
+						UpdateExtracted?.Invoke();
 					}
 				}
 			}, token);

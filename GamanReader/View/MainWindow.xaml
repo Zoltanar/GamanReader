@@ -6,9 +6,10 @@
         xmlns:view="clr-namespace:GamanReader.View"
         xmlns:viewModel="clr-namespace:GamanReader.ViewModel"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
+        xmlns:database="clr-namespace:GamanReader.Model.Database"
         mc:Ignorable="d"
         Title="{Binding TitleText}" 
-        Height="946.5" Width="1260" Background="#FF4D1D1D" 
+        Height="600" Width="1260" Background="#FF4D1D1D" 
         MouseWheel="Window_MouseWheel" AllowDrop="True" Drop="DropFile" 
         MinWidth="711" MinHeight="630" Closing="Window_Closing" Icon="../Resources/favicon.ico">
 	<Window.Resources>
@@ -107,7 +108,7 @@
 				<Setter Property="BorderThickness" Value="0"/>
 			</Style.Setters>
 		</Style>
-		<Style TargetType="{x:Type ToggleButton}">
+		<Style TargetType="{x:Type ToggleButton}" x:Key="ToggleStyle">
 			<Setter Property="BorderBrush" Value="{x:Null}"/>
 			<Setter Property="Background" Value="#FF7C99E8"/>
 			<Setter Property="UseLayoutRounding" Value="False"/>
@@ -124,6 +125,101 @@
 				<Trigger Property="IsChecked" Value="True"/>
 			</Style.Triggers>
 		</Style>
+		<Style x:Key="ColorItems" TargetType="{x:Type ListBoxItem}" >
+			<d:Style.DataContext>
+				<x:Type Type="database:MangaInfo"/>
+			</d:Style.DataContext>
+			<Setter Property="SnapsToDevicePixels" Value="True"/>
+			<Setter Property="Padding" Value="4,1"/>
+			<Setter Property="HorizontalContentAlignment" Value="Left"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="{x:Type ListViewItem}">
+						<Border x:Name="Bd" 
+						        BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" 
+						        Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" 
+						        SnapsToDevicePixels="true">
+							<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+							                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+							                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
+							                  ContextMenu="{DynamicResource  ItemContextMenu}">
+							</ContentPresenter>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter Property="BorderBrush" TargetName="Bd" Value="Black"/>
+								<Setter Property="TextElement.FontWeight" TargetName="Bd" Value="Bold"/>
+							</Trigger>
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="Selector.IsSelectionActive" Value="False"/>
+									<Condition Property="IsSelected" Value="True"/>
+								</MultiTrigger.Conditions>
+								<Setter Property="Background" TargetName="Bd" Value="#3DDADADA"/>
+								<Setter Property="BorderBrush" TargetName="Bd" Value="#FFDADADA"/>
+							</MultiTrigger>
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="Selector.IsSelectionActive" Value="True"/>
+									<Condition Property="IsSelected" Value="True"/>
+								</MultiTrigger.Conditions>
+								<Setter Property="BorderBrush" TargetName="Bd" Value="Black"/>
+								<Setter Property="TextElement.FontWeight" TargetName="Bd" Value="Bold"/>
+							</MultiTrigger>
+							<Trigger Property="IsEnabled" Value="False">
+								<Setter Property="TextElement.Foreground" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding Path=TimesBrowsed}" Value="0">
+					<Setter Property="Background" Value="#77FFD700" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Path=IsBlacklisted}" Value="True">
+					<Setter Property="Background" Value="#77808080" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
+					<Setter Property="Background" Value="#77FFC0CB" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Path=CantOpen}" Value="True">
+					<Setter Property="Background" Value="#EEFF0000" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+		<Style x:Key="ColorTextBlock" TargetType="{x:Type StackPanel}" >
+			<d:Style.DataContext>
+				<x:Type Type="database:MangaInfo"/>
+			</d:Style.DataContext>
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding Path=TimesBrowsed}" Value="0">
+					<Setter Property="Background" Value="#77FFD700" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Path=IsBlacklisted}" Value="True">
+					<Setter Property="Background" Value="#77808080" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
+					<Setter Property="Background" Value="#77FFC0CB" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Path=CantOpen}" Value="True">
+					<Setter Property="Background" Value="#EEFF0000" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+		<ContextMenu x:Key="ItemContextMenu" Opened="ItemContextMenu_OnOpened">
+			<MenuItem Header="Delete Data, Add To Deleted Items" ToolTip="When you wish to delete from file system and want to add it to the list of deleted items." Click="DeleteItemAndAddToDeleted"/>
+			<MenuItem Header="Delete Data, Don't Add To Deleted Items" ToolTip="When you wish to delete from file system but do not want to add it to the list of deleted items." Click="DeleteItemWithoutAddingToDeleted"/>
+			<MenuItem Header="Remove from Items, Add To Deleted Items" ToolTip="When you wish to remove file from database, without deleting from file system, and want to add it to the list of deleted items." Click="RemoveItemAndAddToDeleted"/>
+			<MenuItem Header="Remove from Items, Don't Add To Deleted Items" ToolTip="When you wish to remove file from database, without deleting from file system, but do not want to add it to the list of deleted items." Click="RemoveItemWithoutAddingToDeleted"/>
+			<MenuItem Header="Browse To Location" Click="BrowseToItemLocation"/>
+			<MenuItem Header="Search"/>
+		</ContextMenu>
 	</Window.Resources>
 	<Window.DataContext>
 		<viewModel:MainViewModel/>
@@ -142,13 +238,13 @@
 					<RowDefinition Height="Auto"></RowDefinition>
 				</Grid.RowDefinitions>
 				<!--Center-->
-				<Image x:Name="SingleImageElement" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource, NotifyOnTargetUpdated=True}"  Style="{StaticResource ImageStyle}" TargetUpdated="SingleImageElement_OnTargetUpdated" />
+				<Image x:Name="SingleImageElement" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource, NotifyOnTargetUpdated=True}"  Style="{StaticResource ImageStyle}" TargetUpdated="SingleImageElement_OnTargetUpdated" MouseEnter="DecreaseWidthOnMouseEnter" />
 				<Slider x:Name="SingleAnimationSlider" Grid.Row="1"  Grid.Column="1" Grid.ColumnSpan="2" Margin="80,5" Height="24" ValueChanged="SingleAnimationSlider_OnValueChanged"
 				        TickFrequency="1" TickPlacement="BottomRight" Minimum="0" Maximum="9"/>
-				<ToggleButton x:Name="PlayGifButton" Grid.Row="1"  Grid.Column="1" HorizontalAlignment="Left" Visibility="Visible" Content="{StaticResource StopButtonString}" Foreground="White" Height="24"  Click="PlayGif_OnClicked" Margin="0,5" Width="32" FontSize="17" />
+				<ToggleButton x:Name="PlayGifButton" Grid.Row="1"  Grid.Column="1" HorizontalAlignment="Left" Visibility="Visible" Content="{StaticResource StopButtonString}" Foreground="White" Height="24"  Click="PlayGif_OnClicked" Margin="0,5" Width="32" FontSize="17" Style="{StaticResource ToggleStyle}" />
 				<Label x:Name="SingleAnimationActiveLabel" Grid.Row="1"  Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" Content="000" Foreground="White" Height="24" Margin="37,5,0,5" Width="38"/>
 				<Label x:Name="SingleAnimationMaxLabel" Grid.Row="1"  Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Right" Content="999 (999.999s)" Foreground="White" Height="24"/>
-				<Image Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Style="{StaticResource ImageStyle}" />
+				<Image Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Style="{StaticResource ImageStyle}" MouseEnter="DecreaseWidthOnMouseEnter" />
 				<Image Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Style="{StaticResource ImageStyle}" />
 				<TextBlock Grid.Row="0" Text="{Binding LeftLabelText}" Margin="10,10,10,0" Height="20" VerticalAlignment="Top"  Foreground="Black" HorizontalAlignment="Left" Padding="5,0" Grid.Column="0" Grid.ColumnSpan="2">
 					<TextBlock.Background>
@@ -162,12 +258,49 @@
 				        IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" 
 				        Value="{Binding CurrentPage, Mode=OneWay}" Thumb.DragCompleted="Slider_OnDragCompleted" Style="{DynamicResource SliderStyle1}" />
 				<!--Left Side Bar-->
-				<TabControl Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Margin="10,35,10,10" MouseLeave="DecreaseWidthOnMouseEnter"  MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="{Binding DisplayedPanel}" Background="Transparent">
+				<TabControl x:Name="TabsControl" Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Margin="10,35,10,10" MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="{Binding DisplayedPanel}" Background="Transparent">
 					<TabItem Header="Library">
 						<DockPanel>
-							<ComboBox ItemsSource="{Binding LibraryItemSelectors}" SelectedValue="{Binding LibraryItemSelector}" DockPanel.Dock="Top" />
+							<ComboBox ItemsSource="{Binding LibraryItemSelectors}" 
+							          SelectedValue="{Binding LibraryItemSelector, NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}" 
+							          TargetUpdated="LibraryItemSelectorUpdated"
+							          SourceUpdated="LibraryItemSelectorUpdated"
+							          DockPanel.Dock="Top" />
 							<TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp" DockPanel.Dock="Top" Visibility="{Binding LibrarySearchVisibility}"/>
-							<ListBox ItemsSource="{Binding LibraryItems}" ItemStringFormat="{Binding LibraryItemFormat}" MouseDoubleClick="OpenItemFromListBox" ItemContainerStyle="{DynamicResource ColorItems}" Background="#CCFFFFFF" DockPanel.Dock="Bottom"/>
+							<ListView  x:Name="LibraryItems"
+								ItemsSource="{Binding LibraryItems, NotifyOnTargetUpdated=True}" 
+								ItemContainerStyle="{StaticResource ColorItems}"
+								ItemStringFormat="{Binding LibraryItemFormat}" 
+								MouseDoubleClick="OpenItemFromListBox" 
+								Background="#CCFFFFFF" 
+								DockPanel.Dock="Bottom"
+								ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+								<ListView.Resources>
+									<DataTemplate x:Key="ItemWithImage">
+										<d:DataTemplate.DataContext>
+											<x:Type Type="database:MangaInfo"/>
+										</d:DataTemplate.DataContext>
+										<Border BorderBrush="Transparent" BorderThickness="2" 
+										        Background="Transparent"
+										        SnapsToDevicePixels="true">
+											<StackPanel Orientation="Vertical" MaxWidth="200" 
+											            ContextMenu="{DynamicResource  ItemContextMenu}" Style="{StaticResource ColorTextBlock}">
+												<TextBlock TextWrapping="Wrap">
+													<TextBlock.Text>
+														<MultiBinding Converter="{StaticResource ToStringFormatConverter}">
+															<Binding Path="."/>
+															<Binding ElementName="LibraryItems" Path="ItemStringFormat"/>
+														</MultiBinding>
+													</TextBlock.Text>
+												</TextBlock>
+												<Image Source="{Binding Thumbnail, TargetNullValue={x:Null}}" 
+												       Margin="2"
+												       ToolTip="{Binding .}"/>
+											</StackPanel>
+										</Border>
+									</DataTemplate>
+								</ListView.Resources>
+							</ListView>
 						</DockPanel>
 					</TabItem>
 					<TabItem Header="Tags">
@@ -177,7 +310,10 @@
 						<ListBox ItemsSource="{Binding Pages}"/>
 					</TabItem>
 					<TabItem Header="Stats">
-						<ListBox ItemsSource="{Binding Stats}"/>
+						<ListBox ItemsSource="{Binding Stats, Mode=OneTime}"/>
+					</TabItem>
+					<TabItem Header="Deleted">
+						<ListBox ItemsSource="{Binding DeletedItems}"/>
 					</TabItem>
 				</TabControl>
 				<!--Right Side Bar-->
@@ -198,12 +334,12 @@
 					<TextBlock x:Name="InfoBox" Margin="5,625,5,91" HorizontalAlignment="Stretch" TextWrapping="Wrap" Foreground="White" />
 					<Button  Content="Open Random" Click="OpenRandom_Click" Margin="5,238,5,0" HorizontalAlignment="Stretch"  Style="{StaticResource BlueButtonStyle}" />
 					<Button  Content="Open Random (❤)" Click="OpenRandomFavorite_Click" Margin="5,263,5,0" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" />
-					<ToggleButton Content="{Binding RtlToggleText}" Margin="5,288,5,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Stretch" />
+					<ToggleButton Content="{Binding RtlToggleText}" Margin="5,288,5,0" VerticalAlignment="Top" IsChecked="{Binding RtlIsChecked}" Height="20" HorizontalAlignment="Stretch" Style="{StaticResource ToggleStyle}" />
 					<!--<Button  Content="Add Library Folder" Margin="10,288,0,0" VerticalAlignment="Top" Height="20" Click="AddLibraryFolder_Click" HorizontalAlignment="Left" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" Width="105"/>-->
 					<Button Click="ChangePageMode" Content="{Binding PageModeText}" Margin="5,313,5,0" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" />
 					<Button Content="Fullscreen" Click="GoFullscreen" Margin="5,338,5,0" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" />
 					<!--<Button Content="Reload Library" Click="ReloadLibrary"  Width="105"  Margin="10,363,0,0" Style="{StaticResource BlueButtonStyle}" />-->
-					<Button Content="Debug" Click="DebugButtonClick" Margin="5,363,5,0" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" IsEnabled="{Binding DebugOn}" />
+					<Button Content="Thumbnail View" Click="ThumbnailViewToggle" Margin="5,363,5,0" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" />
 					<Button Content="Get New Additions" Click="GetLibraryAdditions" Margin="5,388,5,0" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" />
 					<Button Content="Close Container" Click="CloseContainer" Margin="5,413,5,0" HorizontalAlignment="Stretch"  Style="{StaticResource BlueButtonStyle}" />
 					<Button Content="Create Alias" Click="CreateAlias" Margin="5,463,5,0" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" />
@@ -215,7 +351,7 @@
 					<Button Content="Delete Container" Click="DeleteContainer"  Height="20"  Margin="5,438,5,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0" />
 					<TextBlock Text="{Binding MangaInfo.InfoString}" HorizontalAlignment="Stretch" Margin="5,488,5,0" Height="106" VerticalAlignment="Top" Background="#FF86B5E4" Padding="0" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
 					<TextBox Text="{Binding AutoPlaySpeed, UpdateSourceTrigger=PropertyChanged}" Margin="5,600,46,0" TextWrapping="Wrap" Height="20" VerticalAlignment="Top" HorizontalContentAlignment="Center" />
-					<ToggleButton x:Name="AutoPlayButton" Content="{StaticResource PlayButtonString}" Margin="0,600,5,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Padding="0" HorizontalContentAlignment="Center" Click="AutoPlayClick" HorizontalAlignment="Right" Width="36" />
+					<ToggleButton x:Name="AutoPlayButton" Content="{StaticResource PlayButtonString}" Margin="0,600,5,0" VerticalContentAlignment="Center" Height="20" VerticalAlignment="Top" Padding="0" HorizontalContentAlignment="Center" Click="AutoPlayClick" HorizontalAlignment="Right" Width="36" Style="{StaticResource ToggleStyle}" />
 					<TextBox HorizontalAlignment="Stretch" Margin="5,0,5,10" TextWrapping="Wrap" Text="{Binding MangaInfo.Notes}" Height="76" VerticalAlignment="Bottom" SelectionChanged="TextBox_SelectionChanged" />
 				</Grid>
 			</Grid>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -14,14 +15,16 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using GamanReader.Model;
 using GamanReader.Model.Database;
 using GamanReader.ViewModel;
 using JetBrains.Annotations;
-using Microsoft.VisualBasic.FileIO;
 using SevenZip;
 using WpfAnimatedGif;
 using static GamanReader.Model.StaticHelpers;
-
+using Brushes = System.Windows.Media.Brushes;
+using Container = GamanReader.Model.Container;
 namespace GamanReader.View
 {
 	/// <summary>
@@ -29,8 +32,8 @@ namespace GamanReader.View
 	/// </summary>
 	public partial class MainWindow
 	{
-		public static readonly string PlayButtonText = (string)Application.Current.Resources["PlayButtonString"];
-		public static readonly string StopButtonText = (string)Application.Current.Resources["StopButtonString"];
+		private static readonly string PlayButtonText = (string)Application.Current.FindResource("PlayButtonString");
+		private static readonly string StopButtonText = (string)Application.Current.FindResource("StopButtonString");
 
 		[NotNull] private readonly MainViewModel _mainModel;
 		private bool _fullscreenOn;
@@ -39,8 +42,7 @@ namespace GamanReader.View
 		{
 			InitializeComponent();
 			ToggleAnimationVisibility(false);
-			 _mainModel = (MainViewModel)DataContext;
-			_mainModel.SingleImageElement = SingleImageElement;
+			_mainModel = (MainViewModel)DataContext;
 			LocalDatabase.TagPanel = TagPanel;
 			var firstPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 			Debug.Assert(firstPath != null, nameof(firstPath) + " != null");
@@ -56,8 +58,8 @@ namespace GamanReader.View
 			var args = Environment.GetCommandLineArgs();
 			if (args.Length > 1)
 			{
-				var item = _mainModel.GetOrCreateMangaInfo(args[1]);
-				Task.Run(() => LoadContainer(item)).RunSynchronously();
+				var item = _mainModel.GetOrCreateMangaInfo(args[1], false);
+				Task.Run(() => LoadContainer(item,false)).RunSynchronously();
 			}
 
 			_mainModel.RefreshTextBox += RefreshTextBox;
@@ -88,8 +90,8 @@ namespace GamanReader.View
 			}
 			else _mainModel.Search($"alias:{text}");
 		}
-		
-		public async Task LoadContainer(MangaInfo item) => await _mainModel.LoadContainer(item);
+
+		public async Task LoadContainer(MangaInfo item, bool saveToDatabase) => await _mainModel.LoadContainer(item, saveToDatabase);
 
 		private void GoToTextBox_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -111,8 +113,16 @@ namespace GamanReader.View
 			if (containerPath?.EndsWith(".lnk") ?? false) containerPath = GetPathFromShortcut(containerPath);
 			if (string.IsNullOrWhiteSpace(containerPath)) return; //todo report error
 			if (!File.Exists(containerPath) && !Directory.Exists(containerPath)) return; //todo report error
-			var item = _mainModel.GetOrCreateMangaInfo(containerPath);
-			await LoadContainer(item);
+			var saveToDatabase = false;
+			string openAtFile = null;
+			if (File.Exists(containerPath) && Container.RecognizedExtensions.Contains(Path.GetExtension(containerPath)))
+			{
+				openAtFile = containerPath;
+				containerPath = Directory.GetParent(containerPath).FullName;
+			}
+			var item = _mainModel.GetOrCreateMangaInfo(containerPath, saveToDatabase);
+			await LoadContainer(item, saveToDatabase);
+			if(_mainModel.MangaInfo == item && openAtFile != null) _mainModel.GoToPage(Array.IndexOf(_mainModel.ContainerModel.FileNames,openAtFile)+1);
 
 		}
 
@@ -125,7 +135,7 @@ namespace GamanReader.View
 		private async void OpenRandom_Click(object sender, RoutedEventArgs e) => await _mainModel.OpenRandom(false);
 
 		private async void OpenRandomFavorite_Click(object sender, RoutedEventArgs e) => await _mainModel.OpenRandom(true);
-		
+
 		private void AddTag(object sender, RoutedEventArgs e) => _mainModel.AddTag(TagText.Text);
 
 		private void GoFullscreen(object sender, RoutedEventArgs e)
@@ -168,22 +178,20 @@ namespace GamanReader.View
 			if (!(e.OriginalSource is DependencyObject source)) return;
 			if (!(ItemsControl.ContainerFromElement(itemsControl, source) is ListBoxItem lbItem)) return;
 			if (!(lbItem.Content is MangaInfo item)) return;
-			var deleted = _mainModel.DeleteItem(item);
+			var deleted = _mainModel.RemoveItemFromDb(item,true,true);
 			if (deleted) ((IList<MangaInfo>)itemsControl.ItemsSource).Remove(item);
 		}
 
 		private void IncreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
 		{
-			var control = (Control)sender;
-			Grid.SetColumnSpan(control, 2);
-			control.Background = Brushes.Transparent;
+			Grid.SetColumnSpan(TabsControl, 2);
+			TabsControl.Background = Brushes.Transparent;
 		}
 
 		private void DecreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
 		{
-			var control = (Control)sender;
-			Grid.SetColumnSpan(control, 1);
-			control.Background = Brushes.White;
+			Grid.SetColumnSpan(TabsControl, 1);
+			TabsControl.Background = Brushes.White;
 		}
 
 		private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -265,86 +273,80 @@ namespace GamanReader.View
 		{
 			LocalDatabase.SaveChanges();
 		}
-
-		private void DebugButtonClick(object sender, RoutedEventArgs e)
+		
+		private async Task ShowThumbnails()
 		{
-#if DEBUG
-			//await _mainModel.SetCantOpenOnNotBrowsed();
-			//DeleteBlacklisted();
-			DebugGetTotalSizeAndCalcCrc(sender, e);
-			FindDuplicates();
-			//FindBlacklistedSize();
-#endif
-		}
-
-		private string[] ExcludedCrcStrings = {"Not Found", "0", "Deleted"};
-
-		private void FindDuplicates()
-		{
-			var grouped = LocalDatabase.Items.Where(i => !ExcludedCrcStrings.Contains(i.CRC32))
-				.GroupBy(c => c.CRC32).Where(g => g.Count() > 1).ToDictionary(g => g.Key, g => g.ToList());
-			Console.WriteLine($"Found {grouped.Count} duplicates.");
-			var duplicatesSize = 0D;
-			foreach (var group in grouped)
+			Directory.CreateDirectory(ThumbFolder);
+			var index = 0;
+			var stopwatch = Stopwatch.StartNew();
+			var maxTime = TimeSpan.FromSeconds(15);
+			while (LibraryItems.Items.Count < 50)
 			{
-				foreach (var item in group.Value) Console.WriteLine($"\t[{group.Key}] {item.FilePath}");
-				var size = group.Value.First().SizeMb;
-				duplicatesSize += size * (group.Value.Count - 1);
-			}
-
-			Console.WriteLine($"Total size used by duplicates: {duplicatesSize:#0,000} MB");
-		}
-
-		private void FindBlacklistedSize()
-		{
-			var blacklisted = LocalDatabase.Items.Where(i =>
-				i.UserTags.Any(t => t.Tag == BlacklistedTagString) && i.CRC32 != null && i.CRC32 != string.Empty &&
-				i.CRC32 != "Not Found").ToList();
-			Console.WriteLine($"Found {blacklisted.Count} blacklisted items.");
-			var sizeSum = blacklisted.Sum(i => i.SizeMb);
-			Console.WriteLine($"Total size used by blacklisted: {sizeSum:#0,000} MB");
-		}
-
-		private void DeleteBlacklisted()
-		{
-			var blacklisted = LocalDatabase.Items.Where(i =>
-				i.UserTags.Any(t => t.Tag == BlacklistedTagString)).AsEnumerable().Where(a => a.Exists()).ToList();
-			Console.WriteLine($"Found {blacklisted.Count} blacklisted items.");
-			var sizeSum = blacklisted.Sum(i => i.SizeMb);
-			Console.WriteLine($"Total size used by blacklisted: {sizeSum:#0,000} MB");
-			var deleteCount = 0;
-			foreach (var item in blacklisted)
-			{
-				item.CRC32 = "Deleted";
-				if (item.IsFolder) FileSystem.DeleteDirectory(item.FilePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.DoNothing);
-				else FileSystem.DeleteFile(item.FilePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.DoNothing);
-				bool stillExists = item.IsFolder ? Directory.Exists(item.FilePath) : File.Exists(item.FilePath);
-				if (!stillExists) deleteCount++;
-			}
-			Console.WriteLine($"Deleted {deleteCount} blacklisted items.");
-		}
-
-		private void DebugGetTotalSizeAndCalcCrc(object sender, RoutedEventArgs e)
-		{
-			var items = LocalDatabase.Items.AsEnumerable().Where(i => string.IsNullOrWhiteSpace(i.CRC32)).ToArray();
-			Debug.WriteLine($"Calculating CRC for {items.Length} items...");
-			var totalSizeMb = 0d;
-			int step = (int)Math.Floor(items.Length * 0.25d);
-			for (var index = 0; index < items.Length; index++)
-			{
-				if (index != 0 && index % 50 /*step*/ == 0)
+				if (_mainModel.LibraryItems.Count == index || stopwatch.Elapsed > maxTime) break;
+				var item = _mainModel.LibraryItems[index++];
+				//if (item.IsBlacklisted || item.IsFavorite) continue;
+				string thumb = null;
+				try
 				{
-					Debug.WriteLine($"\tSize so far: {totalSizeMb:N0}");
-					Debug.WriteLine($"\tCalculating CRC for item {index + 1}");
-					LocalDatabase.SaveChanges();
+					thumb = await item.EnsureThumbExists();
 				}
-				var item = items[index];
-				item.CalcCrc();
-				if(Directory.Exists(item.FilePath)) totalSizeMb += item.SizeMb;
+				catch
+				{
+					item.CantOpen = true;
+				}
+				if (thumb == null) continue;
+				var image = new Image
+				{
+					Source = new BitmapImage(new Uri(thumb)),
+					MaxHeight = 300,
+					MaxWidth = 200,
+					ToolTip = item.ToString(),
+					Tag = item,
+					DataContext = item
+				};
+				image.MouseLeftButtonDown += async (o, args) =>
+				{
+					if (args.ClickCount < 2) return;
+					await _mainModel.LoadContainer(item);
+				};
+				LibraryItems.Items.Add(image);
+				await Task.Yield();
 			}
-			Debug.WriteLine($"\tTotal Size: {totalSizeMb:N0}");
-			LocalDatabase.SaveChanges();
 		}
+
+		private bool _thumbnailViewOn;
+		
+		private async Task ToggleThumbnails2(bool showThumbs)
+		{
+			if (showThumbs)
+			{
+				foreach (var item in _mainModel.LibraryItems)
+				{
+					await item.EnsureThumbExists();
+				}
+				ScrollViewer.SetHorizontalScrollBarVisibility(LibraryItems, ScrollBarVisibility.Disabled);
+				LibraryItems.ItemContainerStyle = null;
+				LibraryItems.ItemTemplate = (DataTemplate) LibraryItems.FindResource("ItemWithImage");
+				LibraryItems.ItemsPanel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(WrapPanel)));
+			}
+			else
+			{
+				ScrollViewer.SetHorizontalScrollBarVisibility(LibraryItems, ScrollBarVisibility.Auto);
+				LibraryItems.ItemTemplate = null;
+				LibraryItems.ItemContainerStyle = (Style) this.FindResource("ColorItems");
+				LibraryItems.ItemsPanel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(VirtualizingStackPanel)));
+			}
+			_mainModel.OnPropertyChanged(nameof(_mainModel.LibraryItems));
+		}
+
+		private async void ThumbnailViewToggle(object sender, RoutedEventArgs e)
+		{
+			_thumbnailViewOn = !_thumbnailViewOn;
+			MangaInfo.ShowThumbs = _thumbnailViewOn;
+			await ToggleThumbnails2(_thumbnailViewOn);
+		}
+
+		private string[] ExcludedCrcStrings = { "Not Found", "0", "Deleted" };
 
 		private void AutoPlayClick(object sender, RoutedEventArgs e)
 		{
@@ -398,7 +400,7 @@ namespace GamanReader.View
 
 		private void ControllerCurrentFrameChanged(object sender, EventArgs e)
 		{
-			var controller = (ImageAnimationController) sender;
+			var controller = (ImageAnimationController)sender;
 			if (controller == null) return;
 			SingleAnimationSlider.Value = controller.CurrentFrame;
 			SingleAnimationActiveLabel.Content = controller.CurrentFrame + 1;
@@ -414,7 +416,7 @@ namespace GamanReader.View
 
 		private void PlayGif_OnClicked(object sender, RoutedEventArgs e)
 		{
-			var toggle = (ToggleButton) sender;
+			var toggle = (ToggleButton)sender;
 			var controller = ImageBehavior.GetAnimationController(SingleImageElement);
 			if (controller?.FrameCount > 1)
 			{
@@ -422,7 +424,7 @@ namespace GamanReader.View
 				{
 					controller.Pause();
 					toggle.Content = PlayButtonText;
-					ImageBehavior.SetAutoStart(SingleImageElement,false);
+					ImageBehavior.SetAutoStart(SingleImageElement, false);
 				}
 				else
 				{
@@ -432,7 +434,7 @@ namespace GamanReader.View
 				}
 			}
 		}
-		
+
 		private void SingleAnimationSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			var controller = ImageBehavior.GetAnimationController(SingleImageElement);
@@ -441,6 +443,168 @@ namespace GamanReader.View
 				var value = (int)e.NewValue;
 				if (controller.CurrentFrame == value) return;
 				controller.GotoFrame(value);
+			}
+		}
+
+		private void DeleteItemAndAddToDeleted(object sender, RoutedEventArgs e)
+		{
+			var menuItem = (MenuItem)sender;
+			var item = GetMangaItemForContextMenu(menuItem, out var removeAction);
+			if (item == null) return;
+			var success = _mainModel.RemoveItemFromDb(item, true, true);
+			if (success) removeAction();
+		}
+
+		private void DeleteItemWithoutAddingToDeleted(object sender, RoutedEventArgs e)
+		{
+			var menuItem = (MenuItem)sender;
+			var item = GetMangaItemForContextMenu(menuItem, out var removeAction);
+			if (item == null) return;
+			var success = _mainModel.RemoveItemFromDb(item, false, true);
+			if (success) removeAction();
+		}
+
+		private void RemoveItemAndAddToDeleted(object sender, RoutedEventArgs e)
+		{
+			var menuItem = (MenuItem)sender;
+			var item = GetMangaItemForContextMenu(menuItem, out var removeAction);
+			if (item == null) return;
+			var success = _mainModel.RemoveItemFromDb(item, true, false);
+			if (success) removeAction();
+		}
+
+		private void RemoveItemWithoutAddingToDeleted(object sender, RoutedEventArgs e)
+		{
+			var menuItem = (MenuItem)sender;
+			var item = GetMangaItemForContextMenu(menuItem, out var removeAction);
+			if (item == null) return;
+			var success = _mainModel.RemoveItemFromDb(item, false, false);
+			if (success) removeAction();
+		}
+
+		private void BrowseToItemLocation(object sender, RoutedEventArgs e)
+		{
+			var menuItem = (MenuItem)sender;
+			var item = GetMangaItemForContextMenu(menuItem, out _);
+			if (item == null) return;
+			if (!item.IsFolder && item.Exists())
+			{
+				Process.Start("explorer", $"/select,  \"{item.FilePath}\"");
+				return;
+			}
+			var location = item.IsFolder ? new DirectoryInfo(item.FilePath) : Directory.GetParent(item.FilePath);
+			while (location != null)
+			{
+				if (location.Exists)
+				{
+					break;
+				}
+				location = location.Parent;
+			}
+			Process.Start("explorer", $"\"{location.FullName}\"");
+		}
+
+		private MangaInfo GetMangaItemForContextMenu(ItemsControl menuItem, out Action removeAction)
+		{
+			removeAction = () => { };
+			var listView = FindParent<Selector>(menuItem);// ?? FindParent<ListView>(menuItem);
+			object listItem;
+			MangaInfo item;
+			switch (listView?.SelectedItem)
+			{
+				case MangaInfo miItem:
+					item = miItem;
+					listItem = item;
+					break;
+				case Image image:
+					listItem = image;
+					if (image.DataContext is MangaInfo mi)
+					{
+						item = mi;
+						break;
+					}
+					else return null;
+					default:
+						return null;
+			}
+			removeAction = () =>
+			{
+				if(listView.ItemsSource != null) ((IList)listView.ItemsSource).Remove(listItem);
+				else listView.Items.Remove(listItem);
+				_mainModel.OnPropertyChanged(nameof(_mainModel.DeletedItems));
+			};
+			return item;
+		}
+
+		private static T FindParent<T>(DependencyObject child) where T : DependencyObject
+		{
+			while (true)
+			{
+				//get parent item
+				if (child is FrameworkElement frameworkElement && frameworkElement.Parent is Popup popup)
+				{
+					child = popup.PlacementTarget;
+					if (child is T t) return t;
+				}
+				var parentObject = VisualTreeHelper.GetParent(child);
+				switch (parentObject)
+				{
+					//we've reached the end of the tree
+					case null:
+						return null;
+					//check if the parent matches the type we're looking for
+					case T parent:
+						return parent;
+					default:
+						child = parentObject;
+						break;
+				}
+			}
+		}
+
+		private void ItemContextMenu_OnOpened(object sender, RoutedEventArgs e)
+		{
+			var contextMenu = (ContextMenu)sender;
+			var item = GetMangaItemForContextMenu(contextMenu, out _);
+			if (item == null) return;
+			var searchMenuItem = contextMenu.Items.Cast<MenuItem>().Last();
+			searchMenuItem.Items.Clear();
+			var nameMenuItem = new MenuItem{Header = item.Name, Tag = item.Name};
+			nameMenuItem.Click += SearchByDebugTagString;
+			searchMenuItem.Items.Add(nameMenuItem);
+			foreach (var tag in item.AutoTags)
+			{
+				var tagMenuItem = new MenuItem { Header = tag.Tag, Tag = tag};
+				tagMenuItem.Click += SearchByDebugTagString;
+				searchMenuItem.Items.Add(tagMenuItem);
+			}
+		}
+
+		private void SearchByDebugTagString(object sender, RoutedEventArgs e)
+		{
+			var menuItem = (MenuItem) sender;
+			var tag = menuItem.Tag;
+			switch (tag)
+			{
+				case string searchText:
+					_mainModel.Search(searchText);
+					break;
+				case AutoTag autoTag:
+					_mainModel.SearchTags(new HashSet<string>{autoTag.Tag});
+					break;
+				default:
+					throw new InvalidOperationException();
+			}
+		}
+
+		private async void LibraryItemSelectorUpdated(object sender, DataTransferEventArgs e)
+		{
+			if (_thumbnailViewOn)
+			{
+				foreach (var item in _mainModel.LibraryItems)
+				{
+					await item.EnsureThumbExists();
+				}
 			}
 		}
 	}

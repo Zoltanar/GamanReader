@@ -50,7 +50,7 @@ namespace GamanReader.Model
 			RecognizedExtensions.Add(".gif");
 		}
 
-		protected static bool FileIsImage([NotNull] string filename)
+		public static bool FileIsImage([NotNull] string filename)
 		{
 			return RecognizedExtensions.Contains(Path.GetExtension(filename).ToLower());
 		}
@@ -62,7 +62,7 @@ namespace GamanReader.Model
 		}
 
 		public abstract void Dispose();
-
+		
 		protected static string[] OrderFiles(IEnumerable<string> fileNames, out bool usingIntegers)
 		{
 			//todo allow user to choose different modes

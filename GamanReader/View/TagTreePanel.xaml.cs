@@ -37,7 +37,7 @@ namespace GamanReader.View
 			if (item == null) return;
 			var window = (MainWindow)Window.GetWindow(this);
 			Debug.Assert(window != null, nameof(window) + " != null");
-			await window.LoadContainer(item);
+			await window.LoadContainer(item,true);
 		}
 
 	private void AliasDoubleClicked(object sender, MouseButtonEventArgs e)
