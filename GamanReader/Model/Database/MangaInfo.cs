@@ -14,13 +14,14 @@ using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Media;
 using Crc32C;
+using GamanReader.ViewModel;
 using JetBrains.Annotations;
 
 // ReSharper disable VirtualMemberCallInConstructor
 
 namespace GamanReader.Model.Database
 {
-	public class MangaInfo : INotifyPropertyChanged, IFormattable
+	public class MangaInfo : INotifyPropertyChanged, IMangaItem
 	{
 		private static readonly Regex Rgx1 = new Regex(@"\[([^];]*)\]");
 		private static readonly Regex Rgx2 = new Regex(@"\{([^};]*)\}");
@@ -29,6 +30,10 @@ namespace GamanReader.Model.Database
 		public static bool ShowThumbs;
 
 		#region Properties
+
+		[NotMapped]
+		public bool IsDeleted => false;
+
 		[Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public long Id { get; set; }
 		public int LibraryFolderId { get; set; }
@@ -62,12 +67,17 @@ namespace GamanReader.Model.Database
 		public static MangaInfo Create(string filePath, bool saveToDatabase)
 		{
 			var pathToFind = Directory.GetParent(filePath).FullName;
-			var item = new MangaInfo(filePath);
-			item.Library = !saveToDatabase ? null : StaticHelpers.LocalDatabase.Libraries.SingleOrDefault(x => x.Path == pathToFind) ??
-								StaticHelpers.LocalDatabase.Libraries.Single(x => x.Id == 1);
-			item.LibraryFolderId = !saveToDatabase ? 1 : item.Library.Id;
-			item.SubPath = item.LibraryFolderId == 1 ? filePath : filePath.Replace(item.Library.Path, "");
-			item.IsFolder = File.GetAttributes(item.FilePath).HasFlag(FileAttributes.Directory);
+			var library = !saveToDatabase
+				? null
+				: StaticHelpers.LocalDatabase.Libraries.SingleOrDefault(x => x.Path == pathToFind) ??
+				  StaticHelpers.LocalDatabase.Libraries.Single(x => x.Id == 1);
+			var item = new MangaInfo(filePath)
+			{
+				Library = library,
+				LibraryFolderId = !saveToDatabase ? 1 : library.Id,
+				SubPath = !saveToDatabase || library.Id == 1 ? filePath : filePath.Replace(library.Path, ""),
+				IsFolder = File.GetAttributes(filePath).HasFlag(FileAttributes.Directory)
+			};
 			if (saveToDatabase) item.CalcCrc();
 			return item;
 		}
@@ -88,12 +98,11 @@ namespace GamanReader.Model.Database
 			var matches3 = Rgx3.Matches(Name);
 			foreach (Match match in matches)
 			{
-				var innerMatch = Rgx3.Match(match.Groups[1].Value);
-				if (innerMatch.Success)
-				{
-					AutoTags.Add(new AutoTag(match.Groups[1].Value.Replace(innerMatch.Value, "").Trim()));
-				}
-				else AutoTags.Add(new AutoTag(match.Groups[1].Value));
+				var matchGroupValue = match.Groups[1].Value;
+				var innerMatch = Rgx3.Match(matchGroupValue);
+				AutoTags.Add(new AutoTag(innerMatch.Success 
+					? matchGroupValue.Replace(innerMatch.Value, "").Trim()
+					: matchGroupValue));
 			}
 			foreach (Match match in matches2) AutoTags.Add(new AutoTag(match.Groups[1].Value.Trim()));
 			foreach (Match match in matches3) AutoTags.Add(new AutoTag(match.Groups[1].Value.Trim()));
@@ -171,27 +180,18 @@ namespace GamanReader.Model.Database
 
 		private long Length => _length ??= IsFolder ? GetImageFiles(new DirectoryInfo(FilePath), SearchOption.AllDirectories).Sum(x => x.Length) : new FileInfo(FilePath).Length;
 
-		[NotMapped]
-		public double SizeMb => Length / 1024d / 1024d;
+		[NotMapped] public double SizeMb => Length / 1024d / 1024d;
 
-		[NotMapped]
-		private DateTime LastModified => IsFolder ? new DirectoryInfo(FilePath).LastWriteTime : new FileInfo(FilePath).LastWriteTime;
+		[NotMapped] private DateTime LastModified => IsFolder ? new DirectoryInfo(FilePath).LastWriteTime : new FileInfo(FilePath).LastWriteTime;
 
-		private bool _thumbnailSet;
+		[NotMapped] public bool ThumbnailSet { get; private set; }
 		private string _thumbnail;
 
-		public string Thumbnail
-		{
-			get
-			{
-				if (!ShowThumbs) return null;
-				return _thumbnail;
-			}
-		}
+		public string Thumbnail => !ShowThumbs ? null : _thumbnail;
 
 		public async Task<string> EnsureThumbExists()
 		{
-			if (_thumbnailSet) return _thumbnail;
+			if (ThumbnailSet) return _thumbnail;
 			if (!(CantOpen == true || !Exists() || CRC32 == "Not Found" || CRC32 == "Deleted"))
 			{
 				if (string.IsNullOrWhiteSpace(CRC32)) CalcCrc();
@@ -209,14 +209,14 @@ namespace GamanReader.Model.Database
 						Image thumbnailImage = null;
 						try
 						{
-							image = System.Drawing.Image.FromFile(file);
+							image = Image.FromFile(file);
 							var scale = Math.Min(200d / image.Width, 300d / image.Height);
 							var newWidth = image.Width * scale;
 							var newHeight = image.Height * scale;
 							thumbnailImage = image.GetThumbnailImage((int) (newWidth), (int) (newHeight), () => true, IntPtr.Zero);
 							thumbnailImage.Save(thumbPath);
 						}
-						catch (OutOfMemoryException ex)
+						catch (OutOfMemoryException)
 						{
 							if(Path.GetExtension(file).ToLower() == ".gif"){}
 							//ignore
@@ -230,7 +230,8 @@ namespace GamanReader.Model.Database
 					}
 				}
 			}
-			_thumbnailSet = true;
+			ThumbnailSet = true;
+			OnPropertyChanged(null);
 			return _thumbnail;
 		}
 
@@ -241,7 +242,7 @@ namespace GamanReader.Model.Database
 			{
 				if (IsFolder)
 				{
-					container = new FolderContainer(this, Directory.GetFiles(FilePath).Where(Container.FileIsImage));
+					container = new FolderContainer(this, new DirectoryInfo(FilePath).GetFiles(),MainViewModel.PageOrder.Auto);
 					if (string.IsNullOrWhiteSpace(CRC32)) CalcCrc();
 				}
 				else
@@ -250,11 +251,11 @@ namespace GamanReader.Model.Database
 					{
 						case ".cbz":
 						case ".zip":
-							container = new ZipContainer(this, null);
+							container = new ZipContainer(this, null, MainViewModel.PageOrder.Auto);
 							await ((ZipContainer)container).ExtractAllAsync(CancellationToken.None, 1);
 							break;
 						case ".rar":
-							container = new RarContainer(this, null, 1);
+							container = new RarContainer(this, null, MainViewModel.PageOrder.Auto, 1);
 							break;
 						default:
 							throw new IndexOutOfRangeException();

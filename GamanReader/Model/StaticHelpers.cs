@@ -19,14 +19,10 @@ namespace GamanReader.Model
 {
 	public static class StaticHelpers
 	{
-#if DEBUG
-		public const string StoredDataFolder = "..\\Release\\Stored Data";
-#else
-		public const string StoredDataFolder = "Stored Data";
-#endif
-		public const string TempFolder = StoredDataFolder + "\\Temp";
-		public const string ThumbFolder = StoredDataFolder + "\\Thumb";
-		public const string LogFile = StoredDataFolder + "\\message.log";
+		public static readonly string StoredDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Gaman Reader", "Stored Data");
+		public static readonly string TempFolder = StoredDataFolder + "\\Temp";
+		public static readonly string ThumbFolder = StoredDataFolder + "\\Thumb";
+		public static readonly string LogFile = StoredDataFolder + "\\message.log";
 		public const string LoadFailedImage = "loadfailedn.png";
 
 		public const string ProgramName = "GamanReader";
@@ -44,9 +40,11 @@ namespace GamanReader.Model
 		static StaticHelpers()
 		{
 			LocalDatabase = new GamanDatabase();
-			if (!LocalDatabase.Libraries.Any(x => x.Id == 1))
+			LocalDatabase.DefaultLibrary = LocalDatabase.Libraries.FirstOrDefault(x => x.Id == 1);
+			if (LocalDatabase.DefaultLibrary == null)
 			{
-				LocalDatabase.Libraries.Add(new LibraryFolder(""));
+				LocalDatabase.DefaultLibrary = new LibraryFolder("");
+				LocalDatabase.Libraries.Add(LocalDatabase.DefaultLibrary);
 				LocalDatabase.SaveChanges();
 			}
 			Directory.CreateDirectory(StoredDataFolder);

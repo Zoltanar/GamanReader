@@ -1,4 +1,6 @@
-﻿namespace GamanReader.Model.Database
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GamanReader.Model.Database
 {
 	public abstract class IndividualTag
 	{
@@ -26,5 +28,14 @@
 	{
 		public UserTag(long itemId, string tag) : base(itemId, tag) { }
 		public UserTag() { }
+	}
+
+	public class FavoriteTag
+	{
+		[Key]
+		public string Tag { get; set; }
+
+		public FavoriteTag(string tag) => Tag = tag;
+		public FavoriteTag() { }
 	}
 }

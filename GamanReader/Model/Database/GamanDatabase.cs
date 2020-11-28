@@ -9,7 +9,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows;
-using GamanReader.View;
+using GamanReader.ViewModel;
+using JetBrains.Annotations;
 
 // ReSharper disable VirtualMemberCallInConstructor
 
@@ -17,19 +18,20 @@ namespace GamanReader.Model.Database
 {
 	public class GamanDatabase : DbContext
 	{
-		public TagTreePanel TagPanel;
+		public TagTreeViewModel TagViewModel;
 
 		public GamanDatabase() : base("TagDatabase")
-		{
-		}
+		{ }
 
-		public DbSet<LibraryFolder> Libraries { get; set; }
-		public DbSet<MangaInfo> Items { get; set; }
-		public DbSet<DeletedMangaInfo> DeletedItems { get; set; }
-		public DbSet<Alias> Aliases { get; set; }
+		[NotNull] public DbSet<LibraryFolder> Libraries { get; set; }
+		[NotNull] public DbSet<MangaInfo> Items { get; set; }
+		[NotNull] public DbSet<DeletedMangaInfo> DeletedItems { get; set; }
+		[NotNull] public DbSet<Alias> Aliases { get; set; }
 		public DbSet<AliasTag> AliasTags { get; set; }
-		public DbSet<AutoTag> AutoTags { get; set; }
-		public DbSet<UserTag> UserTags { get; set; }
+		[NotNull] public DbSet<AutoTag> AutoTags { get; set; }
+		[NotNull] public DbSet<UserTag> UserTags { get; set; }
+		[NotNull] public DbSet<FavoriteTag> FavoriteTags { get; set; }
+		public LibraryFolder DefaultLibrary { get; set; }
 
 		static GamanDatabase()
 		{
@@ -69,29 +71,24 @@ namespace GamanReader.Model.Database
 		{
 			var item = GetByName(aliasName);
 			if (item != null) return item;
-			StaticHelpers.LocalDatabase.Aliases.Add(new Alias(aliasName));
-			StaticHelpers.LocalDatabase.SaveChanges();
+			Aliases.Add(new Alias(aliasName));
+			SaveChanges();
 			item = GetByName(aliasName);
 			return item;
 
-			Alias GetByName(string name)
-			{
-				return StaticHelpers.LocalDatabase.Aliases.FirstOrDefault(x => x.Name.ToLower().Equals(name.ToLower()));
-			}
+			Alias GetByName(string name) => Aliases.FirstOrDefault(x => x.Name.ToLower().Equals(name.ToLower()));
 		}
 
-		public MangaInfo GetOrCreateMangaInfo(string containerPath, RecentItemList<MangaInfo> lastAddedCollection, bool saveToDatabase)
+		public MangaInfo GetOrCreateMangaInfo(string containerPath, RecentItemList<IMangaItem> lastAddedCollection, bool saveToDatabase)
 		{
 			var item = GetByPath(containerPath);
 			if (item != null) return item;
 			item = MangaInfo.Create(containerPath, saveToDatabase);
-			if (saveToDatabase)
-			{
-				CheckCrcMatches(item);
-				Items.Add(item);
-				SaveChanges();
-				lastAddedCollection?.Add(item);
-			}
+			if (!saveToDatabase) return item;
+			CheckCrcMatches(item);
+			Items.Add(item);
+			SaveChanges();
+			lastAddedCollection?.Add(item);
 			return item;
 
 			MangaInfo GetByPath(string path)
@@ -163,11 +160,35 @@ Press cancel to skip this message (will default to adding).",
 			return false;
 		}
 
-		public int SaveChanges([CallerMemberName] string caller = null)
+		public override int SaveChanges()
 		{
-			var count = base.SaveChanges();
-			Debug.WriteLine($"Saved changes to database ({caller}): {count}");
-			return count;
+			int result = base.SaveChanges();
+			var caller = new StackFrame(1).GetMethod();
+			var callerName = $"{caller.DeclaringType?.Name}.{caller.Name}";
+			Debug.WriteLine($"{System.DateTime.Now.ToShortTimeString()} - {nameof(GamanDatabase)}.{nameof(SaveChanges)} called by {callerName} - returned {result}");
+			return result;
+		}
+
+		public void AddFavoriteTag(string tag)
+		{
+			if (FavoriteTags.Any(x => x.Tag.ToLower().Equals(tag.ToLower())))
+			{
+				RemoveFavoriteTag(tag);
+				return;
+			}
+			var favoriteTag = new FavoriteTag(tag);
+			FavoriteTags.Add(favoriteTag);
+			SaveChanges();
+			TagViewModel.AddFavoriteTag(favoriteTag);
+		}
+
+		public void RemoveFavoriteTag(string tag)
+		{
+			var tagItem = FavoriteTags.FirstOrDefault(x => x.Tag.ToLower().Equals(tag.ToLower()));
+			if (tagItem == null) return;
+			FavoriteTags.Remove(tagItem);
+			SaveChanges();
+			TagViewModel.RemoveFavoriteTag(tagItem);
 		}
 
 		public void AddTag(MangaInfo item, string tag)
@@ -179,7 +200,7 @@ Press cancel to skip this message (will default to adding).",
 			}
 			item.UserTags.Add(new UserTag(item.Id, tag));
 			SaveChanges();
-			TagPanel.AddTag(item, tag);
+			TagViewModel.AddTag(item, tag);
 			item.OnPropertyChanged(null);
 		}
 
@@ -190,7 +211,7 @@ Press cancel to skip this message (will default to adding).",
 			item.UserTags.Remove(tagItem);
 			UserTags.Remove(tagItem);
 			SaveChanges();
-			TagPanel.RemoveTag(item, tag);
+			TagViewModel.RemoveTag(item, tag);
 			item.OnPropertyChanged(null);
 		}
 
@@ -227,27 +248,21 @@ Press cancel to skip this message (will default to adding).",
 			private void ReplaceCharIndexFunc(DbCommand command)
 			{
 				bool isMatch = false;
-				var text = ReplaceRegex.Replace(command.CommandText, (match) =>
+				var text = ReplaceRegex.Replace(command.CommandText, match =>
 				{
-					if (match.Success)
+					if (!match.Success) return match.Value;
+					string paramsKey = match.Groups[1].Value;
+					string paramsColumnName = match.Groups[2].Value;
+					//replaceParams
+					foreach (DbParameter param in command.Parameters)
 					{
-						string paramsKey = match.Groups[1].Value;
-						string paramsColumnName = match.Groups[2].Value;
-						//replaceParams
-						foreach (DbParameter param in command.Parameters)
-						{
-							if (param.ParameterName == paramsKey.Substring(1))
-							{
-								param.Value = string.Format("%{0}%", param.Value);
-								break;
-							}
-						}
-
-						isMatch = true;
-						return string.Format("{0} LIKE {1}", paramsColumnName, paramsKey);
+						if (param.ParameterName != paramsKey.Substring(1)) continue;
+						param.Value = $"%{param.Value}%";
+						break;
 					}
-					else
-						return match.Value;
+
+					isMatch = true;
+					return $"{paramsColumnName} LIKE {paramsKey}";
 				});
 				if (isMatch)
 					command.CommandText = text;

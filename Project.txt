@@ -10,3 +10,5 @@ add delete file on DEL key for all MangaInfo panels
 hide side panels after a while and/or darker theme
 going back in auto page mode goes back 2 always.
 support for webp
+add standard natural sort for files
+change open container's file order when changing order.

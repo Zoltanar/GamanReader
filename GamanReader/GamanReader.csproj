@@ -179,6 +179,7 @@
     <Compile Include="Model\ArchiveContainer.cs" />
     <Compile Include="Model\Database\Alias.cs" />
     <Compile Include="Model\Database\DeletedMangaInfo.cs" />
+    <Compile Include="Model\Database\IMangaItem.cs" />
     <Compile Include="Model\Database\IndividualTag.cs" />
     <Compile Include="Model\FolderContainer.cs" />
     <Compile Include="Model\Database\LibraryFolder.cs" />
@@ -234,6 +235,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="allowedformats.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

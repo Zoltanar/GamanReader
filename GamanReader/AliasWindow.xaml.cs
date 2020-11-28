@@ -42,7 +42,6 @@ namespace GamanReader
 			if (string.IsNullOrWhiteSpace(AliasNameTb.Text)) return; //todo say it needs name
 			var alias = StaticHelpers.LocalDatabase.GetOrCreateAlias(AliasNameTb.Text);
 			alias.AddTags(AliasLb.Items.Cast<IndividualTag>());
-			StaticHelpers.LocalDatabase.SaveChanges();
 			Close();
 		}
 

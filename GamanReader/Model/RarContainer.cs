@@ -1,29 +1,41 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using GamanReader.Model.Database;
+using GamanReader.ViewModel;
 using SevenZip;
 
 namespace GamanReader.Model
 {
-	class RarContainer : ArchiveContainer
+	internal class RarContainer : ArchiveContainer<ArchiveFileInfo>
 	{
 		private readonly int? _extractCount;
 
-		public RarContainer(MangaInfo item, Action onPropertyChanged, int? extractCount = null) : base(item, onPropertyChanged)
+		public RarContainer(MangaInfo item, Action<string> onPropertyChanged, MainViewModel.PageOrder pageOrder, int? extractCount = null) : base(item, onPropertyChanged, pageOrder)
 		{
 			var bg = new BackgroundWorker();
 			bg.DoWork += ExtractAllWork;
-			bg.ProgressChanged += (sender, args) => onPropertyChanged?.Invoke();
+			bg.ProgressChanged += (sender, args) => onPropertyChanged?.Invoke(nameof(Extracted));
 			bg.WorkerReportsProgress = true;
-			var rarExtractor = new SevenZipExtractor(ContainerPath);
-			var fileNames = OrderFiles(rarExtractor.ArchiveFileData.Select(af => af.FileName), out var usingIntegers);
-			if (false && !usingIntegers) fileNames = rarExtractor.ArchiveFileData.OrderBy(e => e.LastWriteTime).Select(f => f.FileName).ToArray();
+			using var rarExtractor = new SevenZipExtractor(ContainerPath);
+			var fileNames = OrderFiles(rarExtractor.ArchiveFileData);
 			FileNames = fileNames;
 			_extractCount = extractCount;
 			bg.RunWorkerAsync();
+		}
+
+
+		protected override IEnumerable<string> OrderFilesByDateModified(IEnumerable<ArchiveFileInfo> files)
+		{
+			return files.OrderBy(e => e.LastWriteTime).Select(f => f.FileName);
+		}
+
+		protected override IEnumerable<string> GetFileNames(IEnumerable<ArchiveFileInfo> files)
+		{
+			return files.OrderBy(c => c.FileName).Select(c=>c.FileName);
 		}
 
 		public static int GetFileCount(string containerPath)
@@ -73,13 +85,10 @@ namespace GamanReader.Model
 			try
 			{
 				if (File.Exists(tempFile)) return fullPath;
-				using (var stream = File.OpenWrite(tempFile))
+				using var stream = File.OpenWrite(tempFile);
+				lock (this)
 				{
-					lock (this)
-					{
-						extractor.ExtractFile(filename, stream);
-					}
-
+					extractor.ExtractFile(filename, stream);
 				}
 			}
 			catch (Exception ex)
@@ -91,7 +100,7 @@ namespace GamanReader.Model
 			{
 				worker?.ReportProgress(Extracted);
 				Extracted++;
-				UpdateExtracted?.Invoke();
+				UpdateExtracted?.Invoke(nameof(Extracted));
 			}
 			return fullPath;
 		}

@@ -6,7 +6,8 @@
              xmlns:viewModel="clr-namespace:GamanReader.ViewModel"
              xmlns:database="clr-namespace:GamanReader.Model.Database"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="300"
+             Loaded="TagTreePanel_OnLoaded">
     <UserControl.DataContext>
         <viewModel:TagTreeViewModel/>
     </UserControl.DataContext>
@@ -17,15 +18,18 @@
                     <TextBlock Foreground="Green" Text="{Binding Name}" />
                 </HierarchicalDataTemplate>
                 <DataTemplate DataType="{x:Type database:MangaInfo}" >
-                    <ListBoxItem Style="{StaticResource ColorItems}" Content="{Binding Name}" MouseDoubleClick="MangaDoubleClicked"/>
+                    <ListViewItem Style="{StaticResource ColorItems}" Content="{Binding Name}" MouseDoubleClick="MangaDoubleClicked"/>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type database:AutoTag}" >
                     <ListBoxItem Content="{Binding Item}" MouseDoubleClick="TagDoubleClicked"/>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type database:Alias}" >
-                    <ListBoxItem Content="{Binding Name}" MouseDoubleClick="AliasDoubleClicked"/>
-                </DataTemplate>
-            </TreeView.Resources>
+				</DataTemplate>
+				<DataTemplate DataType="{x:Type database:Alias}" >
+					<ListBoxItem Content="{Binding Name}" MouseDoubleClick="AliasDoubleClicked"/>
+				</DataTemplate>
+	            <DataTemplate DataType="{x:Type database:FavoriteTag}" >
+		            <ListBoxItem Content="{Binding Tag}" MouseDoubleClick="AliasDoubleClicked"/>
+	            </DataTemplate>
+			</TreeView.Resources>
         </TreeView>
     </Grid>
 </UserControl>

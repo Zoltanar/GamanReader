@@ -5,15 +5,68 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using GamanReader.Model.Database;
+using GamanReader.ViewModel;
 using JetBrains.Annotations;
 
 namespace GamanReader.Model
 {
+	public abstract class Container<T> : Container
+	{
+		protected Container(MangaInfo item, MainViewModel.PageOrder pageOrder) : base(item,pageOrder){}
+		
+		protected string[] OrderFiles(IEnumerable<T> files)
+		{
+			switch (PageOrderMode)
+			{
+				case MainViewModel.PageOrder.Auto:
+					
+					var list = GetFileNames(files).ToList();
+					var namesWithoutExtension = list.Select(Path.GetFileNameWithoutExtension).ToArray();
+					// ReSharper disable once AssignNullToNotNullAttribute
+					var minNonInts = list.Count * 0.25;//Math.Min(list.Count * 0.25, 4);
+					var integers = namesWithoutExtension.Count(x => int.TryParse(x, out _));
+					var usingIntegers = integers > list.Count - minNonInts;
+					if (usingIntegers)
+					{
+						return list.OrderBy(x =>
+						{
+							var success = int.TryParse(Path.GetFileNameWithoutExtension(x), out var number);
+							return success ? number : int.MaxValue;
+						}).ToArray();
+					}
+					return list.Where(FileIsImage).OrderBy(ef => ef, new StringWithNumberComparer()).ToArray();
+				case MainViewModel.PageOrder.Modified:
+					return OrderFilesByDateModified(files).ToArray();
+				case MainViewModel.PageOrder.Alphabet:
+					return GetFileNames(files).OrderBy(c => c).ToArray();
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+		}
+
+		protected abstract IEnumerable<string> OrderFilesByDateModified(IEnumerable<T> files);
+
+		protected abstract IEnumerable<string> GetFileNames(IEnumerable<T> files);
+
+	}
+
 	public abstract class Container : IDisposable
 	{
+		public static readonly List<string> RecognizedExtensions = new List<string>();
+
+		static Container()
+		{
+			foreach (var imageCodec in ImageCodecInfo.GetImageEncoders())
+			{
+				RecognizedExtensions.AddRange(imageCodec.FilenameExtension.ToLowerInvariant().Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetExtension));
+			}
+			RecognizedExtensions.Add(".gif");
+		}
+
 		public MangaInfo Item { get; }
 		public string ContainerPath { get; }
-		int _pagesBrowsed;
+		public MainViewModel.PageOrder PageOrderMode { get; }
+		private int _pagesBrowsed;
 		private bool _addedTimeBrowsed;
 		public int CurrentIndex
 		{
@@ -36,18 +89,14 @@ namespace GamanReader.Model
 		public abstract bool IsFolder { get; }
 		public int Extracted { get; protected set; }
 
-		protected Action UpdateExtracted;
+		protected Action<string> UpdateExtracted;
 		private int _currentIndex;
 
-		public static readonly List<string> RecognizedExtensions = new List<string>();
-
-		static Container()
+		protected Container(MangaInfo item, MainViewModel.PageOrder pageOrder)
 		{
-			foreach (var imageCodec in ImageCodecInfo.GetImageEncoders())
-			{
-				RecognizedExtensions.AddRange(imageCodec.FilenameExtension.ToLowerInvariant().Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetExtension));
-			}
-			RecognizedExtensions.Add(".gif");
+			Item = item;
+			ContainerPath = item.FilePath;
+			PageOrderMode = pageOrder;
 		}
 
 		public static bool FileIsImage([NotNull] string filename)
@@ -55,34 +104,7 @@ namespace GamanReader.Model
 			return RecognizedExtensions.Contains(Path.GetExtension(filename).ToLower());
 		}
 
-		protected Container(MangaInfo item)
-		{
-			Item = item;
-			ContainerPath = item.FilePath;
-		}
-
 		public abstract void Dispose();
-		
-		protected static string[] OrderFiles(IEnumerable<string> fileNames, out bool usingIntegers)
-		{
-			//todo allow user to choose different modes
-			//todo add mode int is parsed at the beginning
-			var list = fileNames.ToList();
-			var namesWithoutExtension = list.Select(Path.GetFileNameWithoutExtension).ToArray();
-			// ReSharper disable once AssignNullToNotNullAttribute
-			var minNonInts = list.Count * 0.25;//Math.Min(list.Count * 0.25, 4);
-			var integers = namesWithoutExtension.Count(x => int.TryParse(x, out _));
-			usingIntegers = integers > list.Count - minNonInts;
-			if (usingIntegers)
-			{
-				return list.OrderBy(x =>
-			 {
-				 var success = int.TryParse(Path.GetFileNameWithoutExtension(x), out var number);
-				 return success ? number : int.MaxValue;
-			 }).ToArray();
-			}
-			return list.Where(FileIsImage).OrderBy(ef => ef, new StringWithNumberComparer()).ToArray();
-		}
 
 		public class StringWithNumberComparer : IComparer<string>
 		{
@@ -91,8 +113,7 @@ namespace GamanReader.Model
 			private static readonly Regex Pattern2 = new Regex(@"\d\d\d\d?.*");
 			public int Compare(string x, string y)
 			{
-				if (x == null && y == null) return 0;
-				if (x == null) return 1;
+				if (x == null) return y == null ? 0 : 1;
 				if (y == null) return -1;
 				var dirParts1 = x.Split('\\').ToList();
 				var dirParts2 = y.Split('\\').ToList();

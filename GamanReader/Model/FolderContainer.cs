@@ -1,5 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using GamanReader.Model.Database;
+using GamanReader.ViewModel;
+
 //using System.Linq;
 
 namespace GamanReader.Model
@@ -7,20 +11,14 @@ namespace GamanReader.Model
 	/// <summary>
 	/// Model that contains details about currently opened folder/file.
 	/// </summary>
-	internal class FolderContainer : Container
+	internal class FolderContainer : Container<FileInfo>
 	{
-		public FolderContainer(MangaInfo item, IEnumerable<string> fileNames) : base(item)
+
+
+		public FolderContainer(MangaInfo item, IEnumerable<FileInfo> files, MainViewModel.PageOrder pageOrder) : base(item, pageOrder)
 		{
 			CurrentIndex = 0;
-			//debug
-			/* order by date modified
-			FileNames =
-				fileNames
-					.Select(f => new System.IO.FileInfo(f))
-					.OrderBy(f => f.LastWriteTimeUtc)
-					.Select(f => f.FullName)
-					.ToArray();*/
-			FileNames = OrderFiles(fileNames, out _);
+			FileNames = OrderFiles(files);
 		}
 
 		public override bool IsFolder => true;
@@ -30,6 +28,18 @@ namespace GamanReader.Model
 			//not needed for folder
 		}
 
+		protected override IEnumerable<string> OrderFilesByDateModified(IEnumerable<FileInfo> files)
+		{
+			return files
+				.OrderBy(f => f.LastWriteTimeUtc)
+				.Select(f => f.FullName);
+		}
+
+		protected override IEnumerable<string> GetFileNames(IEnumerable<FileInfo> files)
+		{
+			return files.Select(f => f.FullName);
+		}
+		
 		public override string GetFile(int index, out string displayName)
 		{
 			displayName = null;

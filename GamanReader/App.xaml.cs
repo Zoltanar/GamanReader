@@ -4,14 +4,11 @@ using System.Windows.Threading;
 
 namespace GamanReader
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App
     {
 		private bool _showingError;
 
-		void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+		private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 		{
 			if (_showingError)
 			{

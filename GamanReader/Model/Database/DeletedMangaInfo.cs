@@ -1,18 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.IO;
+using System.Threading.Tasks;
 
 namespace GamanReader.Model.Database
 {
-	public sealed class DeletedMangaInfo : IFormattable
+	public sealed class DeletedMangaInfo : IMangaItem
 	{
 		#region Properties
 		[Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
 		public long Id { get; set; }
 		public string Name { get; set; }
+		[NotMapped] public int TimesBrowsed => 0;
+		[NotMapped] public bool IsDeleted => true;
+		[NotMapped] public bool IsFavorite => false;
+		[NotMapped] public bool IsBlacklisted => false;
+		[NotMapped] public bool? CantOpen => true;
 		public DateTime DateAdded { get; set; }
+
+#pragma warning disable 1998
+		public async Task<string> EnsureThumbExists() => null;
+		[NotMapped] public bool ThumbnailSet { get; } = true;
+#pragma warning restore 1998
+
 		public DateTime DateDeleted { get; set; }
 		public bool IsFolder { get; set; }
 		// ReSharper disable once InconsistentNaming
@@ -41,7 +51,7 @@ namespace GamanReader.Model.Database
 			FilePath = item.FilePath;
 			FileCount = item.FileCount;
 		}
-		
+
 		public override string ToString() => FileCountString + Name;
 
 		public string ToString(string format, IFormatProvider formatProvider)
@@ -52,21 +62,6 @@ namespace GamanReader.Model.Database
 				"T" => $"[{DateDeleted:yyyyMMdd}]{FileCountString} {Name}",
 				_ => ToString()
 			};
-		}
-
-		[NotMapped]
-		public string InfoString
-		{
-			get
-			{
-				var text = new List<string>
-				{
-					$"{(IsFolder ? "Folder" : Path.GetExtension(FilePath))}",
-					$"{SizeMb:#0.##} MB{(FileCount > 0 ? $" ({SizeMb / FileCount:#0.##} ea)" : "")}",
-					$"{FilePath}"
-				};
-				return string.Join(Environment.NewLine, text);
-			}
 		}
 	}
 }

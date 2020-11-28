@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data.Entity;
 using System.Linq;
 using GamanReader.Model.Database;
 using static GamanReader.Model.StaticHelpers;
@@ -10,18 +11,22 @@ namespace GamanReader.ViewModel
 	public class TagTreeViewModel
 	{
 		public ObservableCollection<TagGroup> TagGroups { get; } = new ObservableCollection<TagGroup>();
-
-		public TagTreeViewModel()
+		
+		public void Initialise(bool loadDatabase)
 		{
-			Refresh();
+			if(loadDatabase) Refresh();
 		}
-
 		public void Refresh()
 		{
 			TagGroups.Clear();
-			TagGroups.Add(GetNode("Auto Tags", LocalDatabase.AutoTags.ToArray().GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
-			TagGroups.Add(GetNode("User Tags", LocalDatabase.UserTags.ToArray().GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
-			TagGroups.Add(GetNode("Aliases", LocalDatabase.Aliases.ToArray().GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase)));
+			LocalDatabase.AutoTags.Load();
+			LocalDatabase.UserTags.Load();
+			LocalDatabase.Aliases.Load();
+			LocalDatabase.FavoriteTags.Load();
+			TagGroups.Add(GetNode("Auto Tags", LocalDatabase.AutoTags.Local.GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
+			TagGroups.Add(GetNode("User Tags", LocalDatabase.UserTags.Local.GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
+			TagGroups.Add(GetNode("Aliases", LocalDatabase.Aliases.Local.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase)));
+			TagGroups.Add(GetNodeForFavoriteTags());
 		}
 
 		private TagGroup GetNode(string header, IEnumerable<IGrouping<string, IndividualTag>> items)
@@ -38,6 +43,28 @@ namespace GamanReader.ViewModel
 			return node;
 		}
 
+		private static TagGroup GetNodeForFavoriteTags()
+		{
+			var parentNode = new TagGroup { Name = "Favorite Tags" };
+			foreach (var favoriteTag in LocalDatabase.FavoriteTags)
+			{
+				parentNode.Items.Add(CreateNodeForFavoriteTag(favoriteTag));
+			}
+			SetHeader(parentNode);
+			return parentNode;
+		}
+
+		private static TagGroup CreateNodeForFavoriteTag(FavoriteTag favoriteTag)
+		{
+			var subItem = new TagGroup {Name = favoriteTag.Tag};
+			var autoItems = LocalDatabase.AutoTags.Local.Where(t => t.Tag == favoriteTag.Tag && t.Item != null);
+			foreach (var item in autoItems) subItem.Items.Add(item.Item);
+			var userItems = LocalDatabase.UserTags.Local.Where(t => t.Tag == favoriteTag.Tag && t.Item != null);
+			foreach (var item in userItems) subItem.Items.Add(item.Item);
+			subItem.Header = $"{favoriteTag.Tag} ({subItem.Items.Count} items)";
+			return subItem;
+		}
+
 		private TagGroup GetNode(string header, IEnumerable<IGrouping<string, Alias>> items)
 		{
 			var node = new TagGroup { Name = header };
@@ -50,6 +77,21 @@ namespace GamanReader.ViewModel
 			}
 			SetHeader(node);
 			return node;
+		}
+
+		public void AddFavoriteTag(FavoriteTag tag)
+		{
+			var favoriteTags = TagGroups[3];
+			favoriteTags.Items.Add(CreateNodeForFavoriteTag(tag));
+			SetHeader(favoriteTags);
+		}
+
+		public void RemoveFavoriteTag(FavoriteTag tag)
+		{
+			var favoriteTags = TagGroups[3];
+			TagGroup thisNode = favoriteTags.Items.Cast<TagGroup>().First(node => node.Name.Equals(tag.Tag));
+			favoriteTags.Items.Remove(thisNode);
+			SetHeader(thisNode);
 		}
 
 		public void AddTag(MangaInfo item, string tag)
@@ -67,6 +109,7 @@ namespace GamanReader.ViewModel
 			thisNode.Items.Add(item);
 			SetHeader(thisNode);
 		}
+
 		public void RemoveTag(MangaInfo item, string tag)
 		{
 			var userGroup = TagGroups[1];
@@ -76,12 +119,13 @@ namespace GamanReader.ViewModel
 			//todo remove node if empty
 		}
 
-		void SetHeader(TagGroup node)
+		private static void SetHeader(TagGroup node)
 		{
 			node.Header = node.Items.Count == 1 ? $"{node.Name} ({node.Items.Count} item)" : $"{node.Name} ({node.Items.Count} items)";
 		}
 
 	}
+
 	public class TagGroup
 	{
 		public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();

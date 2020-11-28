@@ -1,20 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GamanReader.Model.Database;
+using GamanReader.ViewModel;
 
 namespace GamanReader.Model
 {
-	class ZipContainer : ArchiveContainer
+	internal class ZipContainer : ArchiveContainer<ZipArchiveEntry>
 	{
-		public ZipContainer(MangaInfo item, Action onPropertyChanged) : base(item, onPropertyChanged)
+		public ZipContainer(MangaInfo item, Action<string> onPropertyChanged, MainViewModel.PageOrder pageOrder) : base(item, onPropertyChanged, pageOrder)
 		{
 			using var archive = new ZipArchive(File.OpenRead(ContainerPath));
-			var fileNames = OrderFiles(archive.Entries.Select(af => af.Name), out bool usingIntegers);
-			if (false && !usingIntegers) fileNames = archive.Entries.OrderBy(e => e.LastWriteTime).Select(f => f.Name).ToArray();
+			var fileNames = OrderFiles(archive.Entries);
 			FileNames = fileNames;
 		}
 
@@ -50,7 +52,7 @@ namespace GamanReader.Model
 					finally
 					{
 						Extracted++;
-						UpdateExtracted?.Invoke();
+						UpdateExtracted?.Invoke(nameof(Extracted));
 					}
 				}
 			}, token);
@@ -58,19 +60,30 @@ namespace GamanReader.Model
 
 		public override string GetFile(int index, out string displayName)
 		{
+			var watch = Stopwatch.StartNew();
 			displayName = null;
 			if (index == -1) return null;
 			var filename = FileNames[index];
 			displayName = Path.GetFileName(filename);
 			var tempFile = Path.Combine(GeneratedFolder, filename);
 			var fullPath = Path.GetFullPath(tempFile);
-			while (Extracted < index) Thread.Sleep(250);
+			while (Extracted < index && watch.Elapsed.TotalSeconds < 10) Thread.Sleep(250);
 			return fullPath;
 		}
 
 		public override void Dispose()
 		{
 			//nothing needed for this archive type
+		}
+
+		protected override IEnumerable<string> OrderFilesByDateModified(IEnumerable<ZipArchiveEntry> files)
+		{
+			return files.OrderBy(e => e.LastWriteTime).Select(f => f.Name);
+		}
+
+		protected override IEnumerable<string> GetFileNames(IEnumerable<ZipArchiveEntry> files)
+		{
+			return files.Select(f => f.FullName);
 		}
 	}
 }
