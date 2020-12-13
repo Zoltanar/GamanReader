@@ -1,10 +1,14 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using GamanReader.Model.Database;
 using GamanReader.ViewModel;
+using JetBrains.Annotations;
 
 namespace GamanReader.View
 {
@@ -12,15 +16,17 @@ namespace GamanReader.View
 	{
 		private bool _loaded;
 
-		public TagTreePanel()
-		{
-			InitializeComponent();
-		}
+		private MainWindow MainWindow => (MainWindow)Application.Current.MainWindow;
+
+		public TagTreePanel() => InitializeComponent();
 
 		private async void MangaDoubleClicked(object sender, MouseButtonEventArgs e)
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
 			MangaInfo item = preItem.DataContext as MangaInfo;
+			if (item == null) return;
+
+
 			await LoadContainer(item);
 		}
 
@@ -34,18 +40,14 @@ namespace GamanReader.View
 		private async Task LoadContainer(MangaInfo item)
 		{
 			if (item == null) return;
-			var window = (MainWindow)Window.GetWindow(this);
-			Debug.Assert(window != null, nameof(window) + " != null");
-			await window.LoadContainer(item, true);
+			await MainWindow.LoadContainer(item, true);
 		}
 
 		private void AliasDoubleClicked(object sender, MouseButtonEventArgs e)
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
 			if (!(preItem.DataContext is Alias alias)) return;
-			var window = (MainWindow)Window.GetWindow(this);
-			Debug.Assert(window != null, nameof(window) + " != null");
-			((MainViewModel)window.DataContext).Search($"alias:{alias.Name}");
+			((MainViewModel)MainWindow.DataContext).Search($"alias:{alias.Name}");
 		}
 
 		public static TreeViewItem VisualUpwardSearch(DependencyObject source)
@@ -53,13 +55,75 @@ namespace GamanReader.View
 			while (source != null && !(source is TreeViewItem)) source = System.Windows.Media.VisualTreeHelper.GetParent(source);
 			return source as TreeViewItem;
 		}
-		
+
 		private void TagTreePanel_OnLoaded(object sender, RoutedEventArgs e)
 		{
 			if (_loaded) return;
-			var window = (MainWindow)Window.GetWindow(this);
-			(DataContext as TagTreeViewModel).Initialise(window.LoadDatabase);
+			((TagTreeViewModel)DataContext).Initialise(MainWindow.LoadDatabase);
 			_loaded = true;
+		}
+
+		public class TreeViewTemplateSelector : DataTemplateSelector, INotifyPropertyChanged
+		{
+			private bool _showThumbnails;
+
+			public bool ShowThumbnails
+			{
+				get => _showThumbnails;
+				set
+				{
+					_showThumbnails = value;
+					OnPropertyChanged();
+				} 
+			}
+
+			public TreeViewTemplateSelector(bool showThumbnails) => ShowThumbnails = showThumbnails;
+
+			public override DataTemplate SelectTemplate(object item, DependencyObject container)
+			{
+				var element = container as FrameworkElement;
+				Debug.Assert(element != null, nameof(element) + " != null");
+				switch (item)
+				{
+					case TagGroup _:
+						return (DataTemplate) element.FindResource("TagGroupTemplate");
+					case IMangaItem _:
+						return (DataTemplate)Application.Current.FindResource("ItemWithImage");
+					case AutoTag _:
+						return (DataTemplate)element.FindResource("AutoTagTemplate");
+					case Alias _:
+						return (DataTemplate)element.FindResource("AliasTemplate");
+					case FavoriteTag _:
+						return (DataTemplate)element.FindResource("FavoriteTemplate");
+					case null: return null;
+					default: throw new ArgumentOutOfRangeException(item.GetType().ToString());
+				}
+			}
+
+			public event PropertyChangedEventHandler PropertyChanged;
+
+			[NotifyPropertyChangedInvocator]
+			protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+			{
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			}
+		}
+
+		private void TagTree_OnExpanded(object sender, RoutedEventArgs e)
+		{
+			return;
+			var node = (sender as TreeViewItem) ?? (e.OriginalSource as TreeViewItem);
+			if (node == null) return;
+			var thumbsEnabled = ((TagTreeViewModel)DataContext).TemplateSelector.ShowThumbnails;
+			if (!thumbsEnabled) return;
+			foreach (var item in node.Items)
+			{
+				if (item is IMangaItem mangaItem)
+				{
+					if (mangaItem.ThumbnailSet) continue;
+					Task.Run(() => mangaItem.EnsureThumbExists().Result);
+				}
+			}
 		}
 	}
 }

@@ -9,26 +9,35 @@
              d:DesignHeight="300" d:DesignWidth="300"
              Loaded="TagTreePanel_OnLoaded">
     <UserControl.DataContext>
-        <viewModel:TagTreeViewModel/>
+        <viewModel:TagTreeViewModel x:Name="ViewModel"/>
     </UserControl.DataContext>
     <Grid>
-        <TreeView ItemsSource="{Binding TagGroups}">
-            <TreeView.Resources>
-                <HierarchicalDataTemplate DataType="{x:Type viewModel:TagGroup}"  ItemsSource="{Binding Items}">
-                    <TextBlock Foreground="Green" Text="{Binding Name}" />
-                </HierarchicalDataTemplate>
-                <DataTemplate DataType="{x:Type database:MangaInfo}" >
-                    <ListViewItem Style="{StaticResource ColorItems}" Content="{Binding Name}" MouseDoubleClick="MangaDoubleClicked"/>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type database:AutoTag}" >
-                    <ListBoxItem Content="{Binding Item}" MouseDoubleClick="TagDoubleClicked"/>
-				</DataTemplate>
-				<DataTemplate DataType="{x:Type database:Alias}" >
-					<ListBoxItem Content="{Binding Name}" MouseDoubleClick="AliasDoubleClicked"/>
-				</DataTemplate>
-	            <DataTemplate DataType="{x:Type database:FavoriteTag}" >
+        <TreeView ItemsSource="{Binding TagGroups}" x:Name="TagTree" ItemTemplateSelector="{Binding TemplateSelector}" 
+                  TreeViewItem.Expanded="TagTree_OnExpanded"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  MouseDoubleClick="MangaDoubleClicked">
+			<TreeView.Resources>
+				<HierarchicalDataTemplate DataType="{x:Type viewModel:TagGroup}"  ItemsSource="{Binding Items}" x:Key="TagGroupTemplate">
+					<TextBlock Foreground="Green" Text="{Binding Name}" />
+				</HierarchicalDataTemplate>
+				<DataTemplate DataType="{x:Type database:AutoTag}" x:Key="AutoTagTemplate">
+		            <ListBoxItem Content="{Binding Item}" MouseDoubleClick="TagDoubleClicked"/>
+	            </DataTemplate>
+				<DataTemplate DataType="{x:Type database:Alias}" x:Key="AliasTemplate">
+		            <ListBoxItem Content="{Binding Name}" MouseDoubleClick="AliasDoubleClicked"/>
+	            </DataTemplate>
+				<DataTemplate DataType="{x:Type database:FavoriteTag}" x:Key="FavoriteTagTemplate">
 		            <ListBoxItem Content="{Binding Tag}" MouseDoubleClick="AliasDoubleClicked"/>
 	            </DataTemplate>
+				<Style TargetType="TreeViewItem">
+					<Setter Property="ItemsPanel">
+						<Setter.Value>
+							<ItemsPanelTemplate>
+								<WrapPanel />
+							</ItemsPanelTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
 			</TreeView.Resources>
         </TreeView>
     </Grid>

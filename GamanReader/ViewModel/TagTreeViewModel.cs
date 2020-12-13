@@ -1,17 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data.Entity;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using GamanReader.Model.Database;
+using GamanReader.View;
+using JetBrains.Annotations;
 using static GamanReader.Model.StaticHelpers;
 
 namespace GamanReader.ViewModel
 {
-	public class TagTreeViewModel
+	public class TagTreeViewModel : INotifyPropertyChanged
 	{
 		public ObservableCollection<TagGroup> TagGroups { get; } = new ObservableCollection<TagGroup>();
-		
+
+		public TagTreePanel.TreeViewTemplateSelector TemplateSelector { get; set; } = new TagTreePanel.TreeViewTemplateSelector(false);
+
+		[UsedImplicitly]
+		public string LibraryItemFormat { get; set; } = "";
+
 		public void Initialise(bool loadDatabase)
 		{
 			if(loadDatabase) Refresh();
@@ -124,6 +133,13 @@ namespace GamanReader.ViewModel
 			node.Header = node.Items.Count == 1 ? $"{node.Name} ({node.Items.Count} item)" : $"{node.Name} ({node.Items.Count} items)";
 		}
 
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		[NotifyPropertyChangedInvocator]
+		public virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 	}
 
 	public class TagGroup

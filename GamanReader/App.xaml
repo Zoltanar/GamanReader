@@ -92,6 +92,61 @@
 		<system:String x:Key="StopButtonString">⏹</system:String>
 		<system:String x:Key="PlayButtonString">▶</system:String>
 		<view:ToStringFormatConverter x:Key="ToStringFormatConverter" />
+		<DataTemplate x:Key="ItemWithImage" DataType="{x:Type database:IMangaItem}">
+			<Border SnapsToDevicePixels="True" Margin="0">
+				<Border.Style>
+					<Style TargetType="Border">
+						<Style.Triggers>
+							<DataTrigger Binding="{Binding Path=TimesBrowsed}" Value="0">
+								<Setter Property="Background" Value="#77FFD700" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding Path=IsBlacklisted}" Value="True">
+								<Setter Property="Background" Value="#77808080" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
+								<Setter Property="Background" Value="#77FFC0CB" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding Path=CantOpen}" Value="True">
+								<Setter Property="Background" Value="#EEFF0000" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding ShowThumbnail}" Value="False">
+								<Setter Property="BorderThickness" Value="0" />
+								<Setter Property="MaxWidth" Value="850" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding ShowThumbnail}" Value="True">
+								<Setter Property="MaxWidth" Value="200" />
+							</DataTrigger>
+						</Style.Triggers>
+					</Style>
+				</Border.Style>
+				<StackPanel Orientation="Vertical" ContextMenu="{DynamicResource  ItemContextMenu}">
+					<TextBlock TextWrapping="Wrap">
+						<TextBlock.Text>
+							<MultiBinding Converter="{StaticResource ToStringFormatConverter}">
+								<Binding Path="."/>
+								<Binding ElementName="ViewModel" Path="LibraryItemFormat"/>
+							</MultiBinding>
+						</TextBlock.Text>
+					</TextBlock>
+					<Image Source="{Binding Thumbnail, TargetNullValue={x:Null}}" 
+												       Margin="2"
+												       ToolTip="{Binding .}">
+						<Image.Style>
+							<Style TargetType="Image">
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding ShowThumbnail}" Value="False">
+										<Setter Property="Visibility" Value="Collapsed" />
+									</DataTrigger>
+									<DataTrigger Binding="{Binding ShowThumbnail}" Value="True">
+										<Setter Property="Visibility" Value="Visible" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</Image.Style>
+					</Image>
+				</StackPanel>
+			</Border>
+		</DataTemplate>
 	</Application.Resources>
 	<JumpList.JumpList>
 		<JumpList ShowRecentCategory="True"/>

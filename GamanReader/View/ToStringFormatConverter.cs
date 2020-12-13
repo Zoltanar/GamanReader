@@ -11,10 +11,11 @@ namespace GamanReader.View
 		{
 			public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
 		{
-
-			if (values.Length == 1) return values[0].ToString();
-			if (values.Length >= 2 && values[0] is IFormattable formatValue) return formatValue.ToString((string)values[1], culture);
-			return null;
+			if (values.Length >= 2 && values[0] is IFormattable formatValue  && values[1] is string sValue && !string.IsNullOrWhiteSpace(sValue))
+			{
+				return formatValue.ToString(sValue, culture);
+			}
+			return values[0].ToString(); ;
 			}
 
 			public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

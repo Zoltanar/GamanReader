@@ -24,6 +24,9 @@ namespace GamanReader.ViewModel
 {
 	public class MainViewModel : INotifyPropertyChanged
 	{
+		public delegate void MyEventAction(MangaInfo item);
+		public event MyEventAction RefreshTextBox;
+
 		public MainViewModel()
 		{
 			TitleText = "GamanReader";
@@ -61,7 +64,6 @@ namespace GamanReader.ViewModel
 
 		public const int MaxListItems = 100;
 		#region Properties
-		public Container ContainerModel { get; private set; }
 		private string _rtlToggleText;
 		private string _pageModeText;
 		private string _pageOrderText;
@@ -77,10 +79,6 @@ namespace GamanReader.ViewModel
 		private RecentItemList<IMangaItem> _lastAdded = new RecentItemList<IMangaItem>();
 		private RecentItemList<IMangaItem> _mostBrowsed = new RecentItemList<IMangaItem>();
 		private RecentItemList<IMangaItem> _notBrowsed = new RecentItemList<IMangaItem>();
-		private object _singleImageSource;
-		private object _leftImageSource;
-		private object _rightImageSource;
-		private MangaInfo _mangaInfo;
 		private string _searchText;
 
 		public string TitleText { get => _titleText; set { _titleText = value; OnPropertyChanged(); } }
@@ -109,7 +107,6 @@ namespace GamanReader.ViewModel
 		public string PageModeText { get => _pageModeText; set { _pageModeText = value; OnPropertyChanged(); } }
 		public string PageOrderText { get => _pageOrderText; set { _pageOrderText = value; OnPropertyChanged(); } }
 		public string IndexLabelText { get => _indexLabelText; set { _indexLabelText = value; OnPropertyChanged(); } }
-		public string[] Pages => ContainerModel?.FileNames.Select((f, i) => $"[{i:000}] {f}").ToArray() ?? Array.Empty<string>();
 		public bool RtlIsChecked
 		{
 			get => _rtlIsChecked;
@@ -165,68 +162,6 @@ namespace GamanReader.ViewModel
 				}
 			}
 		}
-		public object SingleImageSource
-		{
-			get => _singleImageSource ?? DependencyProperty.UnsetValue;
-			set
-			{
-				if (_singleImageSource == value) return;
-				_singleImageSource = value;
-				if (value != null)
-				{
-					LeftImageSource = null;
-					RightImageSource = null;
-				}
-				OnPropertyChanged();
-			}
-		}
-		public object LeftImageSource
-		{
-			get => _leftImageSource ?? DependencyProperty.UnsetValue;
-			set
-			{
-				if (_leftImageSource == value) return;
-				if (value != null) SingleImageSource = null;
-				_leftImageSource = value;
-				OnPropertyChanged();
-			}
-		}
-		public object RightImageSource
-		{
-			get => _rightImageSource ?? DependencyProperty.UnsetValue;
-			set
-			{
-				if (_rightImageSource == value) return;
-				if (value != null) SingleImageSource = null;
-				_rightImageSource = value;
-				OnPropertyChanged();
-			}
-		}
-		public MangaInfo MangaInfo
-		{
-			get => _mangaInfo;
-			set
-			{
-				_mangaInfo = value;
-				RefreshTextBox?.Invoke(_mangaInfo);
-				OnPropertyChanged();
-				OnPropertyChanged(nameof(IsFavorite));
-				OnPropertyChanged(nameof(IsBlacklist));
-				OnPropertyChanged(nameof(Pages));
-			}
-		}
-		public int CurrentIndex
-		{
-			get => ContainerModel?.CurrentIndex ?? -1;
-			set
-			{
-				ContainerModel.CurrentIndex = value;
-				OnPropertyChanged(nameof(CurrentPage));
-				SliderPage = value + 1;
-			}
-		}
-		public int CurrentPage => (ContainerModel?.CurrentIndex ?? -1) + 1;
-		public int TotalFiles => ContainerModel?.TotalFiles ?? 1;
 		private bool DisplayingOnePage => RightImageSource == DependencyProperty.UnsetValue || LeftImageSource == DependencyProperty.UnsetValue;
 		public string SearchText { get => _searchText; set { _searchText = value; OnPropertyChanged(); } }
 		public int AutoPlaySpeed { get; set; } = 1000;
@@ -295,8 +230,80 @@ namespace GamanReader.ViewModel
 			}
 		}
 
-		public delegate void MyEventAction(MangaInfo item);
-		public event MyEventAction RefreshTextBox;
+		#endregion
+
+		#region Container-related Properties
+
+		private object _singleImageSource;
+		private object _leftImageSource;
+		private object _rightImageSource;
+		private MangaInfo _mangaInfo;
+
+		public Container ContainerModel { get; private set; }
+		public object SingleImageSource
+		{
+			get => _singleImageSource ?? DependencyProperty.UnsetValue;
+			set
+			{
+				if (_singleImageSource == value) return;
+				_singleImageSource = value;
+				if (value != null)
+				{
+					LeftImageSource = null;
+					RightImageSource = null;
+				}
+				OnPropertyChanged();
+			}
+		}
+		public object LeftImageSource
+		{
+			get => _leftImageSource ?? DependencyProperty.UnsetValue;
+			set
+			{
+				if (_leftImageSource == value) return;
+				if (value != null) SingleImageSource = null;
+				_leftImageSource = value;
+				OnPropertyChanged();
+			}
+		}
+		public object RightImageSource
+		{
+			get => _rightImageSource ?? DependencyProperty.UnsetValue;
+			set
+			{
+				if (_rightImageSource == value) return;
+				if (value != null) SingleImageSource = null;
+				_rightImageSource = value;
+				OnPropertyChanged();
+			}
+		}
+		public MangaInfo MangaInfo
+		{
+			get => _mangaInfo;
+			set
+			{
+				_mangaInfo = value;
+				RefreshTextBox?.Invoke(_mangaInfo);
+				OnPropertyChanged();
+				OnPropertyChanged(nameof(IsFavorite));
+				OnPropertyChanged(nameof(IsBlacklist));
+				OnPropertyChanged(nameof(Pages));
+			}
+		}
+		public int CurrentIndex
+		{
+			get => ContainerModel?.CurrentIndex ?? -1;
+			set
+			{
+				ContainerModel.CurrentIndex = value;
+				OnPropertyChanged(nameof(CurrentPage));
+				SliderPage = value + 1;
+			}
+		}
+		public int CurrentPage => (ContainerModel?.CurrentIndex ?? -1) + 1;
+		public int TotalFiles => ContainerModel?.TotalFiles ?? 1;
+		public string[] Pages => ContainerModel?.FileNames.Select((f, i) => $"[{i:000}] {f}").ToArray() ?? Array.Empty<string>();
+		public ObservableCollection<PageTag> TaggedPages => ContainerModel.PageTags.Local;
 
 		#endregion
 
@@ -718,6 +725,7 @@ namespace GamanReader.ViewModel
 			var searchString = (searchParts.Length == 2 ? searchParts[1] : SearchText).Trim().ToLower();
 			IEnumerable<MangaInfo> activeResults;
 			IEnumerable<DeletedMangaInfo> deletedResults;
+			// ReSharper disable AssignNullToNotNullAttribute
 			switch (type)
 			{
 				case "alias":
@@ -741,6 +749,7 @@ namespace GamanReader.ViewModel
 				default:
 					throw new ArgumentException("Argument is invalid.");
 			}
+			// ReSharper restore AssignNullToNotNullAttribute
 			var results = activeResults.AsEnumerable<IMangaItem>().Concat(deletedResults);
 			if (NoBlacklisted) results = results.Where(x => x is MangaInfo mi && !mi.IsBlacklisted);
 			var resultArray = results.Distinct().OrderByDescending(x => x.DateAdded);

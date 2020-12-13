@@ -36,7 +36,7 @@ namespace GamanReader.View
 		[NotNull] private readonly MainViewModel _mainModel;
 		private bool _fullscreenOn;
 
-		private string PathToOpenOnInitialise;
+		private string _pathToOpenOnInitialise;
 
 		public MainWindow()
 		{
@@ -59,7 +59,7 @@ namespace GamanReader.View
 			if (args.Length > 1)
 			{
 				LoadDatabase = false;
-				PathToOpenOnInitialise = args[1];
+				_pathToOpenOnInitialise = args[1];
 			}
 
 			_mainModel.RefreshTextBox += RefreshTextBox;
@@ -120,7 +120,7 @@ namespace GamanReader.View
 
 		private async Task OpenContainerOrFile(string containerPath)
 		{
-			var saveToDatabase = false;
+			const bool saveToDatabase = false;
 			string openAtFile = null;
 			if (File.Exists(containerPath) && Container.RecognizedExtensions.Contains(Path.GetExtension(containerPath)))
 			{
@@ -284,23 +284,11 @@ namespace GamanReader.View
 
 		private void ToggleThumbnails(bool showThumbs)
 		{
-			if (showThumbs)
+			MangaInfo.ShowThumbnailForAll = showThumbs;
+			foreach (var item in _mainModel.LibraryItems.Concat(TagPanel.TagTree.Items.OfType<IMangaItem>()))
 			{
-				foreach (var item in _mainModel.LibraryItems)
-				{
-					MainViewModel.GetThumbInBackground(item);
-				}
-				ScrollViewer.SetHorizontalScrollBarVisibility(LibraryItems, ScrollBarVisibility.Disabled);
-				LibraryItems.ItemContainerStyle = null;
-				LibraryItems.ItemTemplate = (DataTemplate)LibraryItems.FindResource("ItemWithImage");
-				LibraryItems.ItemsPanel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(WrapPanel)));
-			}
-			else
-			{
-				ScrollViewer.SetHorizontalScrollBarVisibility(LibraryItems, ScrollBarVisibility.Auto);
-				LibraryItems.ItemTemplate = null;
-				LibraryItems.ItemContainerStyle = (Style)this.FindResource("ColorItems");
-				LibraryItems.ItemsPanel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(VirtualizingStackPanel)));
+				if (showThumbs) MainViewModel.GetThumbInBackground(item);
+				item.OnPropertyChanged(nameof(IMangaItem.ShowThumbnail));
 			}
 			_mainModel.OnPropertyChanged(nameof(_mainModel.LibraryItems));
 		}
@@ -461,6 +449,7 @@ namespace GamanReader.View
 				}
 				location = location.Parent;
 			}
+			if (location == null) throw new DirectoryNotFoundException($"Could not find any existing directory in path '{item.FilePath}'");
 			Process.Start("explorer", $"\"{location.FullName}\"");
 		}
 
@@ -552,9 +541,9 @@ namespace GamanReader.View
 		private async void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
 		{
 			if (_loaded) return;
-			if (!string.IsNullOrWhiteSpace(PathToOpenOnInitialise)) await OpenContainerOrFile(PathToOpenOnInitialise);
+			if (!string.IsNullOrWhiteSpace(_pathToOpenOnInitialise)) await OpenContainerOrFile(_pathToOpenOnInitialise);
 			_mainModel.Initialise(LoadDatabase);
-			PathToOpenOnInitialise = null;
+			_pathToOpenOnInitialise = null;
 			_loaded = true;
 			var timeToLoad = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
 			_mainModel.ReplyText = $"Time to load: {timeToLoad.TotalSeconds:#0.###} seconds.";

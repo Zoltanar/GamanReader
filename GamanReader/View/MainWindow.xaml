@@ -138,25 +138,6 @@
 				<Trigger Property="IsChecked" Value="True"/>
 			</Style.Triggers>
 		</Style>
-		<Style x:Key="ColorTextBlock" TargetType="{x:Type StackPanel}" >
-			<d:Style.DataContext>
-				<x:Type Type="database:MangaInfo"/>
-			</d:Style.DataContext>
-			<Style.Triggers>
-				<DataTrigger Binding="{Binding Path=TimesBrowsed}" Value="0">
-					<Setter Property="Background" Value="#77FFD700" />
-				</DataTrigger>
-				<DataTrigger Binding="{Binding Path=IsBlacklisted}" Value="True">
-					<Setter Property="Background" Value="#77808080" />
-				</DataTrigger>
-				<DataTrigger Binding="{Binding Path=IsFavorite}" Value="True">
-					<Setter Property="Background" Value="#77FFC0CB" />
-				</DataTrigger>
-				<DataTrigger Binding="{Binding Path=CantOpen}" Value="True">
-					<Setter Property="Background" Value="#EEFF0000" />
-				</DataTrigger>
-			</Style.Triggers>
-		</Style>
 		<ContextMenu x:Key="ItemContextMenu" Opened="ItemContextMenu_OnOpened">
 			<MenuItem Header="Delete Data, Add To Deleted Items" ToolTip="When you wish to delete from file system and want to add it to the list of deleted items." Click="DeleteItemAndAddToDeleted"/>
 			<MenuItem Header="Delete Data, Don't Add To Deleted Items" ToolTip="When you wish to delete from file system but do not want to add it to the list of deleted items." Click="DeleteItemWithoutAddingToDeleted"/>
@@ -168,7 +149,7 @@
 		</ContextMenu>
 	</Window.Resources>
 	<Window.DataContext>
-		<viewModel:MainViewModel/>
+		<viewModel:MainViewModel x:Name="ViewModel"/>
 	</Window.DataContext>
 	<Grid>
 		<DockPanel Grid.Row="0">
@@ -215,37 +196,21 @@
 							<TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp" DockPanel.Dock="Top" Visibility="{Binding LibrarySearchVisibility}"/>
 							<ListView x:Name="LibraryItems"
 								ItemsSource="{Binding LibraryItems, NotifyOnTargetUpdated=True}" 
-								ItemContainerStyle="{StaticResource ColorItems}"
-								ItemStringFormat="{Binding LibraryItemFormat}" 
+								ItemTemplate="{DynamicResource ItemWithImage}"
 								MouseDoubleClick="OpenItemFromListBox" 
 								Background="#CCFFFFFF" 
 								DockPanel.Dock="Bottom"
 								ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-								<ListView.Resources>
-									<DataTemplate x:Key="ItemWithImage">
-										<d:DataTemplate.DataContext>
-											<x:Type Type="database:MangaInfo"/>
-										</d:DataTemplate.DataContext>
-										<Border BorderBrush="Transparent" BorderThickness="2" 
-										        Background="Transparent"
-										        SnapsToDevicePixels="true">
-											<StackPanel Orientation="Vertical" MaxWidth="200" 
-											            ContextMenu="{DynamicResource  ItemContextMenu}" Style="{StaticResource ColorTextBlock}">
-												<TextBlock TextWrapping="Wrap">
-													<TextBlock.Text>
-														<MultiBinding Converter="{StaticResource ToStringFormatConverter}">
-															<Binding Path="."/>
-															<Binding ElementName="LibraryItems" Path="ItemStringFormat"/>
-														</MultiBinding>
-													</TextBlock.Text>
-												</TextBlock>
-												<Image Source="{Binding Thumbnail, TargetNullValue={x:Null}}" 
-												       Margin="2"
-												       ToolTip="{Binding .}"/>
-											</StackPanel>
-										</Border>
-									</DataTemplate>
-								</ListView.Resources>
+								<ListView.ItemContainerStyle>
+									<Style TargetType="ListViewItem">
+										<Setter Property="Padding" Value="0"/>
+										<Setter Property="Margin" Value="0"/>
+										<Setter Property="BorderThickness" Value="0"/>
+									</Style>
+								</ListView.ItemContainerStyle>
+								<ListView.ItemsPanel>
+									<ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+								</ListView.ItemsPanel>
 							</ListView>
 						</DockPanel>
 					</TabItem>
@@ -305,6 +270,7 @@
 						<TextBlock Text="{Binding ReplyText}" MaxHeight="150" Background="#FF67E6CF" Padding="0" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" Margin="0,5"/>
 						<TextBlock Text="{Binding MangaInfo.InfoString}" Background="#FF67E6CF" Padding="0" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
 						<TextBox TextWrapping="Wrap" Text="{Binding MangaInfo.Notes}" Height="76" SelectionChanged="TextBox_SelectionChanged" Margin="0,5" />
+						<DataGrid CanUserAddRows="True" ItemsSource="{Binding TaggedPages}"/>
 						<TextBlock x:Name="InfoBox" TextWrapping="Wrap" Foreground="White" />
 					</StackPanel>
 

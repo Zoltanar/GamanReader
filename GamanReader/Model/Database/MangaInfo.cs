@@ -59,6 +59,7 @@ namespace GamanReader.Model.Database
 		public bool IsFolder { get; set; }
 		public virtual ICollection<AutoTag> AutoTags { get; set; }
 		public virtual ICollection<UserTag> UserTags { get; set; }
+		public virtual ICollection<PageTag> PageTags { get; set; }
 
 		// ReSharper disable once InconsistentNaming
 		public string CRC32 { get; set; }
@@ -185,6 +186,10 @@ namespace GamanReader.Model.Database
 		[NotMapped] private DateTime LastModified => IsFolder ? new DirectoryInfo(FilePath).LastWriteTime : new FileInfo(FilePath).LastWriteTime;
 
 		[NotMapped] public bool ThumbnailSet { get; private set; }
+
+		public static bool ShowThumbnailForAll { get; set; }
+
+		[NotMapped] public bool ShowThumbnail => ShowThumbnailForAll;
 		private string _thumbnail;
 
 		public string Thumbnail => !ShowThumbs ? null : _thumbnail;

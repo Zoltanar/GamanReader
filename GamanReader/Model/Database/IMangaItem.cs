@@ -1,9 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
 namespace GamanReader.Model.Database
 {
-	public interface IMangaItem : IFormattable
+	public interface IMangaItem : IFormattable, INotifyPropertyChanged
 	{
 		long Id { get; }
 		string Name { get; }
@@ -13,7 +14,10 @@ namespace GamanReader.Model.Database
 		bool IsBlacklisted { get; }
 		bool? CantOpen { get;}
 		DateTime DateAdded { get; }
+		string Thumbnail { get; }
 		Task<string> EnsureThumbExists();
 		bool ThumbnailSet { get; }
+		bool ShowThumbnail { get; }
+		void OnPropertyChanged(string propertyName);
 	}
 }

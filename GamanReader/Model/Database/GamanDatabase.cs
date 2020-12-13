@@ -6,11 +6,9 @@ using System.Data.Entity.Infrastructure.Interception;
 using System.Diagnostics;
 using SQLite.CodeFirst;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows;
 using GamanReader.ViewModel;
-using JetBrains.Annotations;
 
 // ReSharper disable VirtualMemberCallInConstructor
 
@@ -23,14 +21,15 @@ namespace GamanReader.Model.Database
 		public GamanDatabase() : base("TagDatabase")
 		{ }
 
-		[NotNull] public DbSet<LibraryFolder> Libraries { get; set; }
-		[NotNull] public DbSet<MangaInfo> Items { get; set; }
-		[NotNull] public DbSet<DeletedMangaInfo> DeletedItems { get; set; }
-		[NotNull] public DbSet<Alias> Aliases { get; set; }
+		public DbSet<LibraryFolder> Libraries { get; set; }
+		public DbSet<MangaInfo> Items { get; set; }
+		public DbSet<DeletedMangaInfo> DeletedItems { get; set; }
+		public DbSet<Alias> Aliases { get; set; }
 		public DbSet<AliasTag> AliasTags { get; set; }
-		[NotNull] public DbSet<AutoTag> AutoTags { get; set; }
-		[NotNull] public DbSet<UserTag> UserTags { get; set; }
-		[NotNull] public DbSet<FavoriteTag> FavoriteTags { get; set; }
+		public DbSet<AutoTag> AutoTags { get; set; }
+		public DbSet<UserTag> UserTags { get; set; }
+		public DbSet<FavoriteTag> FavoriteTags { get; set; }
+		public DbSet<PageTag> PageTags { get; set; }
 		public LibraryFolder DefaultLibrary { get; set; }
 
 		static GamanDatabase()
@@ -165,7 +164,7 @@ Press cancel to skip this message (will default to adding).",
 			int result = base.SaveChanges();
 			var caller = new StackFrame(1).GetMethod();
 			var callerName = $"{caller.DeclaringType?.Name}.{caller.Name}";
-			Debug.WriteLine($"{System.DateTime.Now.ToShortTimeString()} - {nameof(GamanDatabase)}.{nameof(SaveChanges)} called by {callerName} - returned {result}");
+			Debug.WriteLine($"{DateTime.Now.ToShortTimeString()} - {nameof(GamanDatabase)}.{nameof(SaveChanges)} called by {callerName} - returned {result}");
 			return result;
 		}
 

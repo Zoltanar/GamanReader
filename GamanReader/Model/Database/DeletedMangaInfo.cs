@@ -1,11 +1,14 @@
 ﻿using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace GamanReader.Model.Database
 {
-	public sealed class DeletedMangaInfo : IMangaItem
+	public sealed class DeletedMangaInfo : IMangaItem, INotifyPropertyChanged
 	{
 		#region Properties
 		[Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -19,8 +22,10 @@ namespace GamanReader.Model.Database
 		public DateTime DateAdded { get; set; }
 
 #pragma warning disable 1998
+		public string Thumbnail => null;
 		public async Task<string> EnsureThumbExists() => null;
 		[NotMapped] public bool ThumbnailSet { get; } = true;
+		public bool ShowThumbnail => false;
 #pragma warning restore 1998
 
 		public DateTime DateDeleted { get; set; }
@@ -62,6 +67,14 @@ namespace GamanReader.Model.Database
 				"T" => $"[{DateDeleted:yyyyMMdd}]{FileCountString} {Name}",
 				_ => ToString()
 			};
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		[NotifyPropertyChangedInvocator]
+		public void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 	}
 }

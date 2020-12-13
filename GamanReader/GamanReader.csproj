@@ -184,6 +184,7 @@
     <Compile Include="Model\FolderContainer.cs" />
     <Compile Include="Model\Database\LibraryFolder.cs" />
     <Compile Include="Model\Database\MangaInfo.cs" />
+    <Compile Include="Model\Database\PageTag.cs" />
     <Compile Include="Model\RarContainer.cs" />
     <Compile Include="Model\RecentItemList.cs" />
     <Compile Include="Model\ZipContainer.cs" />
