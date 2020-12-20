@@ -108,22 +108,5 @@ namespace GamanReader.View
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 			}
 		}
-
-		private void TagTree_OnExpanded(object sender, RoutedEventArgs e)
-		{
-			return;
-			var node = (sender as TreeViewItem) ?? (e.OriginalSource as TreeViewItem);
-			if (node == null) return;
-			var thumbsEnabled = ((TagTreeViewModel)DataContext).TemplateSelector.ShowThumbnails;
-			if (!thumbsEnabled) return;
-			foreach (var item in node.Items)
-			{
-				if (item is IMangaItem mangaItem)
-				{
-					if (mangaItem.ThumbnailSet) continue;
-					Task.Run(() => mangaItem.EnsureThumbExists().Result);
-				}
-			}
-		}
 	}
 }

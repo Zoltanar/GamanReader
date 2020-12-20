@@ -214,6 +214,13 @@ Press cancel to skip this message (will default to adding).",
 			item.OnPropertyChanged(null);
 		}
 
+		public void RemovePageTag(PageTag pageTag)
+		{
+			pageTag.Item.PageTags.Remove(pageTag);
+			PageTags.Remove(pageTag);
+			SaveChanges();
+		}
+
 		private class SqliteInterceptCharIndex : IDbCommandInterceptor
 		{
 			private static readonly Regex ReplaceRegex = new Regex(@"\(CHARINDEX\((.*?),\s?(.*?)\)\)\s*?>\s*?0");

@@ -13,7 +13,6 @@
     </UserControl.DataContext>
     <Grid>
         <TreeView ItemsSource="{Binding TagGroups}" x:Name="TagTree" ItemTemplateSelector="{Binding TemplateSelector}" 
-                  TreeViewItem.Expanded="TagTree_OnExpanded"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                   MouseDoubleClick="MangaDoubleClicked">
 			<TreeView.Resources>

@@ -6,7 +6,6 @@
         xmlns:view="clr-namespace:GamanReader.View"
         xmlns:viewModel="clr-namespace:GamanReader.ViewModel"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
-        xmlns:database="clr-namespace:GamanReader.Model.Database"
         mc:Ignorable="d"
         Title="{Binding TitleText}" 
         Height="900" Width="1260" Background="#FF4D1D1D" 
@@ -270,7 +269,16 @@
 						<TextBlock Text="{Binding ReplyText}" MaxHeight="150" Background="#FF67E6CF" Padding="0" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" Margin="0,5"/>
 						<TextBlock Text="{Binding MangaInfo.InfoString}" Background="#FF67E6CF" Padding="0" TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" />
 						<TextBox TextWrapping="Wrap" Text="{Binding MangaInfo.Notes}" Height="76" SelectionChanged="TextBox_SelectionChanged" Margin="0,5" />
-						<DataGrid CanUserAddRows="True" ItemsSource="{Binding TaggedPages}"/>
+						<Button Content="Tag Page" Click="TagPageClick" IsEnabled="{Binding CurrentPageNotTagged}"/>
+						<DataGrid ItemsSource="{Binding TaggedPages}" 
+						          CanUserAddRows="True" CanUserDeleteRows="True"  
+						          SelectionChanged="PageTagSelected"
+											PreviewKeyDown="DeletePageTag"
+						          AutoGenerateColumns="False">
+							<DataGrid.Columns>
+								<DataGridTextColumn Header="Page No." Binding="{Binding Index}"/>
+							</DataGrid.Columns>
+						</DataGrid>
 						<TextBlock x:Name="InfoBox" TextWrapping="Wrap" Foreground="White" />
 					</StackPanel>
 

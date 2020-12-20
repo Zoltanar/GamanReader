@@ -32,6 +32,7 @@ namespace GamanReader.ViewModel
 			LocalDatabase.UserTags.Load();
 			LocalDatabase.Aliases.Load();
 			LocalDatabase.FavoriteTags.Load();
+			LocalDatabase.PageTags.Load();
 			TagGroups.Add(GetNode("Auto Tags", LocalDatabase.AutoTags.Local.GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
 			TagGroups.Add(GetNode("User Tags", LocalDatabase.UserTags.Local.GroupBy(i => i.Tag, StringComparer.OrdinalIgnoreCase)));
 			TagGroups.Add(GetNode("Aliases", LocalDatabase.Aliases.Local.GroupBy(i => i.Name, StringComparer.OrdinalIgnoreCase)));

@@ -90,6 +90,7 @@ namespace GamanReader.Model.Database
 		{
 			AutoTags = new HashSet<AutoTag>();
 			UserTags = new HashSet<UserTag>();
+			PageTags = new HashSet<PageTag>();
 			DateAdded = DateTime.Now;
 			// ReSharper disable once PossibleNullReferenceException
 			Name = Path.GetFileNameWithoutExtension(filePath).Trim();
@@ -107,7 +108,6 @@ namespace GamanReader.Model.Database
 			}
 			foreach (Match match in matches2) AutoTags.Add(new AutoTag(match.Groups[1].Value.Trim()));
 			foreach (Match match in matches3) AutoTags.Add(new AutoTag(match.Groups[1].Value.Trim()));
-
 		}
 
 		/// <summary>

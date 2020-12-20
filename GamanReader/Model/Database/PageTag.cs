@@ -4,7 +4,7 @@
 	{
 		public int Id { get; set; }
 
-		public int ItemId { get; set; }
+		public long ItemId { get; set; }
 
 		public int Index { get; set; }
 

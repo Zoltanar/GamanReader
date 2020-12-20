@@ -548,5 +548,28 @@ namespace GamanReader.View
 			var timeToLoad = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
 			_mainModel.ReplyText = $"Time to load: {timeToLoad.TotalSeconds:#0.###} seconds.";
 		}
+		
+		private void TagPageClick(object sender, RoutedEventArgs e)
+		{
+			_mainModel.MangaInfo.PageTags.Add(new PageTag{Index = _mainModel.CurrentPage});
+			LocalDatabase.SaveChanges();
+			_mainModel.OnPropertyChanged(nameof(_mainModel.TaggedPages));
+			_mainModel.OnPropertyChanged(nameof(_mainModel.CurrentPageNotTagged));
+		}
+
+		private void PageTagSelected(object sender, SelectionChangedEventArgs e)
+		{
+			if (e.AddedItems.Count == 0 || !(e.AddedItems[0] is PageTag pageTag)) return;
+			_mainModel.GoToPage(pageTag.Index);
+		}
+
+		private void DeletePageTag(object sender, KeyEventArgs e)
+		{
+			if (e.Key != Key.Delete) return;
+			var grid = (DataGrid) sender;
+			if (grid.SelectedItems.Count == 0 || !(grid.SelectedItems[0] is PageTag pageTag)) return;
+			LocalDatabase.RemovePageTag(pageTag);
+			_mainModel.OnPropertyChanged(nameof(_mainModel.CurrentPageNotTagged));
+		}
 	}
 }

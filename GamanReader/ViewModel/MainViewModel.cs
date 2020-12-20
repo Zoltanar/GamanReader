@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using GamanReader.Model;
 using GamanReader.Model.Database;
@@ -242,7 +241,7 @@ namespace GamanReader.ViewModel
 		public Container ContainerModel { get; private set; }
 		public object SingleImageSource
 		{
-			get => _singleImageSource ?? DependencyProperty.UnsetValue;
+			get => _singleImageSource ??  DependencyProperty.UnsetValue;
 			set
 			{
 				if (_singleImageSource == value) return;
@@ -286,8 +285,8 @@ namespace GamanReader.ViewModel
 				RefreshTextBox?.Invoke(_mangaInfo);
 				OnPropertyChanged();
 				OnPropertyChanged(nameof(IsFavorite));
-				OnPropertyChanged(nameof(IsBlacklist));
 				OnPropertyChanged(nameof(Pages));
+				OnPropertyChanged(nameof(TaggedPages));
 			}
 		}
 		public int CurrentIndex
@@ -297,21 +296,22 @@ namespace GamanReader.ViewModel
 			{
 				ContainerModel.CurrentIndex = value;
 				OnPropertyChanged(nameof(CurrentPage));
+				OnPropertyChanged(nameof(CurrentPageNotTagged));
 				SliderPage = value + 1;
 			}
 		}
 		public int CurrentPage => (ContainerModel?.CurrentIndex ?? -1) + 1;
 		public int TotalFiles => ContainerModel?.TotalFiles ?? 1;
 		public string[] Pages => ContainerModel?.FileNames.Select((f, i) => $"[{i:000}] {f}").ToArray() ?? Array.Empty<string>();
-		public ObservableCollection<PageTag> TaggedPages => ContainerModel.PageTags.Local;
+		public ObservableCollection<PageTag> TaggedPages => MangaInfo == null ? new ObservableCollection<PageTag>() : new ObservableCollection<PageTag>(MangaInfo.PageTags);
+		public bool CurrentPageNotTagged => MangaInfo == null ? false : MangaInfo.PageTags.All(i => i.Index != CurrentPage);
 
 		#endregion
 
 		private void PopulateBox(ImageBox imageBox, int index)
 		{
 			var filename = ContainerModel.GetFile(index, out var displayName);
-			var image = new BitmapImage(new Uri(filename));
-			PopulateBox(imageBox, index, image, displayName);
+			PopulateBox(imageBox, index, new Uri(filename), displayName);
 		}
 
 		private void PopulateEmpty(ImageBox imageBox)
@@ -319,24 +319,24 @@ namespace GamanReader.ViewModel
 			PopulateBox(imageBox, -1, null, null);
 		}
 
-		private void PopulateBox(ImageBox imageBox, int index, BitmapImage image, string displayName)
+		private void PopulateBox(ImageBox imageBox, int index, Uri imageUri, string displayName)
 		{
-			SetImage(imageBox, image);
+			SetImage(imageBox, imageUri);
 			SetLabelText(imageBox, string.IsNullOrWhiteSpace(displayName) ? string.Empty : $"({index + 1}) {displayName}");
 		}
 
-		private void SetImage(ImageBox boxForImage, ImageSource image)
+		private void SetImage(ImageBox boxForImage, Uri imageUri)
 		{
 			switch (boxForImage)
 			{
 				case ImageBox.Single:
-					SingleImageSource = image;
+					SingleImageSource = imageUri;
 					return;
 				case ImageBox.Left:
-					LeftImageSource = image;
+					LeftImageSource = imageUri;
 					return;
 				case ImageBox.Right:
-					RightImageSource = image;
+					RightImageSource = imageUri;
 					return;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(boxForImage), boxForImage, null);
@@ -498,7 +498,7 @@ namespace GamanReader.ViewModel
 					var img1 = GetImage(filename);
 					var ratio1 = img1.Width / img1.Height;
 					var imageBox1 = ratio1 > 1 || ratio2 > 1 ? ImageBox.Single : (RtlIsChecked ? ImageBox.Right : ImageBox.Left);
-					PopulateBox(imageBox1, CurrentIndex, img1, displayName);
+					PopulateBox(imageBox1, CurrentIndex, img1.UriSource, displayName);
 					if (ratio1 > 1 || ratio2 > 1)
 					{
 						LeftImageSource = null;
@@ -520,7 +520,7 @@ namespace GamanReader.ViewModel
 				return;
 			}
 			if (ratio2 > 1) PopulateEmpty(imageBox2);
-			else PopulateBox(imageBox2, CurrentIndex + 1, img2, displayName2);
+			else PopulateBox(imageBox2, CurrentIndex + 1, img2.UriSource, displayName2);
 		}
 
 		private void PopulateLastImage()
@@ -529,16 +529,17 @@ namespace GamanReader.ViewModel
 			var image = GetImage(filename);
 			if (image.Width > image.Height)
 			{
-				PopulateBox(ImageBox.Single, CurrentIndex, image, displayName);
+				PopulateBox(ImageBox.Single, CurrentIndex, image.UriSource, displayName);
 			}
 			else
 			{
-				PopulateBox(RtlIsChecked ? ImageBox.Right : ImageBox.Left, CurrentIndex, image, displayName);
+				PopulateBox(RtlIsChecked ? ImageBox.Right : ImageBox.Left, CurrentIndex, image.UriSource, displayName);
 				if (RtlIsChecked) LeftImageSource = null;
 				else RightImageSource = null;
 				SetLabelText(RtlIsChecked ? ImageBox.Left : ImageBox.Right, "(none)");
 			}
 		}
+
 
 		private static BitmapImage GetImage(string filename)
 		{
@@ -771,19 +772,7 @@ namespace GamanReader.ViewModel
 				OnPropertyChanged();
 			}
 		}
-
-		public bool IsBlacklist
-		{
-			get => MangaInfo?.IsBlacklisted ?? false;
-			set
-			{
-				if (value == MangaInfo.UserTags.Any(x => x.Tag.ToLower().Equals(BlacklistedTagString))) return;
-				if (value) LocalDatabase.AddTag(MangaInfo, BlacklistedTagString);
-				else LocalDatabase.RemoveTag(MangaInfo, BlacklistedTagString);
-				OnPropertyChanged();
-			}
-		}
-
+		
 		private DisplayPanel _displayedPanel = DisplayPanel.Library;
 
 		public object DisplayedPanel
