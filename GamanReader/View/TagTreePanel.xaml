@@ -13,8 +13,7 @@
     </UserControl.DataContext>
     <Grid>
         <TreeView ItemsSource="{Binding TagGroups}" x:Name="TagTree" ItemTemplateSelector="{Binding TemplateSelector}" 
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                  MouseDoubleClick="MangaDoubleClicked">
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" MouseDoubleClick="MangaDoubleClicked">
 			<TreeView.Resources>
 				<HierarchicalDataTemplate DataType="{x:Type viewModel:TagGroup}"  ItemsSource="{Binding Items}" x:Key="TagGroupTemplate">
 					<TextBlock Foreground="Green" Text="{Binding Name}" />

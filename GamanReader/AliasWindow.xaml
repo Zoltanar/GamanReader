@@ -19,7 +19,7 @@
         <ListBox Grid.Column="1" x:Name="AliasLb" Margin="10,61,10,37"/>
         <Button Grid.Column="1" Click="Save" Content="Save" Margin="0,0,10,10" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="51"/>
         <Button Grid.Column="1" Click="Cancel" Content="Cancel" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalAlignment="Bottom" Width="65"/>
-        <TextBox Grid.Column="1" x:Name="AliasNameTb" Height="23" Margin="10,33,10,0" TextWrapping="Wrap" VerticalAlignment="Top" KeyUp="ShowTagsOnEnterKey"/>
+		<TextBox Grid.Column="1" x:Name="AliasNameTb" Height="23" Margin="10,33,10,0" TextWrapping="Wrap" VerticalAlignment="Top" LostKeyboardFocus="OnAliasGroupLostFocus"/>
 
     </Grid>
 </Window>

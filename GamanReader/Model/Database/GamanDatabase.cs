@@ -18,6 +18,15 @@ namespace GamanReader.Model.Database
 	{
 		public TagTreeViewModel TagViewModel;
 
+		/// <summary>
+		/// First argument is item, second argument is whether we want favorites (true) or short not browsed (false)
+		/// </summary>
+		public static readonly Func<MangaInfo, bool, bool> IsFavoriteOrShortNotBrowsed = (x, favorites) => !x.IsBlacklisted &&
+		                                                           (favorites
+			                                                           ? x.IsFavorite
+			                                                           : x.TimesBrowsed == 0 && x.FileCount <= 80) &&
+		                                                           x.CantOpen != true;
+
 		public GamanDatabase() : base("TagDatabase")
 		{ }
 
@@ -53,7 +62,10 @@ namespace GamanReader.Model.Database
 			Items.AsEnumerable().Where(i => !i.IsFavorite && !i.IsBlacklisted && i.TimesBrowsed > 0).OrderByDescending(x => x.TimesBrowsed).Take(itemCount);
 
 		public IEnumerable<MangaInfo> GetNotBrowsed(int itemCount) =>
-			Items.AsEnumerable().Where(i => /*!i.IsFavorite &&*/ !i.IsBlacklisted && i.TimesBrowsed == 0 && i.Exists()).OrderByDescending(x => x.DateAdded).Take(itemCount);
+			Items.AsEnumerable().Where(i => !i.IsBlacklisted && i.TimesBrowsed == 0 && i.Exists()).OrderByDescending(x => x.DateAdded).Take(itemCount);
+
+		public IEnumerable<MangaInfo> GetRandomContainers(int itemCount) =>
+			Items.AsEnumerable().Where(i => IsFavoriteOrShortNotBrowsed(i,false)).OrderBy(x => Guid.NewGuid()).Take(itemCount);
 
 		public void DeleteMangaInfo(MangaInfo item, bool addToDeletedItems)
 		{

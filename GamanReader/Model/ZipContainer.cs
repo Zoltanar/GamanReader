@@ -16,8 +16,7 @@ namespace GamanReader.Model
 		public ZipContainer(MangaInfo item, Action<string> onPropertyChanged, MainViewModel.PageOrder pageOrder) : base(item, onPropertyChanged, pageOrder)
 		{
 			using var archive = new ZipArchive(File.OpenRead(ContainerPath));
-			var fileNames = OrderFiles(archive.Entries);
-			FileNames = fileNames;
+			OrderFiles(archive.Entries);
 		}
 
 		public static int GetFileCount(string containerPath)
@@ -26,22 +25,23 @@ namespace GamanReader.Model
 			return archive.Entries.Select(af => af.Name).Count(FileIsImage);
 		}
 
-		public async Task ExtractAllAsync(CancellationToken token, int? extractCount = null)
+		public async Task ExtractAllAsync(CancellationToken token)
 		{
 			var file = new FileInfo(ContainerPath);
-			var extensions = new[] {".zip", ".cbz"};
+			var extensions = new[] { ".zip", ".cbz" };
 			if (!extensions.Contains(file.Extension)) return;
 			await Task.Run(() =>
 			{
 				using var archive = new ZipArchive(File.OpenRead(ContainerPath));
-				var entries = FileNames.Select(f => archive.Entries.First(e => e.Name == f)).ToList();
-				foreach (var entry in entries)
+				var entries = FileNames.Select(f => archive.Entries.First(e => e.FullName == f)).ToList();
+				for (var index = 0; index < entries.Count; index++)
 				{
-					if (extractCount.HasValue && Extracted >= extractCount.Value) return;
+					var entry = entries[index];
+					if (Extracted > index) continue;
 					if (token.IsCancellationRequested) return;
 					try
 					{
-						var tempFile = Path.Combine(GeneratedFolder, entry.Name);
+						var tempFile = GetFileFromUnorderedIndex(index);
 						if (File.Exists(tempFile)) continue;
 						var fileStream = File.OpenWrite(tempFile);
 						var zipStream = entry.Open();
@@ -63,9 +63,7 @@ namespace GamanReader.Model
 			var watch = Stopwatch.StartNew();
 			displayName = null;
 			if (index == -1) return null;
-			var filename = FileNames[index];
-			displayName = Path.GetFileName(filename);
-			var tempFile = Path.Combine(GeneratedFolder, filename);
+			GetFileFromOrderedIndex(index, out _, out displayName, out var tempFile);
 			var fullPath = Path.GetFullPath(tempFile);
 			while (Extracted < index && watch.Elapsed.TotalSeconds < 10) Thread.Sleep(250);
 			return fullPath;
@@ -78,12 +76,31 @@ namespace GamanReader.Model
 
 		protected override IEnumerable<string> OrderFilesByDateModified(IEnumerable<ZipArchiveEntry> files)
 		{
-			return files.OrderBy(e => e.LastWriteTime).Select(f => f.Name);
+			return files.OrderBy(e => e.LastWriteTime).Select(f => f.FullName);
 		}
 
 		protected override IEnumerable<string> GetFileNames(IEnumerable<ZipArchiveEntry> files)
 		{
 			return files.Select(f => f.FullName);
+		}
+
+		public void ExtractFirstItem()
+		{
+			if (Extracted >= 1)
+			{
+				return;
+			}
+			if (FileNames.Length == 0) return;
+			var file = new FileInfo(ContainerPath);
+			var extensions = new[] { ".zip", ".cbz" };
+			if (!extensions.Contains(file.Extension)) throw new NotSupportedException($"Extension not supported: {file.Extension}");
+			using var archive = new ZipArchive(File.OpenRead(ContainerPath));
+			var entry = archive.Entries.First(e => e.FullName == FileNames[0]);
+			var tempFile = GetFileFromUnorderedIndex(0);
+			if (File.Exists(tempFile)) return;
+			using var fileStream = File.OpenWrite(tempFile);
+			using var zipStream = entry.Open();
+			zipStream.CopyTo(fileStream);
 		}
 	}
 }

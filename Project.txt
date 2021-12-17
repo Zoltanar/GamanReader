@@ -1,20 +1,13 @@
 TODO
-handle folders in archives
 save search strings to tags
-going backwords in auto mode
 zoom in lens
 remove tags from items with DEL key
 library flags include in random, include in get additions
 left panel horizontal mouse wheel scroll if no need for vertical
 add delete file on DEL key for all MangaInfo panels
 hide side panels after a while and/or darker theme
-going back in auto page mode goes back 2 always.
 support for webp
-add standard natural sort for files
-change open container's file order when changing order.
-change tag item style to use trigger for showthumbnails instead.
-
-Thumbnail view: solve System.Windows.Data Error: 25 : Both 'ItemTemplate' and 'ItemTemplateSelector' are set;  'ItemTemplateSelector' will be ignored. ListView:'ListView' (Name='LibraryItems')
-ItemTemplateSelector is not null when ItemStringFormat is not null or whitespace (browsed/notbrowsed/search)
- 
-System.Windows.Data Error: 25 : Both 'ContentTemplate' and 'ContentTemplateSelector' are set;  'ContentTemplateSelector' will be ignored. ListViewItem:'ListViewItem' (Name='')
+change open container's file order when changing order. be ignored. ListViewItem:'ListViewItem' (Name='')
+Auto restart on slideshow with non-auto page mode
+change order without reloading
+button to show not browsed first

@@ -12,19 +12,22 @@ namespace GamanReader.Model
 {
 	internal class RarContainer : ArchiveContainer<ArchiveFileInfo>
 	{
-		private readonly int? _extractCount;
-
-		public RarContainer(MangaInfo item, Action<string> onPropertyChanged, MainViewModel.PageOrder pageOrder, int? extractCount = null) : base(item, onPropertyChanged, pageOrder)
+		public RarContainer(MangaInfo item, Action<string> onPropertyChanged, MainViewModel.PageOrder pageOrder, bool extractFirstOnly = false) : base(item, onPropertyChanged, pageOrder)
 		{
-			var bg = new BackgroundWorker();
-			bg.DoWork += ExtractAllWork;
-			bg.ProgressChanged += (sender, args) => onPropertyChanged?.Invoke(nameof(Extracted));
-			bg.WorkerReportsProgress = true;
 			using var rarExtractor = new SevenZipExtractor(ContainerPath);
-			var fileNames = OrderFiles(rarExtractor.ArchiveFileData);
-			FileNames = fileNames;
-			_extractCount = extractCount;
-			bg.RunWorkerAsync();
+			OrderFiles(rarExtractor.ArchiveFileData);
+			if (extractFirstOnly)
+			{
+				ExtractFirst();
+			}
+			else
+			{
+				var bg = new BackgroundWorker();
+				bg.DoWork += ExtractAllWork;
+				bg.ProgressChanged += (_, _) => onPropertyChanged?.Invoke(nameof(Extracted));
+				bg.WorkerReportsProgress = true;
+				bg.RunWorkerAsync();
+			}
 		}
 
 
@@ -48,11 +51,20 @@ namespace GamanReader.Model
 		{
 			if (TotalFiles == 0) return;
 			var rarExtractor = new SevenZipExtractor(ContainerPath);
-			for (int index = 0; index < (_extractCount ?? TotalFiles); index++)
+			for (int index = 0; index < TotalFiles; index++)
 			{
 				GetFile(index, out _, rarExtractor, sender as BackgroundWorker);
 			}
 			rarExtractor.Dispose();
+		}
+		private void ExtractFirst()
+		{
+			if (TotalFiles == 0) return;
+			var tempFile = GetFileFromUnorderedIndex(0);
+			if (File.Exists(tempFile)) return;
+			using var fileStream = File.OpenWrite(tempFile);
+			var rarExtractor = new SevenZipExtractor(ContainerPath);
+			rarExtractor.ExtractFile(FileNames[0], fileStream);
 		}
 
 		public override string GetFile(int index, out string displayName)
@@ -71,15 +83,7 @@ namespace GamanReader.Model
 		{
 			displayName = null;
 			if (index == -1) return null;
-			var filename = FileNames[index];
-			displayName = Path.GetFileName(filename);
-			string hashedFilename = filename.GetHashCode().ToString();
-			if (filename.Contains('\\'))
-			{
-				var folders = filename.Split('\\');
-				hashedFilename = Path.Combine(folders.Select(t => t.GetHashCode().ToString()).ToArray());
-			}
-			var tempFile = Path.Combine(GeneratedFolder, hashedFilename + Path.GetExtension(filename));
+			GetFileFromOrderedIndex(index, out var archivePath, out displayName, out var tempFile);
 			var fullPath = Path.GetFullPath(tempFile);
 			Directory.CreateDirectory(Directory.GetParent(fullPath).FullName);
 			try
@@ -88,7 +92,7 @@ namespace GamanReader.Model
 				using var stream = File.OpenWrite(tempFile);
 				lock (this)
 				{
-					extractor.ExtractFile(filename, stream);
+					extractor.ExtractFile(archivePath, stream);
 				}
 			}
 			catch (Exception ex)
@@ -104,7 +108,7 @@ namespace GamanReader.Model
 			}
 			return fullPath;
 		}
-
+		
 		public override void Dispose() { }
 
 	}

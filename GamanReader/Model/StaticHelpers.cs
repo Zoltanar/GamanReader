@@ -8,12 +8,16 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using GamanReader.Model.Database;
+using GamanReader.View;
+using IWshRuntimeLibrary;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using File = System.IO.File;
 
 namespace GamanReader.Model
 {
@@ -36,6 +40,7 @@ namespace GamanReader.Model
 		[NotNull] public static GamanDatabase LocalDatabase { get; }
 
 		public static string[] AllowedFormats { get; }
+		public static MainWindow MainModel { get; set; }
 
 		static StaticHelpers()
 		{
@@ -48,6 +53,8 @@ namespace GamanReader.Model
 				LocalDatabase.SaveChanges();
 			}
 			Directory.CreateDirectory(StoredDataFolder);
+			Directory.CreateDirectory(TempFolder);
+			Directory.CreateDirectory(ThumbFolder);
 			try
 			{
 				AllowedFormats = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(AllowedFormatsJson));
@@ -58,12 +65,45 @@ namespace GamanReader.Model
 			}
 		}
 
+
+		public static string GetNoTagName(string name)
+		{
+			string noTagName = string.Empty;
+			int inBrackets = 0;
+			foreach (char c in name)
+			{
+				switch (c)
+				{
+					case '[':
+					case '(':
+					case '{':
+						inBrackets++;
+						break;
+					case ']':
+					case ')':
+					case '}':
+						inBrackets--;
+						if (inBrackets == 0)
+						{
+							if (!string.IsNullOrWhiteSpace(noTagName)) return noTagName.Trim().ToLowerInvariant();
+							noTagName = string.Empty;
+						}
+						break;
+					default:
+						if (inBrackets == 0) noTagName += c;
+						break;
+				}
+			}
+			return !string.IsNullOrWhiteSpace(noTagName) ? noTagName.Trim().ToLowerInvariant() : string.Empty;
+		}
+
 		public static int NumberBetween(int min, int max, int value)
 		{
 			return Math.Min(Math.Max(value, min), max);
 		}
 
 		public static Expression<Func<MangaInfo, bool>> IsFavorited() => mi => mi.UserTags.Any(t => t.Tag.ToLower().Equals(FavoriteTagString));
+
 		public static Expression<Func<MangaInfo, bool>> IsBlacklisted() => mi => mi.UserTags.Any(t => t.Tag.ToLower().Equals(BlacklistedTagString));
 
 		public static ImageSource GetFavoritesIcon()
@@ -99,7 +139,7 @@ namespace GamanReader.Model
 
 		private static void LogToFile(ICollection<string> lines)
 		{
-			foreach (var line in lines) Debug.Print(line);
+			foreach (var line in lines) Console.WriteLine(line);
 			int counter = 0;
 			while (new FileInfo(LogFile).IsLocked())
 			{
@@ -166,8 +206,8 @@ namespace GamanReader.Model
 		public static string GetPathFromShortcut(string containerPath)
 		{
 			// IWshRuntimeLibrary is in the COM library "Windows Script Host Object Model"
-			var shell = new IWshRuntimeLibrary.WshShell();
-			var shortcut = (IWshRuntimeLibrary.IWshShortcut) shell.CreateShortcut(containerPath);
+			var shell = new WshShell();
+			var shortcut = (IWshShortcut) shell.CreateShortcut(containerPath);
 			return shortcut.TargetPath;
 		}
 
@@ -176,10 +216,11 @@ namespace GamanReader.Model
 			return MessageBox.Show(message, "Gaman Reader - Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes;
 		}
 
-		public static T RunWithRetries<T>(Func<T> action, Func<Exception, bool> exceptionAllowed, int maxTries, int? timeBetweenTries)
+		public static T RunWithRetries<T>(Func<T> action, Func<Exception, bool> exceptionAllowed, int maxTries, int? timeBetweenTries, int? timeoutMS)
 		{
 			int tries = 0;
 			Exception exOuter;
+			var watch = Stopwatch.StartNew();
 			do
 			{
 				try
@@ -190,7 +231,9 @@ namespace GamanReader.Model
 				{
 					exOuter = ex;
 					tries++;
-					if (!exceptionAllowed(ex) || tries > maxTries) throw;
+					if (!exceptionAllowed(ex) 
+					    || tries > maxTries 
+					    || timeoutMS.HasValue && watch.ElapsedMilliseconds > timeoutMS) throw;
 					if (timeBetweenTries.HasValue) Thread.Sleep(timeBetweenTries.Value);
 				}
 			} while (tries < maxTries);
@@ -200,6 +243,82 @@ namespace GamanReader.Model
 		public static string ToSeconds(this TimeSpan ts)
 		{
 			return $"{ts.TotalSeconds:0.###}";
+		}
+
+		public static List<Inline> GetTbInlines(string name)
+		{
+			var list = new List<Inline>();
+			int inBrackets = 0;
+			var curHp = new Hyperlink();
+			curHp.Click += MainModel.TagLinkClicked;
+			var curRun = new Run();
+			foreach (char c in name)
+			{
+				switch (c)
+				{
+					case '[':
+					case '(':
+					case '{':
+						if (inBrackets == 0 && curRun.Text.Length > 0)
+						{
+							list.Add(curRun);
+							curRun = new Run();
+						}
+						else if (inBrackets > 0 && curRun.Text.Length > 0)
+						{
+							AddTagRun(curHp.Inlines, ref curRun);
+							list.Add(curHp);
+							curHp = new Hyperlink { Tag = new List<Hyperlink>() };
+							curHp.Click += MainModel.TagLinkClicked;
+						}
+						curRun.Text += c;
+						inBrackets++;
+						break;
+					case ']':
+					case ')':
+					case '}':
+						curRun.Text += c;
+						if (inBrackets == 0 && curRun.Text.Length > 1)
+						{
+							AddTagRun(list, ref curRun);
+						}
+						else if (inBrackets > 0 && curRun.Text.Length > 1)
+						{
+							AddTagRun(curHp.Inlines, ref curRun);
+							for (int index = list.Count - 1; index >= list.Count - (inBrackets - 1); index--)
+							{
+								var item = list[index];
+								if (item is Hyperlink hpItem) ((List<Hyperlink>)curHp.Tag).Add(hpItem);
+							}
+							list.Add(curHp);
+							curHp = new Hyperlink { Tag = new List<Hyperlink>() };
+							curHp.Click += MainModel.TagLinkClicked;
+						}
+						inBrackets--;
+						break;
+					default:
+						curRun.Text += c;
+						break;
+				}
+			}
+			if (curRun.Text.Length > 0) list.Add(curRun);
+			return list;
+		}
+
+		private static void AddTagRun(ICollection<Inline> inlines, ref Run run)
+		{
+			var trimmed = run.Text.Trim('[', '(', '{', ']', ')', '}').ToLowerInvariant();
+			if (LocalDatabase.FavoriteTags.AsEnumerable().Any(ft => ft.Tag.ToLowerInvariant() == trimmed)) run.Foreground = Brushes.Red;
+			inlines.Add(run);
+			run = new Run();
+		}
+
+		private static readonly Random Random = new Random();
+
+		public static T SelectRandom<T>(this IList<T> collection)
+		{
+			if (collection == null || collection.Count == 0) return default;
+			return collection[Random.Next(0, collection.Count)];
 		}
 	}
 }

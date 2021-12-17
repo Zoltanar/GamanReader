@@ -20,12 +20,12 @@ namespace GamanReader.Model.Database
 			AliasTags = new List<AliasTag>();
 		}
 
-		public void AddTags(IEnumerable<IndividualTag> tags)
+		public void AddTags(IEnumerable<string> tags)
 		{
 			foreach (var iTag in tags)
 			{
-				if (Tags.Contains(iTag.Tag.ToLower())) continue;
-				AliasTags.Add(new AliasTag{AliasId = Id, Tag = iTag.Tag.ToLower()});
+				if (Tags.Contains(iTag.ToLower())) continue;
+				AliasTags.Add(new AliasTag{AliasId = Id, Tag = iTag.ToLower()});
 			}
 		}
 

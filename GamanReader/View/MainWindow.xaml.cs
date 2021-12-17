@@ -32,9 +32,13 @@ namespace GamanReader.View
 	{
 		private static readonly string PlayButtonText = (string)Application.Current.FindResource("PlayButtonString");
 		private static readonly string StopButtonText = (string)Application.Current.FindResource("StopButtonString");
+		private static readonly Regex NumberRegex = new(@"\d+", RegexOptions.Compiled);
+
 
 		[NotNull] private readonly MainViewModel _mainModel;
 		private bool _fullscreenOn;
+		private bool _thumbnailViewOn;
+
 
 		private string _pathToOpenOnInitialise;
 
@@ -43,6 +47,7 @@ namespace GamanReader.View
 			InitializeComponent();
 			ToggleAnimationVisibility(false);
 			_mainModel = (MainViewModel)DataContext;
+			MainModel = this;
 			LocalDatabase.TagViewModel = (TagTreeViewModel)TagPanel.DataContext;
 			var firstPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 			Debug.Assert(firstPath != null, nameof(firstPath) + " != null");
@@ -61,24 +66,11 @@ namespace GamanReader.View
 				LoadDatabase = false;
 				_pathToOpenOnInitialise = args[1];
 			}
-
-			_mainModel.RefreshTextBox += RefreshTextBox;
 		}
 
 		public bool LoadDatabase { get; private set; } = true;
-
-		private void RefreshTextBox(MangaInfo item)
-		{
-			InfoBox.Inlines.Clear();
-			if (item == null) return;
-			foreach (var inline in item.GetTbInlines())
-			{
-				InfoBox.Inlines.Add(inline);
-				if (inline is Hyperlink link) link.Click += TagLinkClicked;
-			}
-		}
-
-		private void TagLinkClicked(object sender, RoutedEventArgs e)
+		
+		public void TagLinkClicked(object sender, RoutedEventArgs e)
 		{
 			var link = (Hyperlink)sender;
 			var run = (Run)link.Inlines.FirstInline;
@@ -88,9 +80,9 @@ namespace GamanReader.View
 				var set = new HashSet<string>(list.Select(t =>
 					((Run)t.Inlines.FirstInline).Text.Trim('[', '(', '{', ']', ')', '}')));
 				set.UnionWith(new[] { text });
-				_mainModel.SearchTags(set);
+				_mainModel.SearchTags(set, true);
 			}
-			else _mainModel.Search($"alias:{text}");
+			else _mainModel.Search($"alias:{text}", true);
 		}
 
 		public async Task LoadContainer(MangaInfo item, bool saveToDatabase) => await _mainModel.LoadContainer(item, saveToDatabase);
@@ -104,7 +96,6 @@ namespace GamanReader.View
 				//TODO ERROR
 				return;
 			}
-
 			e.Handled = true;
 			_mainModel.GoToPage(pageNumber);
 		}
@@ -129,13 +120,12 @@ namespace GamanReader.View
 			}
 			var item = _mainModel.GetOrCreateMangaInfo(containerPath, saveToDatabase);
 			await LoadContainer(item, saveToDatabase);
-			if (_mainModel.MangaInfo == item && openAtFile != null) _mainModel.GoToPage(Array.IndexOf(_mainModel.ContainerModel.FileNames, openAtFile) + 1);
+			if (_mainModel.MangaInfo == item && openAtFile != null) _mainModel.GoToPage(Array.IndexOf(_mainModel.ContainerModel.OrderedFileNames, openAtFile) + 1);
 		}
 
 		private void GoToTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
 		{
-			Regex regex = new Regex("[^0-9]+");
-			e.Handled = regex.IsMatch(e.Text);
+			e.Handled = NumberRegex.IsMatch(e.Text);
 		}
 
 		private async void OpenRandom_Click(object sender, RoutedEventArgs e) => await _mainModel.OpenRandom(false);
@@ -165,15 +155,15 @@ namespace GamanReader.View
 		private void TextBox_KeyUp(object sender, KeyEventArgs e)
 		{
 			if (e.Key != Key.Enter) return;
-			_mainModel.Search();
+			_mainModel.Search(false);
 
 		}
 
 		private async void OpenItemFromListBox(object sender, MouseButtonEventArgs e)
 		{
-			if (!(e.OriginalSource is DependencyObject source)) return;
-			if (!(ItemsControl.ContainerFromElement((ItemsControl)sender, source) is ListBoxItem lbItem)) return;
-			if (!(lbItem.DataContext is MangaInfo item)) return;
+			if (e.OriginalSource is not DependencyObject source ||
+					ItemsControl.ContainerFromElement((ItemsControl)sender, source) is not ListBoxItem lbItem ||
+					lbItem.DataContext is not MangaInfo item) return;
 			await _mainModel.LoadContainer(item);
 		}
 
@@ -190,7 +180,7 @@ namespace GamanReader.View
 
 		private void IncreaseWidthOnMouseEnter(object sender, MouseEventArgs e)
 		{
-			Grid.SetColumnSpan(TabsControl, 2);
+			Grid.SetColumnSpan(TabsControl, 3);
 			TabsControl.Background = Brushes.Transparent;
 		}
 
@@ -267,36 +257,54 @@ namespace GamanReader.View
 
 		private void GetLibraryAdditions(object sender, RoutedEventArgs e) => _mainModel.GetLibraryAdditions();
 
-		private void CloseContainer(object sender, RoutedEventArgs e) => _mainModel.CloseContainer();
-
+		private void CloseContainer(object sender, RoutedEventArgs e)
+		{
+			_mainModel.CloseContainer();
+		}
+		
 		private void CreateAlias(object sender, RoutedEventArgs e)
 		{
 			var aliasWindow = new AliasWindow();
 			aliasWindow.Show();
 		}
 
-		private void Window_Closing(object sender, CancelEventArgs e)
-		{
-			LocalDatabase.SaveChanges();
-		}
-
-		private bool _thumbnailViewOn;
+		private void Window_Closing(object sender, CancelEventArgs e) => LocalDatabase.SaveChanges();
 
 		private void ToggleThumbnails(bool showThumbs)
 		{
 			MangaInfo.ShowThumbnailForAll = showThumbs;
-			foreach (var item in _mainModel.LibraryItems.Concat(TagPanel.TagTree.Items.OfType<IMangaItem>()))
+			var tagMangaItems = new List<IMangaItem>();
+			GetVisibleMangaItems(tagMangaItems, TagPanel.TagTree);
+			foreach (var item in _mainModel.LibraryItems.Concat(tagMangaItems))
 			{
 				if (showThumbs) MainViewModel.GetThumbInBackground(item);
 				item.OnPropertyChanged(nameof(IMangaItem.ShowThumbnail));
 			}
 			_mainModel.OnPropertyChanged(nameof(_mainModel.LibraryItems));
+			LibraryItems.ItemsPanel = (ItemsPanelTemplate) LibraryItems.Resources[showThumbs ? "WrapPanelTemplate" : "StackPanelTemplate"];
+		}
+
+		private void GetVisibleMangaItems(List<IMangaItem> visibleMangaItems, ItemsControl itemsControl)
+		{
+			int index = 0;
+			var generator = itemsControl.ItemContainerGenerator;
+			while (index < generator.Items.Count)
+			{
+				var item = generator.Items[index];
+				index++;
+				if (item is IMangaItem mangaItem) visibleMangaItems.Add(mangaItem);
+				if (item is not TagGroup) continue;
+				var node = generator.ContainerFromItem(item);
+				if (node is TreeViewItem treeNode && treeNode.IsExpanded)
+				{
+					GetVisibleMangaItems(visibleMangaItems, treeNode);
+				}
+			}
 		}
 
 		private void ThumbnailViewToggle(object sender, RoutedEventArgs e)
 		{
 			_thumbnailViewOn = !_thumbnailViewOn;
-			MangaInfo.ShowThumbs = _thumbnailViewOn;
 			ToggleThumbnails(_thumbnailViewOn);
 		}
 
@@ -344,7 +352,6 @@ namespace GamanReader.View
 				SingleAnimationSlider.Value = 0;
 				SingleAnimationSlider.Maximum = controller.FrameCount - 1;
 				SingleAnimationMaxLabel.Content = $"{controller.FrameCount} ({controller.Duration.ToSeconds()}s)";
-				//SetPlayPauseEnabled(_controller.IsPaused || _controller.IsComplete);
 				ToggleAnimationVisibility(true);
 			}
 			else ToggleAnimationVisibility(false);
@@ -394,143 +401,6 @@ namespace GamanReader.View
 			controller.GotoFrame(value);
 		}
 
-		private void DeleteItemAndAddToDeleted(object sender, RoutedEventArgs e)
-		{
-			var menuItem = (FrameworkElement)sender;
-			var item = GetMangaItem(menuItem);
-			if (item == null) return;
-			var success = _mainModel.RemoveItemFromDb(item, true, true);
-			if (success) _mainModel.LibraryItems.Remove(item);
-		}
-
-		private void DeleteItemWithoutAddingToDeleted(object sender, RoutedEventArgs e)
-		{
-			var menuItem = (FrameworkElement)sender;
-			var item = GetMangaItem(menuItem);
-			if (item == null) return;
-			var success = _mainModel.RemoveItemFromDb(item, false, true);
-			if (success) _mainModel.LibraryItems.Remove(item);
-		}
-
-		private void RemoveItemAndAddToDeleted(object sender, RoutedEventArgs e)
-		{
-			var menuItem = (FrameworkElement)sender;
-			var item = GetMangaItem(menuItem);
-			if (item == null) return;
-			var success = _mainModel.RemoveItemFromDb(item, true, false);
-			if (success) _mainModel.LibraryItems.Remove(item);
-		}
-
-		private void RemoveItemWithoutAddingToDeleted(object sender, RoutedEventArgs e)
-		{
-			var menuItem = (FrameworkElement)sender;
-			var item = GetMangaItem(menuItem);
-			if (item == null) return;
-			var success = _mainModel.RemoveItemFromDb(item, false, false);
-			if (success) _mainModel.LibraryItems.Remove(item);
-		}
-
-		private void BrowseToItemLocation(object sender, RoutedEventArgs e)
-		{
-			var menuItem = (FrameworkElement)sender;
-			var item = GetMangaItem(menuItem);
-			if (item == null) return;
-			if (!item.IsFolder && item.Exists())
-			{
-				Process.Start("explorer", $"/select,  \"{item.FilePath}\"");
-				return;
-			}
-			var location = item.IsFolder ? new DirectoryInfo(item.FilePath) : Directory.GetParent(item.FilePath);
-			while (location != null)
-			{
-				if (location.Exists)
-				{
-					break;
-				}
-				location = location.Parent;
-			}
-			if (location == null) throw new DirectoryNotFoundException($"Could not find any existing directory in path '{item.FilePath}'");
-			Process.Start("explorer", $"\"{location.FullName}\"");
-		}
-
-		private MangaInfo GetMangaItem(FrameworkElement menuItem)
-		{
-			var mangaItem = FindDataContextFromParent<MangaInfo>(menuItem);
-			return mangaItem ?? _mainModel.MangaInfo;
-		}
-
-		private static T FindDataContextFromParent<T>(FrameworkElement child)
-		{
-			while (true)
-			{
-				if (child.DataContext is T typedDataContext) return typedDataContext;
-				//get parent item
-				var parentObject = VisualTreeHelper.GetParent(child);
-				switch (parentObject)
-				{
-					//we've reached the end of the tree
-					case null:
-						return default;
-					//check if the parent matches the type we're looking for
-					default:
-						child = (FrameworkElement)parentObject;
-						break;
-				}
-			}
-		}
-
-		private void ItemContextMenu_OnOpened(object sender, RoutedEventArgs e)
-		{
-			var contextMenu = (ContextMenu)sender;
-			if (!(contextMenu.DataContext is MangaInfo item)) return;
-			SetupSearchMenuItem(contextMenu, item);
-			SetupFavoriteTagMenuItem(contextMenu, item);
-		}
-
-		private void SetupSearchMenuItem(ContextMenu contextMenu, MangaInfo item)
-		{
-			var searchMenuItem = contextMenu.Items.Cast<MenuItem>().Single(mi => mi.Header.Equals("Search"));
-			searchMenuItem.Items.Clear();
-			var nameMenuItem = new MenuItem { Header = item.Name, Tag = item.Name };
-			nameMenuItem.Click += SearchByDebugTagString;
-			searchMenuItem.Items.Add(nameMenuItem);
-			foreach (var tag in item.AutoTags)
-			{
-				var tagMenuItem = new MenuItem { Header = tag.Tag, Tag = tag };
-				tagMenuItem.Click += SearchByDebugTagString;
-				searchMenuItem.Items.Add(tagMenuItem);
-			}
-		}
-
-		private void SetupFavoriteTagMenuItem(ContextMenu contextMenu, MangaInfo item)
-		{
-			var addTagMenuItem = contextMenu.Items.Cast<MenuItem>().Single(mi => mi.Header.Equals("Add Tag to Favorites"));
-			addTagMenuItem.Items.Clear();
-			foreach (var tag in item.AutoTags)
-			{
-				var tagMenuItem = new MenuItem { Header = tag.Tag, Tag = tag };
-				tagMenuItem.Click += (s, e) => LocalDatabase.AddFavoriteTag(tag.Tag);
-				addTagMenuItem.Items.Add(tagMenuItem);
-			}
-		}
-
-		private void SearchByDebugTagString(object sender, RoutedEventArgs e)
-		{
-			var menuItem = (MenuItem)sender;
-			var tag = menuItem.Tag;
-			switch (tag)
-			{
-				case string searchText:
-					_mainModel.Search(searchText);
-					break;
-				case AutoTag autoTag:
-					_mainModel.SearchTags(new HashSet<string> { autoTag.Tag });
-					break;
-				default:
-					throw new InvalidOperationException();
-			}
-		}
-
 		private void LibraryItemSelectorUpdated(object sender, DataTransferEventArgs e)
 		{
 			if (!_thumbnailViewOn) return;
@@ -548,10 +418,10 @@ namespace GamanReader.View
 			var timeToLoad = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
 			_mainModel.ReplyText = $"Time to load: {timeToLoad.TotalSeconds:#0.###} seconds.";
 		}
-		
+
 		private void TagPageClick(object sender, RoutedEventArgs e)
 		{
-			_mainModel.MangaInfo.PageTags.Add(new PageTag{Index = _mainModel.CurrentPage});
+			_mainModel.MangaInfo.PageTags.Add(new PageTag { Index = _mainModel.CurrentPage });
 			LocalDatabase.SaveChanges();
 			_mainModel.OnPropertyChanged(nameof(_mainModel.TaggedPages));
 			_mainModel.OnPropertyChanged(nameof(_mainModel.CurrentPageNotTagged));
@@ -566,10 +436,38 @@ namespace GamanReader.View
 		private void DeletePageTag(object sender, KeyEventArgs e)
 		{
 			if (e.Key != Key.Delete) return;
-			var grid = (DataGrid) sender;
+			var grid = (DataGrid)sender;
 			if (grid.SelectedItems.Count == 0 || !(grid.SelectedItems[0] is PageTag pageTag)) return;
 			LocalDatabase.RemovePageTag(pageTag);
 			_mainModel.OnPropertyChanged(nameof(_mainModel.CurrentPageNotTagged));
+		}
+
+		private void DeleteItemAndAddToDeleted(object sender, RoutedEventArgs e)
+		{
+			((App)Application.Current).DeleteItemAndAddToDeleted(sender, e);
+		}
+
+		private void FilterSearchResults(object sender, RoutedEventArgs e)
+		{
+			var view = CollectionViewSource.GetDefaultView(ViewModel.SearchResults);
+			var searchBrowsed = SearchResultsBrowsedCheckBox?.IsChecked.GetValueOrDefault(true) ?? true;
+			var searchDeleted = SearchResultsDeletedCheckBox?.IsChecked.GetValueOrDefault(true) ?? true;
+			if (searchBrowsed && searchDeleted) view.Filter = null;
+			view.Filter = o => o is IMangaItem mi && (searchBrowsed || mi.TimesBrowsed == 0) && (searchDeleted || !mi.IsDeleted);
+		}
+
+		private void SortSearchResults(object sender, RoutedEventArgs e)
+		{
+			var view = CollectionViewSource.GetDefaultView(ViewModel.SearchResults);
+			var sortByName = SearchResultsByNameCheckBox?.IsChecked.GetValueOrDefault(false) ?? false;
+			if (sortByName) view.SortDescriptions.Add(new SortDescription(nameof(IMangaItem.NoTagName), ListSortDirection.Ascending));
+			else view.SortDescriptions.Clear();
+		}
+
+		private async void OpenRandomFromResults(object sender, RoutedEventArgs e)
+		{
+			var random = ViewModel.SearchResults.OfType<MangaInfo>().Where(i=>i.Exists()).ToList().SelectRandom();
+			if (random != null) await ViewModel.LoadContainer(random);
 		}
 	}
 }

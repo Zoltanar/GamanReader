@@ -91,7 +91,6 @@
 		</Style>
 		<system:String x:Key="StopButtonString">⏹</system:String>
 		<system:String x:Key="PlayButtonString">▶</system:String>
-		<view:ToStringFormatConverter x:Key="ToStringFormatConverter" />
 		<DataTemplate x:Key="ItemWithImage" DataType="{x:Type database:IMangaItem}">
 			<Border SnapsToDevicePixels="True" Margin="0">
 				<Border.Style>
@@ -107,11 +106,13 @@
 								<Setter Property="Background" Value="#77FFC0CB" />
 							</DataTrigger>
 							<DataTrigger Binding="{Binding Path=CantOpen}" Value="True">
-								<Setter Property="Background" Value="#EEFF0000" />
+								<Setter Property="Background" Value="#99FF0000" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding Path=IsDeleted}" Value="True">
+								<Setter Property="Background" Value="#FFFF0000" />
 							</DataTrigger>
 							<DataTrigger Binding="{Binding ShowThumbnail}" Value="False">
 								<Setter Property="BorderThickness" Value="0" />
-								<Setter Property="MaxWidth" Value="850" />
 							</DataTrigger>
 							<DataTrigger Binding="{Binding ShowThumbnail}" Value="True">
 								<Setter Property="MaxWidth" Value="200" />
@@ -120,13 +121,7 @@
 					</Style>
 				</Border.Style>
 				<StackPanel Orientation="Vertical" ContextMenu="{DynamicResource  ItemContextMenu}">
-					<TextBlock TextWrapping="Wrap">
-						<TextBlock.Text>
-							<MultiBinding Converter="{StaticResource ToStringFormatConverter}">
-								<Binding Path="."/>
-								<Binding ElementName="ViewModel" Path="LibraryItemFormat"/>
-							</MultiBinding>
-						</TextBlock.Text>
+					<TextBlock TextWrapping="Wrap" Loaded="ItemTextBlockLoaded" DataContextChanged="ItemTextBlockLoaded2">
 					</TextBlock>
 					<Image Source="{Binding Thumbnail, TargetNullValue={x:Null}}" 
 												       Margin="2"
@@ -147,6 +142,15 @@
 				</StackPanel>
 			</Border>
 		</DataTemplate>
+		<ContextMenu x:Key="ItemContextMenu" Opened="ItemContextMenu_OnOpened">
+			<MenuItem Header="Delete Data, Add To Deleted Items" ToolTip="When you wish to delete from file system and want to add it to the list of deleted items." Click="DeleteItemAndAddToDeleted"/>
+			<MenuItem Header="Delete Data, Don't Add To Deleted Items" ToolTip="When you wish to delete from file system but do not want to add it to the list of deleted items." Click="DeleteItemWithoutAddingToDeleted"/>
+			<MenuItem Header="Remove from Items, Add To Deleted Items" ToolTip="When you wish to remove file from database, without deleting from file system, and want to add it to the list of deleted items." Click="RemoveItemAndAddToDeleted"/>
+			<MenuItem Header="Remove from Items, Don't Add To Deleted Items" ToolTip="When you wish to remove file from database, without deleting from file system, but do not want to add it to the list of deleted items." Click="RemoveItemWithoutAddingToDeleted"/>
+			<MenuItem Header="Browse To Location" Click="BrowseToItemLocation"/>
+			<MenuItem Header="Search"/>
+			<MenuItem Header="Add Tag to Favorites"/>
+		</ContextMenu>
 	</Application.Resources>
 	<JumpList.JumpList>
 		<JumpList ShowRecentCategory="True"/>

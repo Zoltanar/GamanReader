@@ -12,36 +12,22 @@ namespace GamanReader.Model
 {
 	public abstract class Container<T> : Container
 	{
-		protected Container(MangaInfo item, MainViewModel.PageOrder pageOrder) : base(item,pageOrder){}
-		
-		protected string[] OrderFiles(IEnumerable<T> files)
+		protected Container(MangaInfo item, MainViewModel.PageOrder pageOrder) : base(item, pageOrder) { }
+
+		protected void OrderFiles(IEnumerable<T> files)
 		{
-			switch (PageOrderMode)
+			// ReSharper disable once PossibleMultipleEnumeration
+			FileNames = GetFileNames(files).Where(FileIsImage).OrderBy(c => c).ToArray();
+			OrderedFileNames = PageOrderMode switch
 			{
-				case MainViewModel.PageOrder.Auto:
-					
-					var list = GetFileNames(files).ToList();
-					var namesWithoutExtension = list.Select(Path.GetFileNameWithoutExtension).ToArray();
-					// ReSharper disable once AssignNullToNotNullAttribute
-					var minNonInts = list.Count * 0.25;//Math.Min(list.Count * 0.25, 4);
-					var integers = namesWithoutExtension.Count(x => int.TryParse(x, out _));
-					var usingIntegers = integers > list.Count - minNonInts;
-					if (usingIntegers)
-					{
-						return list.OrderBy(x =>
-						{
-							var success = int.TryParse(Path.GetFileNameWithoutExtension(x), out var number);
-							return success ? number : int.MaxValue;
-						}).ToArray();
-					}
-					return list.Where(FileIsImage).OrderBy(ef => ef, new StringWithNumberComparer()).ToArray();
-				case MainViewModel.PageOrder.Modified:
-					return OrderFilesByDateModified(files).ToArray();
-				case MainViewModel.PageOrder.Alphabet:
-					return GetFileNames(files).OrderBy(c => c).ToArray();
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+				MainViewModel.PageOrder.Natural => GetFileNames(files)
+					.Where(FileIsImage)
+					.OrderBy(ef => ef, new NaturalSortComparer())
+					.ToArray(),
+				MainViewModel.PageOrder.Modified => OrderFilesByDateModified(files).Where(FileIsImage).ToArray(),
+				MainViewModel.PageOrder.Ordinal => FileNames.ToArray(),
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		protected abstract IEnumerable<string> OrderFilesByDateModified(IEnumerable<T> files);
@@ -52,19 +38,24 @@ namespace GamanReader.Model
 
 	public abstract class Container : IDisposable
 	{
-		public static readonly List<string> RecognizedExtensions = new List<string>();
+		public static readonly HashSet<string> RecognizedExtensions = new(StringComparer.OrdinalIgnoreCase);
 
 		static Container()
 		{
 			foreach (var imageCodec in ImageCodecInfo.GetImageEncoders())
 			{
-				RecognizedExtensions.AddRange(imageCodec.FilenameExtension.ToLowerInvariant().Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetExtension));
+				foreach (var ext in imageCodec.FilenameExtension.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetExtension))
+					RecognizedExtensions.Add(ext);
 			}
 			RecognizedExtensions.Add(".gif");
 		}
 
 		public MangaInfo Item { get; }
 		public string ContainerPath { get; }
+		/// <summary>
+		/// Either temporary directory with extracted files, or folder itself.
+		/// </summary>
+		public abstract string FileDirectory { get; }
 		public MainViewModel.PageOrder PageOrderMode { get; }
 		private int _pagesBrowsed;
 		private bool _addedTimeBrowsed;
@@ -79,12 +70,14 @@ namespace GamanReader.Model
 				if (_addedTimeBrowsed || _pagesBrowsed <= Math.Min(TotalFiles * 0.5, 15)) return;
 				Item.TimesBrowsed++;
 				_addedTimeBrowsed = true;
+				StaticHelpers.MainModel.ViewModel.UpdateStats(true, Item.Length);
 
 			}
 		}
 
 		public int TotalFiles => FileNames.Length;
 		public string[] FileNames { get; protected set; }
+		public string[] OrderedFileNames { get; protected set; }
 		public abstract string GetFile(int index, out string displayName);
 		public abstract bool IsFolder { get; }
 		public int Extracted { get; protected set; }
@@ -97,6 +90,7 @@ namespace GamanReader.Model
 			Item = item;
 			ContainerPath = item.FilePath;
 			PageOrderMode = pageOrder;
+			CurrentIndex = 0;
 		}
 
 		public static bool FileIsImage([NotNull] string filename)
@@ -131,6 +125,12 @@ namespace GamanReader.Model
 					int.Parse(parts1.Groups[2].Value).CompareTo(int.Parse(parts2.Groups[2].Value)) :
 					string.CompareOrdinal(x, y);
 			}
+		}
+
+		public string GetFileFromUnorderedIndex(int unorderedIndex)
+		{
+			var file = FileNames[unorderedIndex];
+			return IsFolder ? file : Path.Combine(FileDirectory, $"{unorderedIndex}{Path.GetExtension(file)}");
 		}
 	}
 

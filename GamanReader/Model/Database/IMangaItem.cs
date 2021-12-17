@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Threading.Tasks;
+using System.Windows.Documents;
 
 namespace GamanReader.Model.Database
 {
@@ -8,16 +9,19 @@ namespace GamanReader.Model.Database
 	{
 		long Id { get; }
 		string Name { get; }
+		string NoTagName { get; }
 		int TimesBrowsed { get; }
+		string FileCountString { get; }
 		bool IsDeleted { get; }
 		bool IsFavorite { get; }
 		bool IsBlacklisted { get; }
 		bool? CantOpen { get;}
 		DateTime DateAdded { get; }
 		string Thumbnail { get; }
-		Task<string> EnsureThumbExists();
+		string EnsureThumbExists();
 		bool ThumbnailSet { get; }
 		bool ShowThumbnail { get; }
+		List<Inline> GetDescriptiveTitle();
 		void OnPropertyChanged(string propertyName);
 	}
 }

@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
+using System.Windows.Documents;
 using JetBrains.Annotations;
 
 namespace GamanReader.Model.Database
@@ -14,18 +15,20 @@ namespace GamanReader.Model.Database
 		[Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
 		public long Id { get; set; }
 		public string Name { get; set; }
+		public string NoTagName => StaticHelpers.GetNoTagName(Name);
 		[NotMapped] public int TimesBrowsed => 0;
 		[NotMapped] public bool IsDeleted => true;
 		[NotMapped] public bool IsFavorite => false;
 		[NotMapped] public bool IsBlacklisted => false;
 		[NotMapped] public bool? CantOpen => true;
+		public List<Inline> GetDescriptiveTitle() => StaticHelpers.GetTbInlines(Name);
 		public DateTime DateAdded { get; set; }
 
 #pragma warning disable 1998
 		public string Thumbnail => null;
-		public async Task<string> EnsureThumbExists() => null;
+		public string EnsureThumbExists() => null;
 		[NotMapped] public bool ThumbnailSet { get; } = true;
-		public bool ShowThumbnail => false;
+		public bool ShowThumbnail => MangaInfo.ShowThumbnailForAll;
 #pragma warning restore 1998
 
 		public DateTime DateDeleted { get; set; }
@@ -35,7 +38,7 @@ namespace GamanReader.Model.Database
 		public int? FileCount { get; set; }
 		public double SizeMb { get; set; }
 		public string FilePath { get; set; }
-		private string FileCountString => FileCount.HasValue ? $"[{FileCount}]" : string.Empty;
+		public string FileCountString => FileCount.HasValue ? $"[{FileCount}]" : string.Empty;
 
 		#endregion
 
@@ -52,7 +55,7 @@ namespace GamanReader.Model.Database
 			DateDeleted = DateTime.Now;
 			IsFolder = item.IsFolder;
 			CRC32 = item.CRC32;
-			SizeMb = item.Exists() ? item.SizeMb : 0d;
+			SizeMb = item.SizeMb;
 			FilePath = item.FilePath;
 			FileCount = item.FileCount;
 		}

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using GamanReader.Model.Database;
 using GamanReader.ViewModel;
 using JetBrains.Annotations;
@@ -47,12 +48,12 @@ namespace GamanReader.View
 		{
 			var preItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
 			if (!(preItem.DataContext is Alias alias)) return;
-			((MainViewModel)MainWindow.DataContext).Search($"alias:{alias.Name}");
+			((MainViewModel)MainWindow.DataContext).Search($"alias:{alias.Name}",false);
 		}
 
 		public static TreeViewItem VisualUpwardSearch(DependencyObject source)
 		{
-			while (source != null && !(source is TreeViewItem)) source = System.Windows.Media.VisualTreeHelper.GetParent(source);
+			while (source != null && !(source is TreeViewItem)) source = VisualTreeHelper.GetParent(source);
 			return source as TreeViewItem;
 		}
 
@@ -74,7 +75,7 @@ namespace GamanReader.View
 				{
 					_showThumbnails = value;
 					OnPropertyChanged();
-				} 
+				}
 			}
 
 			public TreeViewTemplateSelector(bool showThumbnails) => ShowThumbnails = showThumbnails;
@@ -86,7 +87,7 @@ namespace GamanReader.View
 				switch (item)
 				{
 					case TagGroup _:
-						return (DataTemplate) element.FindResource("TagGroupTemplate");
+						return (DataTemplate)element.FindResource("TagGroupTemplate");
 					case IMangaItem _:
 						return (DataTemplate)Application.Current.FindResource("ItemWithImage");
 					case AutoTag _:

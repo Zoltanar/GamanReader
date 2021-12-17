@@ -4,8 +4,6 @@ using System.Linq;
 using GamanReader.Model.Database;
 using GamanReader.ViewModel;
 
-//using System.Linq;
-
 namespace GamanReader.Model
 {
 	/// <summary>
@@ -13,12 +11,10 @@ namespace GamanReader.Model
 	/// </summary>
 	internal class FolderContainer : Container<FileInfo>
 	{
-
-
 		public FolderContainer(MangaInfo item, IEnumerable<FileInfo> files, MainViewModel.PageOrder pageOrder) : base(item, pageOrder)
 		{
 			CurrentIndex = 0;
-			FileNames = OrderFiles(files);
+			OrderFiles(files);
 		}
 
 		public override bool IsFolder => true;
@@ -39,12 +35,14 @@ namespace GamanReader.Model
 		{
 			return files.Select(f => f.FullName);
 		}
-		
+
+		public override string FileDirectory => ContainerPath;
+
 		public override string GetFile(int index, out string displayName)
 		{
 			displayName = null;
 			if (index == -1) return null;
-			var filename = FileNames[index];
+			var filename = OrderedFileNames[index];
 			displayName = filename.Remove(0, ContainerPath.Length+1);
 			return filename;
 		}

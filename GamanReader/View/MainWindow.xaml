@@ -137,15 +137,6 @@
 				<Trigger Property="IsChecked" Value="True"/>
 			</Style.Triggers>
 		</Style>
-		<ContextMenu x:Key="ItemContextMenu" Opened="ItemContextMenu_OnOpened">
-			<MenuItem Header="Delete Data, Add To Deleted Items" ToolTip="When you wish to delete from file system and want to add it to the list of deleted items." Click="DeleteItemAndAddToDeleted"/>
-			<MenuItem Header="Delete Data, Don't Add To Deleted Items" ToolTip="When you wish to delete from file system but do not want to add it to the list of deleted items." Click="DeleteItemWithoutAddingToDeleted"/>
-			<MenuItem Header="Remove from Items, Add To Deleted Items" ToolTip="When you wish to remove file from database, without deleting from file system, and want to add it to the list of deleted items." Click="RemoveItemAndAddToDeleted"/>
-			<MenuItem Header="Remove from Items, Don't Add To Deleted Items" ToolTip="When you wish to remove file from database, without deleting from file system, but do not want to add it to the list of deleted items." Click="RemoveItemWithoutAddingToDeleted"/>
-			<MenuItem Header="Browse To Location" Click="BrowseToItemLocation"/>
-			<MenuItem Header="Search"/>
-			<MenuItem Header="Add Tag to Favorites"/>
-		</ContextMenu>
 	</Window.Resources>
 	<Window.DataContext>
 		<viewModel:MainViewModel x:Name="ViewModel"/>
@@ -164,14 +155,24 @@
 					<RowDefinition Height="Auto"/>
 				</Grid.RowDefinitions>
 				<!--Center-->
-				<Image x:Name="SingleImageElement" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource, NotifyOnTargetUpdated=True}"  Style="{StaticResource ImageStyle}" TargetUpdated="SingleImageElement_OnTargetUpdated" MouseEnter="DecreaseWidthOnMouseEnter" />
+				<Image x:Name="SingleImageElement" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" gif:ImageBehavior.AnimatedSource="{Binding SingleImageSource, NotifyOnTargetUpdated=True}"  Style="{StaticResource ImageStyle}" TargetUpdated="SingleImageElement_OnTargetUpdated" MouseEnter="DecreaseWidthOnMouseEnter">
+					<Image.LayoutTransform><RotateTransform Angle="{Binding SingleRotationAngle}"/></Image.LayoutTransform>
+				</Image>
 				<Slider x:Name="SingleAnimationSlider" Grid.Row="1"  Grid.Column="1" Grid.ColumnSpan="2" Margin="80,5" Height="24" ValueChanged="SingleAnimationSlider_OnValueChanged"
 				        TickFrequency="1" TickPlacement="BottomRight" Minimum="0" Maximum="9"/>
 				<ToggleButton x:Name="PlayGifButton" Grid.Row="1"  Grid.Column="1" HorizontalAlignment="Left" Visibility="Visible" Content="{StaticResource StopButtonString}" Foreground="White" Height="24"  Click="PlayGif_OnClicked" Margin="0,5" Width="32" FontSize="17" Style="{StaticResource ToggleStyle}" />
 				<Label x:Name="SingleAnimationActiveLabel" Grid.Row="1"  Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" Content="000" Foreground="White" Height="24" Margin="37,5,0,5" Width="38"/>
 				<Label x:Name="SingleAnimationMaxLabel" Grid.Row="1"  Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Right" Content="999 (999.999s)" Foreground="White" Height="24"/>
-				<Image Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Style="{StaticResource ImageStyle}" MouseEnter="DecreaseWidthOnMouseEnter" />
-				<Image Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Style="{StaticResource ImageStyle}" />
+				<Image Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" gif:ImageBehavior.AnimatedSource="{Binding LeftImageSource}" Style="{StaticResource ImageStyle}">
+				<Image.LayoutTransform>
+					<RotateTransform Angle="{Binding LeftRotationAngle}"/>
+				</Image.LayoutTransform>
+				</Image>
+				<Image Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" gif:ImageBehavior.AnimatedSource="{Binding RightImageSource}" Style="{StaticResource ImageStyle}">
+				<Image.LayoutTransform>
+					<RotateTransform Angle="{Binding RightRotationAngle}"/>
+				</Image.LayoutTransform>
+				</Image>
 				<TextBlock Grid.Row="0" Text="{Binding LeftLabelText}" Margin="10,10,10,0" Height="20" VerticalAlignment="Top"  Foreground="Black" HorizontalAlignment="Left" Padding="5,0" Grid.Column="0" Grid.ColumnSpan="2">
 					<TextBlock.Background>
 						<SolidColorBrush Color="White" Opacity="0.25"/>
@@ -184,21 +185,26 @@
 				        IsDirectionReversed="True" ValueChanged="Slider_ValueChanged" Minimum="1" Maximum="{Binding TotalFiles}" 
 				        Value="{Binding CurrentPage, Mode=OneWay}" Thumb.DragCompleted="Slider_OnDragCompleted" Style="{DynamicResource SliderStyle1}" />
 				<!--Left Side Bar-->
-				<TabControl x:Name="TabsControl" Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Margin="10,35,10,10" MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="{Binding DisplayedPanel}" Background="Transparent">
+				<TextBox Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Height="23" TextWrapping="Wrap" Margin="10,35,10,10" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp"/>
+				<TabControl x:Name="TabsControl" Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Margin="10,63,10,10" MouseEnter="IncreaseWidthOnMouseEnter" SelectedIndex="{Binding DisplayedPanel}" Background="Transparent">
 					<TabItem Header="Library">
-						<DockPanel>
+						<DockPanel LastChildFill="True">
 							<ComboBox ItemsSource="{Binding LibraryItemSelectors}" 
 							          SelectedValue="{Binding LibraryItemSelector, NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}" 
 							          TargetUpdated="LibraryItemSelectorUpdated"
 							          SourceUpdated="LibraryItemSelectorUpdated"
 							          DockPanel.Dock="Top" />
-							<TextBox Height="23" TextWrapping="Wrap" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" KeyUp="TextBox_KeyUp" DockPanel.Dock="Top" Visibility="{Binding LibrarySearchVisibility}"/>
+							<StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Background="AliceBlue" Visibility="{Binding SearchSettingsVisible}">
+								<CheckBox Content="Deleted" x:Name="SearchResultsDeletedCheckBox" IsChecked="True" Checked="FilterSearchResults" Unchecked="FilterSearchResults"/>
+								<CheckBox Content="Browsed" x:Name="SearchResultsBrowsedCheckBox" IsChecked="True" Checked="FilterSearchResults" Unchecked="FilterSearchResults"/>
+								<CheckBox Content="By Name" x:Name="SearchResultsByNameCheckBox" IsChecked="False" Checked="SortSearchResults" Unchecked="SortSearchResults"/>
+								<Button Content="Random" Click="OpenRandomFromResults"/>
+							</StackPanel>
 							<ListView x:Name="LibraryItems"
 								ItemsSource="{Binding LibraryItems, NotifyOnTargetUpdated=True}" 
 								ItemTemplate="{DynamicResource ItemWithImage}"
 								MouseDoubleClick="OpenItemFromListBox" 
 								Background="#CCFFFFFF" 
-								DockPanel.Dock="Bottom"
 								ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 								<ListView.ItemContainerStyle>
 									<Style TargetType="ListViewItem">
@@ -207,9 +213,23 @@
 										<Setter Property="BorderThickness" Value="0"/>
 									</Style>
 								</ListView.ItemContainerStyle>
+								<ListView.Resources>
+									<ItemsPanelTemplate x:Key="StackPanelTemplate">
+										<StackPanel
+											Width="{Binding (FrameworkElement.ActualWidth), RelativeSource={RelativeSource AncestorType=ScrollContentPresenter}}"
+											Orientation="Vertical" />
+									</ItemsPanelTemplate>
+									<ItemsPanelTemplate x:Key="WrapPanelTemplate">
+										<WrapPanel/>
+									</ItemsPanelTemplate>
+								</ListView.Resources>
 								<ListView.ItemsPanel>
-									<ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-								</ListView.ItemsPanel>
+										<ItemsPanelTemplate>
+										<StackPanel 
+											Width="{Binding (FrameworkElement.ActualWidth), RelativeSource={RelativeSource AncestorType=ScrollContentPresenter}}"
+											Orientation="Vertical"/>
+									</ItemsPanelTemplate>
+									</ListView.ItemsPanel>
 							</ListView>
 						</DockPanel>
 					</TabItem>
@@ -235,7 +255,7 @@
 						<DropShadowEffect ShadowDepth="2" BlurRadius="1" Color="LightGray" />
 					</TextBlock.Effect>
 				</TextBlock>
-				<Grid Grid.Row="0" Grid.RowSpan="2" Column="3">
+				<Grid Grid.Row="0" Grid.RowSpan="2" Column="3"  MouseEnter="DecreaseWidthOnMouseEnter">
 					<StackPanel Orientation="Vertical" Margin="5,34,5,5">
 						<Button  Content="Open Random" Click="OpenRandom_Click" Style="{StaticResource YellowButtonStyle}" Margin="0,5" />
 						<Button  Content="Open Random (❤)" Click="OpenRandomFavorite_Click" Style="{StaticResource YellowButtonStyle}" />
@@ -279,9 +299,13 @@
 								<DataGridTextColumn Header="Page No." Binding="{Binding Index}"/>
 							</DataGrid.Columns>
 						</DataGrid>
-						<TextBlock x:Name="InfoBox" TextWrapping="Wrap" Foreground="White" />
+						<Border Background="#CCFFFFFF">
+						<ContentControl 
+							Content="{Binding MangaInfo}" 
+							ContentTemplate="{DynamicResource ItemWithImage}">
+							</ContentControl>
+						</Border>
 					</StackPanel>
-
 				</Grid>
 			</Grid>
 		</DockPanel>
