@@ -427,7 +427,7 @@ namespace GamanReader.ViewModel
 		public int TotalFiles => ContainerModel?.TotalFiles ?? 1;
 		public string[] Pages => ContainerModel?.OrderedFileNames.Select((f, i) => $"[{i:000}] {f}").ToArray() ?? Array.Empty<string>();
 		public ObservableCollection<PageTag> TaggedPages => MangaInfo == null ? new ObservableCollection<PageTag>() : new ObservableCollection<PageTag>(MangaInfo.PageTags);
-		public bool CurrentPageNotTagged => MangaInfo?.PageTags.All(i => i.Index != CurrentPage) ?? false;
+		public bool CurrentPageNotTagged => MangaInfo?.PageTags.All(i => i.Page != CurrentPage) ?? false;
 
 		#endregion
 
@@ -556,7 +556,7 @@ namespace GamanReader.ViewModel
 			if (ContainerModel == null) return;
 			if (pageNumber < 0 || pageNumber > TotalFiles)
 			{
-				IndexLabelText = "Page out of range.";
+				ReplyText = "Page out of range.";
 				return;
 			}
 			GoToIndex(pageNumber - 1);
@@ -933,7 +933,9 @@ namespace GamanReader.ViewModel
 			}
 			MangaInfo = item;
 			OnPropertyChanged(nameof(TotalFiles));
-			GoToIndex(MangaInfo.LastOpenPageIndex.GetValueOrDefault(0));
+			var lastOpenPage = MangaInfo.LastOpenPageIndex.GetValueOrDefault(0);
+			if (lastOpenPage >= TotalFiles) lastOpenPage = 0;
+			GoToIndex(lastOpenPage);
 			ReplyText = string.Empty;
 			TitleText = $"{Path.GetFileName(item.FilePath)} - {ProgramName}";
 			_lastOpened.Add(item);

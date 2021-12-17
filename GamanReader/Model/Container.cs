@@ -28,6 +28,19 @@ namespace GamanReader.Model
 				MainViewModel.PageOrder.Ordinal => FileNames.ToArray(),
 				_ => throw new ArgumentOutOfRangeException()
 			};
+			OrderedShortNames = OrderedFileNames.Select(fn => GetShortName(this is FolderContainer ? ContainerPath : null, fn)).ToArray();
+			foreach (var pageTag in Item.PageTags)
+			{
+				var index = Array.IndexOf(OrderedShortNames, pageTag.FileName);
+				pageTag.Page = index == -1 ? -1 : index + 1;
+			}
+		}
+
+		public static string GetShortName(string rootPath, string fullName)
+		{
+			if (rootPath == null) return fullName;
+			var shortName = fullName.Remove(0, rootPath.Length + 1);
+			return shortName;
 		}
 
 		protected abstract IEnumerable<string> OrderFilesByDateModified(IEnumerable<T> files);
@@ -52,6 +65,7 @@ namespace GamanReader.Model
 
 		public MangaInfo Item { get; }
 		public string ContainerPath { get; }
+
 		/// <summary>
 		/// Either temporary directory with extracted files, or folder itself.
 		/// </summary>
@@ -78,6 +92,7 @@ namespace GamanReader.Model
 		public int TotalFiles => FileNames.Length;
 		public string[] FileNames { get; protected set; }
 		public string[] OrderedFileNames { get; protected set; }
+		public string[] OrderedShortNames { get; protected set; }
 		public abstract string GetFile(int index, out string displayName);
 		public abstract bool IsFolder { get; }
 		public int Extracted { get; protected set; }

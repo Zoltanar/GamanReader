@@ -69,7 +69,7 @@ namespace GamanReader.View
 		}
 
 		public bool LoadDatabase { get; private set; } = true;
-		
+
 		public void TagLinkClicked(object sender, RoutedEventArgs e)
 		{
 			var link = (Hyperlink)sender;
@@ -125,7 +125,7 @@ namespace GamanReader.View
 
 		private void GoToTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
 		{
-			e.Handled = NumberRegex.IsMatch(e.Text);
+			e.Handled = !NumberRegex.IsMatch(e.Text);
 		}
 
 		private async void OpenRandom_Click(object sender, RoutedEventArgs e) => await _mainModel.OpenRandom(false);
@@ -261,7 +261,7 @@ namespace GamanReader.View
 		{
 			_mainModel.CloseContainer();
 		}
-		
+
 		private void CreateAlias(object sender, RoutedEventArgs e)
 		{
 			var aliasWindow = new AliasWindow();
@@ -281,7 +281,7 @@ namespace GamanReader.View
 				item.OnPropertyChanged(nameof(IMangaItem.ShowThumbnail));
 			}
 			_mainModel.OnPropertyChanged(nameof(_mainModel.LibraryItems));
-			LibraryItems.ItemsPanel = (ItemsPanelTemplate) LibraryItems.Resources[showThumbs ? "WrapPanelTemplate" : "StackPanelTemplate"];
+			LibraryItems.ItemsPanel = (ItemsPanelTemplate)LibraryItems.Resources[showThumbs ? "WrapPanelTemplate" : "StackPanelTemplate"];
 		}
 
 		private void GetVisibleMangaItems(List<IMangaItem> visibleMangaItems, ItemsControl itemsControl)
@@ -421,7 +421,8 @@ namespace GamanReader.View
 
 		private void TagPageClick(object sender, RoutedEventArgs e)
 		{
-			_mainModel.MangaInfo.PageTags.Add(new PageTag { Index = _mainModel.CurrentPage });
+			var shortName = _mainModel.ContainerModel.OrderedShortNames[_mainModel.CurrentIndex];
+			_mainModel.MangaInfo.PageTags.Add(new PageTag { Page = _mainModel.CurrentPage, FileName = shortName });
 			LocalDatabase.SaveChanges();
 			_mainModel.OnPropertyChanged(nameof(_mainModel.TaggedPages));
 			_mainModel.OnPropertyChanged(nameof(_mainModel.CurrentPageNotTagged));
@@ -429,8 +430,9 @@ namespace GamanReader.View
 
 		private void PageTagSelected(object sender, SelectionChangedEventArgs e)
 		{
-			if (e.AddedItems.Count == 0 || !(e.AddedItems[0] is PageTag pageTag)) return;
-			_mainModel.GoToPage(pageTag.Index);
+			if (e.AddedItems.Count == 0 || e.AddedItems[0] is not PageTag pageTag) return;
+			if (pageTag.Page == -1) ViewModel.ReplyText = "Tagged page not found.";
+			else _mainModel.GoToPage(pageTag.Page);
 		}
 
 		private void DeletePageTag(object sender, KeyEventArgs e)
@@ -466,8 +468,44 @@ namespace GamanReader.View
 
 		private async void OpenRandomFromResults(object sender, RoutedEventArgs e)
 		{
-			var random = ViewModel.SearchResults.OfType<MangaInfo>().Where(i=>i.Exists()).ToList().SelectRandom();
+			var random = ViewModel.SearchResults.OfType<MangaInfo>().Where(i => i.Exists()).ToList().SelectRandom();
 			if (random != null) await ViewModel.LoadContainer(random);
+		}
+
+		private async void DebugClick(object sender, RoutedEventArgs e)
+		{
+			var tagsByItem = LocalDatabase.PageTags/*.Where(pt => pt.FileName == null)*/.ToList().GroupBy(pt => pt.ItemId);
+			var allItemIds = LocalDatabase.Items.Select(i => i.Id).ToArray();
+			tagsByItem = tagsByItem.Where(g => allItemIds.Contains(g.Key));
+			var itemCounter = 0;
+			var total = tagsByItem.Count();
+			foreach (var tagGroup in tagsByItem)
+			{
+				itemCounter++;
+				if (itemCounter % 25 == 0) Debug.WriteLine($@"Processed {itemCounter}/{total}...");
+				var item = LocalDatabase.Items.FirstOrDefault(i => i.Id == tagGroup.Key);
+				if (item == null) continue;
+				try
+				{
+					var container = await MainViewModel.LoadContainerNonUI(item);
+					if (container == null || container is not FolderContainer) continue;
+					foreach (var pageTag in tagGroup)
+					{
+						var fileNames = container.FileNames;
+						if (fileNames.Length == pageTag.Page) pageTag.Page -= 1;
+						if (fileNames.Length <= pageTag.Page) continue;
+						var file = container.GetFile(pageTag.Page, out var display);
+						pageTag.FileName = display;
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($@"{item.NoTagName}:{ex}");
+				}
+			}
+			Debug.WriteLine($@"Finished processing.");
+			LocalDatabase.SaveChanges();
+			Debug.WriteLine($@"Finished saving.");
 		}
 	}
 }

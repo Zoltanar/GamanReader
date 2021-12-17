@@ -1,4 +1,6 @@
-﻿namespace GamanReader.Model.Database
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace GamanReader.Model.Database
 {
 	public class PageTag
 	{
@@ -6,7 +8,8 @@
 
 		public long ItemId { get; set; }
 
-		public int Index { get; set; }
+		[NotMapped]
+		public int Page { get; set; }
 
 		public string FileName { get; set; }
 

@@ -261,7 +261,7 @@
 						<Button  Content="Open Random (❤)" Click="OpenRandomFavorite_Click" Style="{StaticResource YellowButtonStyle}" />
 						<Button Content="Close Container" Click="CloseContainer" Style="{StaticResource YellowButtonStyle}" Margin="0,5"/>
 						<Button Content="Get New Additions" Click="GetLibraryAdditions" Style="{StaticResource GreenButtonStyle}"  />
-						<Button Content="Create Alias" Click="CreateAlias" Style="{StaticResource GreenButtonStyle}" Margin="0,5" />
+						<Button Content="Create Alias" Click="DebugClick" Style="{StaticResource GreenButtonStyle}" Margin="0,5" />
 						<Button Click="ChangePageOrder" Content="{Binding PageOrderText}" HorizontalAlignment="Stretch" Style="{StaticResource BlueButtonStyle}" />
 						<ToggleButton Content="{Binding RtlToggleText}" IsChecked="{Binding RtlIsChecked}" Height="20" Style="{StaticResource ToggleStyle}" Margin="0,5" />
 						<!--<Button  Content="Add Library Folder" Height="20" Click="AddLibraryFolder_Click" Background="#FF7C99E8" BorderBrush="{x:Null}" BorderThickness="0"/>-->
@@ -296,7 +296,8 @@
 											PreviewKeyDown="DeletePageTag"
 						          AutoGenerateColumns="False">
 							<DataGrid.Columns>
-								<DataGridTextColumn Header="Page No." Binding="{Binding Index}"/>
+								<DataGridTextColumn Header="Page" Binding="{Binding Page}"/>
+								<DataGridTextColumn Header="Name" Binding="{Binding FileName}"/>
 							</DataGrid.Columns>
 						</DataGrid>
 						<Border Background="#CCFFFFFF">
