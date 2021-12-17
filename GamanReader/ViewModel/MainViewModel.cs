@@ -783,7 +783,7 @@ namespace GamanReader.ViewModel
 					_zipArchiveTask?.Wait();
 					_tokenSource = new CancellationTokenSource();
 #pragma warning disable 4014
-					Task.Run(ZipExtractAllAsync, CancellationToken.None);
+					Task.Run(() => ZipExtractAllAsync(ContainerModel), CancellationToken.None);
 #pragma warning restore 4014
 					break;
 				case ".rar":
@@ -797,10 +797,37 @@ namespace GamanReader.ViewModel
 					throw new InvalidOperationException($"Extension: '{extension}' is not supported.");
 			}
 		}
-
-		private async Task ZipExtractAllAsync()
+		
+		private static async Task<Container> LoadArchiveNonUI(MangaInfo item)
 		{
-			await ((ZipContainer)ContainerModel).ExtractAllAsync(_tokenSource.Token);
+			if (!File.Exists(item.FilePath))
+			{
+				return null;
+			}
+			var extension = Path.GetExtension(item.FilePath);
+			Container container;
+			switch (extension)
+			{
+				case ".cbz":
+				case ".zip":
+					container = new ZipContainer(item, null, PageOrder.Natural);
+					break;
+				case ".rar":
+					container = await Task.Run(() =>
+					{
+						var containerModel = new RarContainer(item, null, PageOrder.Natural, doNotExtract:true);
+						return containerModel;
+					});
+					break;
+				default:
+					throw new InvalidOperationException($"Extension: '{extension}' is not supported.");
+			}
+			return container;
+		}
+
+		private async Task ZipExtractAllAsync(Container container)
+		{
+			await ((ZipContainer)container).ExtractAllAsync(_tokenSource.Token);
 			_tokenSource = null;
 			_zipArchiveTask = null;
 		}
@@ -830,6 +857,30 @@ namespace GamanReader.ViewModel
 			}
 			ContainerModel?.Dispose();
 			ContainerModel = new FolderContainer(item, files, PageOrderMode);
+		}
+
+		private static FolderContainer LoadFolderNonUI(MangaInfo item)
+		{
+			if (!Directory.Exists(item.FilePath))
+			{
+				return null;
+			}
+			var directoryInfo = new DirectoryInfo(item.FilePath);
+			var files = MangaInfo.GetImageFiles(directoryInfo, SearchOption.TopDirectoryOnly);
+			var folders = Directory.GetDirectories(item.FilePath);
+			if (files.Length + folders.Length == 0)
+			{
+				return null;
+			}
+			if (folders.Any())
+			{
+				var result = MessageBox.Show($"{item.NoTagName}{Environment.NewLine}Include sub-folders?", ProgramName, MessageBoxButton.YesNo);
+				if (result == MessageBoxResult.Yes)
+				{
+					files = MangaInfo.GetImageFiles(directoryInfo, SearchOption.AllDirectories);
+				}
+			}
+			return new FolderContainer(item, files, PageOrder.Natural);
 		}
 
 		public async Task LoadContainer(MangaInfo item, bool saveToDatabase = true)
@@ -889,6 +940,35 @@ namespace GamanReader.ViewModel
 			item.LastOpened = DateTime.Now;
 			LocalDatabase.SaveChanges();
 			IndexLabelText = $"/{ContainerModel.TotalFiles}";
+		}
+
+		public static async Task<Container> LoadContainerNonUI(MangaInfo item)
+		{
+			if (item.IsDeleted) return null;
+			var itemExists = await Task.Run(() => item.Exists());
+			if (!itemExists)
+			{
+				return null;
+			}
+			Container container = null;
+			try
+			{
+				await Task.Run(async () =>
+				{
+					if (item.IsFolder) container = LoadFolderNonUI(item);
+					else container = await LoadArchiveNonUI(item);
+				});
+			}
+			catch (Exception)
+			{
+				return null;
+			}
+			if (container == null) return null;
+			if (container.TotalFiles == 0)
+			{
+				return null;
+			}
+			return container;
 		}
 
 		#endregion

@@ -12,10 +12,11 @@ namespace GamanReader.Model
 {
 	internal class RarContainer : ArchiveContainer<ArchiveFileInfo>
 	{
-		public RarContainer(MangaInfo item, Action<string> onPropertyChanged, MainViewModel.PageOrder pageOrder, bool extractFirstOnly = false) : base(item, onPropertyChanged, pageOrder)
+		public RarContainer(MangaInfo item, Action<string> onPropertyChanged, MainViewModel.PageOrder pageOrder, bool extractFirstOnly = false, bool doNotExtract = false) : base(item, onPropertyChanged, pageOrder)
 		{
 			using var rarExtractor = new SevenZipExtractor(ContainerPath);
 			OrderFiles(rarExtractor.ArchiveFileData);
+			if (doNotExtract) return;
 			if (extractFirstOnly)
 			{
 				ExtractFirst();
